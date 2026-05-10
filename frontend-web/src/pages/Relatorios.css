@@ -1,0 +1,570 @@
+/* ============================================================
+   RELATORIOS — estilos específicos
+   Visual padrão Operon, reutiliza variáveis globais
+   ============================================================ */
+
+/* ── ABAS ──────────────────────────────────────────────── */
+
+.rel-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+  margin-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.rel-tabs::-webkit-scrollbar { display: none; }
+
+.rel-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.rel-tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface-soft);
+}
+.rel-tab.active {
+  color: var(--color-primary, #6B4EFF);
+  border-bottom-color: var(--color-primary, #6B4EFF);
+  background: var(--color-surface-soft);
+}
+
+/* ── PERÍODO ────────────────────────────────────────────── */
+
+.rel-periodo-group {
+  display: flex;
+  gap: 4px;
+}
+
+.rel-periodo-btn {
+  padding: 6px 14px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.rel-periodo-btn:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+.rel-periodo-btn.active {
+  background: var(--color-primary, #6B4EFF);
+  border-color: var(--color-primary, #6B4EFF);
+  color: #fff;
+}
+
+/* ── CONTEÚDO DA ABA ────────────────────────────────────── */
+
+.rel-aba-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── KPIs ───────────────────────────────────────────────── */
+
+.rel-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.rel-kpi {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-primary, #6B4EFF);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: box-shadow var(--transition-fast);
+}
+.rel-kpi:hover {
+  box-shadow: var(--shadow-soft);
+}
+
+.rel-kpi-icon {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.rel-kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.rel-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.rel-kpi-sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ── CARD ───────────────────────────────────────────────── */
+
+.rel-card {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rel-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rel-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+/* ── GRID 2 COLUNAS ─────────────────────────────────────── */
+
+.rel-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── BARRAS HORIZONTAIS ─────────────────────────────────── */
+
+.rel-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rel-barra-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.rel-barra-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rel-barra-track {
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rel-barra-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.rel-barra-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: right;
+}
+
+/* ── GRÁFICO DE BARRAS VERTICAIS ────────────────────────── */
+
+.rel-grafico-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rel-barras-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  position: relative;
+}
+
+.rel-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.rel-bar-col:hover .rel-bar-tooltip {
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
+.rel-bar-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--color-surface-strong, #2a2d3e);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 2;
+}
+
+.rel-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: opacity 0.15s;
+}
+.rel-bar-col:hover .rel-bar {
+  opacity: 0.85;
+}
+
+.rel-bar-lbl {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── GRÁFICO DE LINHA ───────────────────────────────────── */
+
+.rel-linha-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rel-linha-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.rel-linha-labels span {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.rel-linha-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+}
+.rel-linha-meta strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── PIZZA / DONUT ──────────────────────────────────────── */
+
+.rel-pizza-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rel-pizza-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.rel-pizza-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.rel-pizza-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rel-pizza-lbl {
+  flex: 1;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rel-pizza-pct {
+  font-weight: 700;
+  color: var(--color-text);
+  min-width: 38px;
+  text-align: right;
+}
+
+.rel-pizza-n {
+  color: var(--color-text-muted);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── TABELA ─────────────────────────────────────────────── */
+
+.rel-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.rel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.rel-table thead tr {
+  background: var(--color-surface);
+}
+
+.rel-table th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.rel-table td {
+  padding: 9px 12px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.rel-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rel-table tbody tr:hover {
+  background: var(--color-surface);
+}
+
+.rel-table td strong {
+  font-weight: 600;
+}
+
+.rel-td-muted {
+  color: var(--color-text-muted) !important;
+  font-size: 11px !important;
+}
+
+/* ── BADGE ──────────────────────────────────────────────── */
+
+.rel-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── KPIs 6 colunas ────────────────────────────────────── */
+
+.rel-kpis-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/* ── TAXA DE CONCLUSÃO ──────────────────────────────────── */
+
+.rel-taxa-wrap {
+  gap: 10px !important;
+}
+
+.rel-taxa-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.rel-taxa-valor {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.rel-taxa-track {
+  height: 10px;
+  background: var(--color-border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rel-taxa-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+.rel-taxa-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ── LEGENDA DA LINHA DUPLA ─────────────────────────────── */
+
+.rel-linha-legenda {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.rel-linha-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.rel-linha-leg-item em {
+  display: inline-block;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  font-style: normal;
+}
+
+/* ── ESTADOS VAZIO / SKELETON ───────────────────────────── */
+
+.rel-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  padding: 32px 0;
+  opacity: 0.7;
+}
+
+.rel-skeleton {
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-soft) 25%,
+    var(--color-border) 50%,
+    var(--color-surface-soft) 75%
+  );
+  background-size: 400% 100%;
+  animation: relSkeleton 1.4s ease infinite;
+}
+
+@keyframes relSkeleton {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── RESPONSIVIDADE ─────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .rel-kpis-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .rel-row-2 {
+    grid-template-columns: 1fr;
+  }
+  .rel-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rel-kpis-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .rel-kpis,
+  .rel-kpis-6 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rel-barra-row {
+    grid-template-columns: 100px 1fr 52px;
+  }
+  .rel-kpi-value {
+    font-size: 18px;
+  }
+  .rel-taxa-valor {
+    font-size: 28px;
+  }
+  .rel-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .rel-periodo-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}

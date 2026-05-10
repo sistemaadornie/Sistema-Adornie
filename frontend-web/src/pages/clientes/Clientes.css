@@ -1,0 +1,507 @@
+/* ============================================================
+   CLIENTES — estilos específicos
+   Usa base ek-* de Estoque.css
+   ============================================================ */
+
+/* ── SPINNER DE LOADING ──────────────────────────── */
+
+.cl-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  animation: cl-spin 0.75s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes cl-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── ERRO BANNER ─────────────────────────────────── */
+
+.cl-erro-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.cl-erro-banner button {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.cl-erro-banner button:hover { opacity: 1; }
+
+/* ── REUTILIZADOS DOS AGENDAMENTOS ───────────────── */
+
+.ag-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ag-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ag-form-field label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.ag-form-field input,
+.ag-form-field select,
+.ag-form-field textarea {
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+
+.ag-form-field input:focus,
+.ag-form-field select:focus,
+.ag-form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.ag-section-divider {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+  margin-top: 4px;
+}
+
+/* ── LAYOUT ── */
+.cl-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+  min-height: calc(100vh - 220px);
+}
+
+@media (max-width: 900px) {
+  .cl-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── LISTA DE CLIENTES ── */
+.cl-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cl-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all var(--transition-fast);
+}
+
+.cl-card:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.cl-card.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.cl-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cl-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cl-card-nome {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-card-info {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-card-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.cl-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.cl-card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.cl-card:hover .cl-card-actions {
+  opacity: 1;
+}
+
+/* ── ICON BUTTONS ── */
+.cl-icon-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.cl-icon-btn:hover {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.cl-icon-btn.danger:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ── DETALHE ── */
+.cl-detalhe {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-height: 400px;
+  position: sticky;
+  top: 24px;
+}
+
+.cl-detalhe-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.cl-detalhe-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cl-detalhe-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cl-detalhe-nome {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.cl-detalhe-contatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cl-contato-link {
+  font-size: 13px;
+  color: var(--color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cl-contato-link:hover {
+  text-decoration: underline;
+}
+
+/* ── SEÇÃO ENDEREÇOS ── */
+.cl-enderecos-section {
+  padding: 16px 20px 20px;
+}
+
+.cl-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cl-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--color-text-muted);
+}
+
+.cl-enderecos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── CARD ENDEREÇO ── */
+.cl-endereco-card {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  transition: all var(--transition-fast);
+}
+
+.cl-endereco-card.padrao {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.cl-endereco-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cl-endereco-cat {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.cl-endereco-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cl-padrao-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+  border-radius: 20px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.cl-endereco-cat-tag {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.cl-endereco-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.cl-endereco-info {
+  border-left: 2px solid var(--color-border);
+  padding-left: 12px;
+  margin: 4px 0 10px 30px;
+}
+
+.cl-endereco-linha {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.cl-endereco-referencia {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.cl-endereco-mapa-link {
+  margin-left: 30px;
+}
+
+.cl-link-mapa {
+  font-size: 12px;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.cl-link-mapa:hover {
+  text-decoration: underline;
+}
+
+/* ── CHECKBOX ── */
+.cl-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── toggle reutilizável ── */
+.ek-toggle-sw {
+  position: relative;
+  width: 34px;
+  height: 19px;
+  background: var(--color-border-strong, #cbd5e1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  transition: background 0.18s;
+}
+.ek-toggle-sw.on { background: #22c55e; }
+.ek-toggle-knob {
+  position: absolute;
+  top: 2.5px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform 0.18s;
+}
+.ek-toggle-sw.on .ek-toggle-knob { transform: translateX(15px); }
+
+/* ── campo linha única de endereço ── */
+.cl-linha-endereco-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--color-primary, #6B4EFF) 5%, var(--color-surface-soft));
+  border: 1px solid color-mix(in srgb, var(--color-primary, #6B4EFF) 20%, var(--color-border));
+  border-radius: var(--radius-md);
+}
+.cl-linha-endereco-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary, #6B4EFF);
+}
+.cl-linha-endereco-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cl-linha-endereco-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.cl-linha-endereco-input:focus { outline: none; border-color: var(--color-primary, #6B4EFF); }
+.cl-geoc-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.cl-geoc-status.buscando     { background: color-mix(in srgb, #eab308 12%, transparent); color: #a16207; }
+.cl-geoc-status.encontrado   { background: color-mix(in srgb, #22c55e 12%, transparent); color: #15803d; }
+.cl-geoc-status.nao_encontrado { background: color-mix(in srgb, #ef4444 12%, transparent); color: #b91c1c; }
+.cl-geoc-hint { font-size: 11px; color: #15803d; margin: 0; }
+.cl-divider-linha {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  position: relative;
+}

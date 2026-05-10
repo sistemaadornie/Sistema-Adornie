@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm list:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vite:*)",
+      "Bash(grep -A 40 \"CREATE TABLE.*usuarios\" /e/Projetos/sistema_liuu/backend/src/routes/*.js)",
+      "Bash(grep -E \"\\\\.\\(sql|js\\)$\")",
+      "Bash(grep -E \"\\(CREATE TABLE|INSERT INTO\\).*\\(usuarios|setores|permissoes\\)\" /e/Projetos/sistema_liuu/backend/src/routes/*.js)",
+      "Bash(grep -r \"foto_url\\\\|setor_id\" /e/Projetos/sistema_liuu/backend/src/routes/*.js)",
+      "Bash(xargs grep:*)",
+      "Bash(node *)",
+      "Bash(npx --yes acorn --ecma2020 --module src/pages/agendamentos/Agendamentos.jsx)",
+      "Bash(npx tsc *)",
+      "Bash(del *)",
+      "Bash(python3 *)",
+      "Bash(PGPASSWORD=sistema_liuu psql *)",
+      "PowerShell($env:PGPASSWORD = \"sistema_liuu\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -h localhost -U postgres -d sistema_liuu -f \"E:\\\\Projetos\\\\sistema_liuu\\\\backend\\\\src\\\\database\\\\migrations\\\\lat_lng_agendamentos.sql\" 2>&1)",
+      "PowerShell(Get-Command *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(dir E:\\\\Projetos\\\\sistema_liuu /s /b)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Select-Object FullName)",
+      "Bash(xargs ls *)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Sort-Object)",
+      "Bash(xargs cat *)",
+      "Bash(Select-Object Name)",
+      "Bash(grep -rn \"min\\\\`\" --include=\"*.jsx\" --include=\"*.js\")",
+      "Bash(Select-Object -Property Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && cat {}')"
+    ]
+  }
+}

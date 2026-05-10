@@ -1,0 +1,137 @@
+/* ============================================================
+   SISTEMA DE DESIGN — VARIÁVEIS GLOBAIS
+   Paleta preto/branco — dark mode padrão
+   ============================================================ */
+
+:root {
+  /* ── LAYOUT ──────────────────────────────────────── */
+  --sidebar-width:     220px;
+  --sidebar-collapsed: 64px;
+  --header-height:     58px;
+
+  /* ── BACKGROUND ──────────────────────────────────── */
+  --color-bg:           #0c0e14;
+  --color-bg-secondary: #10121a;
+
+  /* ── SURFACES ────────────────────────────────────── */
+  --color-surface:        #13151f;
+  --color-surface-strong: #181b27;
+  --color-surface-soft:   #1c1f2e;
+  --color-card:           #13151f;
+
+  /* ── PRIMARY (branco no dark) ────────────────────── */
+  --color-primary:          #f1f5f9;
+  --color-primary-hover:    #ffffff;
+  --color-primary-soft:     rgba(241, 245, 249, 0.08);
+  --color-primary-btn-text: #0c0e14;
+  --color-primary-rgb:      241, 245, 249;
+
+  /* ── TEXT ────────────────────────────────────────── */
+  --color-text:           #f1f5f9;
+  --color-text-secondary: #8892a4;
+  --color-text-muted:     #4d5568;
+
+  /* ── BORDER ──────────────────────────────────────── */
+  --color-border:        #1f2235;
+  --color-border-strong: #2a2e45;
+
+  /* ── STATUS ──────────────────────────────────────── */
+  --color-success:      #22c55e;
+  --color-success-soft: rgba(34, 197, 94, 0.12);
+  --color-warning:      #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.12);
+  --color-danger:       #ef4444;
+  --color-danger-soft:  rgba(239, 68, 68, 0.12);
+  --color-info:         #38bdf8;
+  --color-info-soft:    rgba(56, 189, 248, 0.12);
+
+  /* ── SHADOWS ─────────────────────────────────────── */
+  --shadow-sm:     0 1px 4px rgba(0, 0, 0, 0.30);
+  --shadow-soft:   0 4px 16px rgba(0, 0, 0, 0.36);
+  --shadow-medium: 0 8px 28px rgba(0, 0, 0, 0.42);
+  --shadow-large:  0 16px 48px rgba(0, 0, 0, 0.52);
+  --shadow-strong: 0 24px 60px rgba(0, 0, 0, 0.58);
+
+  /* ── RADIUS ──────────────────────────────────────── */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius:    12px;
+
+  /* ── SPACING ─────────────────────────────────────── */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+
+  /* ── TYPOGRAPHY ──────────────────────────────────── */
+  --font-title: "Sora", system-ui, sans-serif;
+  --font-body:  "Inter", system-ui, sans-serif;
+
+  /* ── TRANSITIONS ─────────────────────────────────── */
+  --transition-fast:   0.13s ease;
+  --transition-normal: 0.22s ease;
+  --transition-slow:   0.36s ease;
+
+  /* ── EFFECTS ─────────────────────────────────────── */
+  --blur-glass: blur(12px);
+
+  /* ── SIDEBAR ─────────────────────────────────────── */
+  --sidebar-bg:          #0f1117;
+  --sidebar-border:      #1a1d2c;
+  --sidebar-item-hover:  rgba(255, 255, 255, 0.04);
+  --sidebar-item-active: rgba(255, 255, 255, 0.08);
+  --sidebar-text:        #5a6278;
+  --sidebar-text-active: #f1f5f9;
+  --sidebar-accent:      #f1f5f9;
+}
+
+/* ============================================================
+   LIGHT MODE
+   ============================================================ */
+
+[data-theme="light"] {
+  /* ── BACKGROUND ──────────────────────────────────── */
+  --color-bg:           #f2f4f8;
+  --color-bg-secondary: #ffffff;
+
+  /* ── SURFACES ────────────────────────────────────── */
+  --color-surface:        #ffffff;
+  --color-surface-strong: #f8fafc;
+  --color-surface-soft:   #f2f4f8;
+  --color-card:           #ffffff;
+
+  /* ── PRIMARY (preto no light) ────────────────────── */
+  --color-primary:          #0f172a;
+  --color-primary-hover:    #1e293b;
+  --color-primary-soft:     rgba(15, 23, 42, 0.07);
+  --color-primary-btn-text: #ffffff;
+  --color-primary-rgb:      15, 23, 42;
+
+  /* ── TEXT ────────────────────────────────────────── */
+  --color-text:           #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted:     #94a3b8;
+
+  /* ── BORDER ──────────────────────────────────────── */
+  --color-border:        #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* ── SHADOWS ─────────────────────────────────────── */
+  --shadow-sm:     0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-soft:   0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 28px rgba(0, 0, 0, 0.10);
+  --shadow-large:  0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-strong: 0 24px 60px rgba(0, 0, 0, 0.14);
+
+  /* ── SIDEBAR ─────────────────────────────────────── */
+  --sidebar-bg:          #ffffff;
+  --sidebar-border:      #eaedf2;
+  --sidebar-item-hover:  #f5f7fa;
+  --sidebar-item-active: #eef0f7;
+  --sidebar-text:        #8896ab;
+  --sidebar-text-active: #0f172a;
+  --sidebar-accent:      #0f172a;
+}

@@ -1,0 +1,258 @@
+const express = require("express");
+const authMiddleware = require("../middlewares/authMiddleware");
+const upload = require("../middlewares/uploadMemory");
+const { validarMagicBytes } = require("../middlewares/uploadMemory");
+const svc = require("../services/agendamentoService");
+
+const router = express.Router();
+
+router.get("/equipe", authMiddleware, async (req, res) => {
+  try {
+    const equipe = await svc.getEquipe(req.user.empresa_id);
+    return res.json({ equipe });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar equipe." });
+  }
+});
+
+router.get("/", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id, id: userId, permissoes } = req.user;
+    const agendamentos = await svc.listar(empresa_id, userId, permissoes, req.query);
+    return res.json({ agendamentos });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao listar agendamentos." });
+  }
+});
+
+router.get("/coords-status", authMiddleware, async (req, res) => {
+  try {
+    const db = require("../database/db");
+    const { data } = req.query;
+    const where = data
+      ? `empresa_id=$1 AND data=$2 AND (lat IS NULL OR lng IS NULL) AND status != 'cancelado'`
+      : `empresa_id=$1 AND (lat IS NULL OR lng IS NULL) AND status != 'cancelado'`;
+    const params = data ? [req.user.empresa_id, data] : [req.user.empresa_id];
+    const { rows } = await db.query(`SELECT COUNT(*)::int AS sem_coords FROM agendamentos WHERE ${where}`, params);
+    return res.json({ sem_coords: rows[0].sem_coords });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/geocodificar", authMiddleware, async (req, res) => {
+  try {
+    const db = require("../database/db");
+    const { rows } = await db.query(
+      `SELECT COUNT(*)::int AS total FROM agendamentos
+       WHERE empresa_id=$1 AND (lat IS NULL OR lng IS NULL) AND status != 'cancelado'`,
+      [req.user.empresa_id]
+    );
+    const total = rows[0].total;
+    if (total === 0) return res.json({ ok: true, total: 0 });
+
+    svc.geocodificarTodos(req.user.empresa_id).catch(() => {});
+
+    return res.json({ ok: true, total });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao geocodificar." });
+  }
+});
+
+/* Reseta flag de falha e dispara retry para UM agendamento específico */
+router.post("/:id/geocodificar", authMiddleware, async (req, res) => {
+  try {
+    const db = require("../database/db");
+    await db.query(
+      `UPDATE agendamentos SET geocod_falhou=FALSE, lat=NULL, lng=NULL
+       WHERE id=$1 AND empresa_id=$2`,
+      [req.params.id, req.user.empresa_id]
+    );
+    svc.geocodificarTodos(req.user.empresa_id).catch(() => {});
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(err.status || 500).json({ message: err.message || "Erro." });
+  }
+});
+
+router.get("/:id", authMiddleware, async (req, res) => {
+  try {
+    const ag = await svc.buscar(req.params.id, req.user.empresa_id);
+    if (!ag) return res.status(404).json({ message: "Agendamento não encontrado." });
+    return res.json({ agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar agendamento." });
+  }
+});
+
+router.post("/", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id, id: userId } = req.user;
+    const { titulo, cliente, data, hora, equipe, itens } = req.body;
+    if (!titulo || !cliente || !data || !hora) {
+      return res.status(400).json({ message: "Campos obrigatórios: título, cliente, data e horário." });
+    }
+    if (typeof titulo === "string" && titulo.length > 200) {
+      return res.status(400).json({ message: "Título muito longo (máx. 200 caracteres)." });
+    }
+    if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return res.status(400).json({ message: "Data inválida. Use o formato AAAA-MM-DD." });
+    }
+    if (!hora || !/^\d{2}:\d{2}$/.test(hora)) {
+      return res.status(400).json({ message: "Hora inválida. Use o formato HH:MM." });
+    }
+    if (equipe !== undefined && (!Array.isArray(equipe) || equipe.length > 50)) {
+      return res.status(400).json({ message: "Campo equipe inválido (máx. 50 membros)." });
+    }
+    if (itens !== undefined && (!Array.isArray(itens) || itens.length > 200)) {
+      return res.status(400).json({ message: "Campo itens inválido (máx. 200 itens)." });
+    }
+    const ag = await svc.criar(empresa_id, userId, req.body);
+    return res.status(201).json({ message: "Agendamento criado!", agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao criar agendamento." });
+  }
+});
+
+/* PATCH — salva distância estimada do trecho desse agendamento na rota do dia */
+router.patch("/:id/km-rota", authMiddleware, async (req, res) => {
+  try {
+    const db = require("../database/db");
+    const { km_rota } = req.body;
+    if (!km_rota || isNaN(Number(km_rota))) return res.status(400).json({ message: "km_rota inválido." });
+    await db.query(
+      `UPDATE agendamentos SET km_rota=$1 WHERE id=$2 AND empresa_id=$3`,
+      [Number(km_rota), req.params.id, req.user.empresa_id]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao salvar km_rota." });
+  }
+});
+
+/* PATCH leve — apenas reagendamento via drag & drop */
+router.patch("/:id/reagendar", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id, id: userId, permissoes, nome_completo } = req.user;
+    const { data, hora, duracao_minutos } = req.body;
+    if (!data || !hora) return res.status(400).json({ message: "data e hora são obrigatórios." });
+    await svc.reagendar(req.params.id, empresa_id, userId, nome_completo, permissoes, { data, hora, duracao_minutos });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao reagendar." });
+  }
+});
+
+router.put("/:id/status", authMiddleware, upload.array("arquivos", 10), validarMagicBytes, async (req, res) => {
+  try {
+    const { empresa_id, id: userId, nome_completo, permissoes } = req.user;
+    const { status, motivo } = req.body || {};
+    if (!status) {
+      console.error("[PUT /:id/status] status ausente — body:", req.body, "content-type:", req.headers["content-type"]);
+      return res.status(400).json({ message: "Campo 'status' é obrigatório." });
+    }
+    const nomesRaw = req.body.nomes;
+    const nomes = Array.isArray(nomesRaw) ? nomesRaw : (nomesRaw ? [nomesRaw] : []);
+    const ag = await svc.alterarStatus(
+      req.params.id, empresa_id, userId, nome_completo, permissoes,
+      status, motivo, req.files, nomes
+    );
+    return res.json({ message: "Status atualizado!", agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao alterar status." });
+  }
+});
+
+router.post("/:id/anexos", authMiddleware, upload.array("arquivos", 20), validarMagicBytes, async (req, res) => {
+  try {
+    const { empresa_id, id: userId } = req.user;
+    const anexos = await svc.adicionarAnexos(req.params.id, empresa_id, userId, req.files);
+    return res.status(201).json({ ok: true, anexos });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao salvar anexos." });
+  }
+});
+
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id, id: userId, nome_completo } = req.user;
+    const ag = await svc.atualizar(req.params.id, empresa_id, userId, nome_completo, req.body);
+    return res.json({ message: "Agendamento atualizado!", agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao atualizar agendamento." });
+  }
+});
+
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id, id: userId, nome_completo, permissoes } = req.user;
+    await svc.excluir(req.params.id, empresa_id, userId, nome_completo, permissoes);
+    return res.json({ message: "Agendamento excluído." });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao excluir agendamento." });
+  }
+});
+
+router.get("/:id/logs", authMiddleware, async (req, res) => {
+  try {
+    const logs = await svc.getLogs(req.params.id, req.user.empresa_id);
+    return res.json({ logs });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar logs." });
+  }
+});
+
+router.post("/:id/sugestoes", authMiddleware, async (req, res) => {
+  try {
+    const { id: userId, empresa_id } = req.user;
+    const { tipo, descricao } = req.body;
+    const sugestao = await svc.criarSugestao(req.params.id, empresa_id, userId, tipo, descricao);
+    return res.status(201).json({ sugestao });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao criar sugestão." });
+  }
+});
+
+router.get("/:id/sugestoes", authMiddleware, async (req, res) => {
+  try {
+    const sugestoes = await svc.listarSugestoes(req.params.id, req.user.empresa_id);
+    return res.json({ sugestoes });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar sugestões." });
+  }
+});
+
+router.put("/sugestoes/:sid", authMiddleware, async (req, res) => {
+  try {
+    const { id: userId, empresa_id } = req.user;
+    const { status, resposta } = req.body;
+    const sugestao = await svc.responderSugestao(req.params.sid, userId, empresa_id, status, resposta);
+    return res.json({ sugestao });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao responder sugestão." });
+  }
+});
+
+/* Error handler para erros do multer (tipo/tamanho de arquivo) que escapam do try/catch */
+// eslint-disable-next-line no-unused-vars
+router.use((err, req, res, _next) => {
+  console.error("[agendamentosRoutes] erro de upload:", err.message);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ message: err.message || "Erro no upload do arquivo." });
+});
+
+module.exports = router;

@@ -1,0 +1,323 @@
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
+
+.home-page {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.home-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home-title {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.home-sub {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── GRID ── */
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* ── CARD ── */
+
+.home-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.13s;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--mod-color);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.home-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.home-card:hover::before {
+  opacity: 1;
+}
+
+.home-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--mod-color) 14%, var(--color-surface-soft));
+  color: var(--mod-color);
+  border: 1px solid color-mix(in srgb, var(--mod-color) 28%, var(--color-border));
+}
+
+.home-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.home-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.home-card-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.home-card-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mod-color);
+  align-self: flex-start;
+}
+
+.home-card:hover .home-card-btn {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── GRÁFICO HOME ── */
+
+.home-graf-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 12%, transparent),
+              0 8px 32px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+/* grade de pontos decorativa */
+.home-graf-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 18%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* linha de brilho no topo */
+.home-graf-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  opacity: 0.6;
+}
+
+.home-graf-wrap .ag-graficos {
+  gap: 14px;
+  position: relative;
+}
+
+/* ── header ── */
+.home-graf-wrap .ag-graf-header {
+  align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2px;
+}
+
+.home-graf-wrap .ag-graf-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.home-graf-wrap .ag-graf-subtitle::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 6px var(--color-primary);
+  flex-shrink: 0;
+}
+
+.home-graf-wrap .ag-graf-period-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  border-radius: 999px;
+}
+
+.home-graf-wrap .ag-graf-period-btn.active {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 50%, transparent);
+}
+
+/* ── cards ── */
+.home-graf-wrap .ag-graf-cards {
+  gap: 8px;
+}
+
+.home-graf-wrap .ag-graf-card {
+  padding: 14px 16px;
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  border-top-width: 2px;
+  border-radius: 10px;
+  gap: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-graf-wrap .ag-graf-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 4%, transparent), transparent 60%);
+  pointer-events: none;
+}
+
+.home-graf-wrap .ag-graf-card-value {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: -1px;
+}
+
+.home-graf-wrap .ag-graf-card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.home-graf-wrap .ag-graf-card-pct {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* ── section title ── */
+.home-graf-wrap .ag-graf-section-title {
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-bottom: -6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-graf-wrap .ag-graf-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ── timeline ── */
+.home-graf-wrap .ag-graf-timeline {
+  min-height: 110px;
+  gap: 4px;
+  padding-bottom: 2px;
+}
+
+.home-graf-wrap .ag-graf-tl-bar-wrap {
+  height: 90px;
+}
+
+.home-graf-wrap .ag-graf-tl-bar-inner {
+  border-radius: 4px 4px 0 0;
+  max-width: 20px;
+}
+
+.home-graf-wrap .ag-graf-tl-label {
+  font-size: 9px;
+  letter-spacing: 0.2px;
+}
+
+.home-graf-wrap .ag-graf-tl-total {
+  font-size: 9px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* ── barra de distribuição ── */
+.home-graf-wrap .ag-graf-bars {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  gap: 7px;
+}
+
+.home-graf-wrap .ag-graf-bar-label {
+  font-size: 12px;
+  min-width: 120px;
+}
+
+.home-graf-wrap .ag-graf-bar-track {
+  height: 6px;
+  background: color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.home-graf-wrap .ag-graf-bar-fill {
+  box-shadow: 0 0 6px currentColor;
+  opacity: 0.9;
+}
+
+.home-graf-wrap .ag-graf-bar-count {
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  min-width: 22px;
+}
+
+/* ── RESPONSIVO ── */
+
+@media (max-width: 600px) {
+  .home-page { padding: 20px 16px; }
+  .home-grid  { grid-template-columns: 1fr; }
+}

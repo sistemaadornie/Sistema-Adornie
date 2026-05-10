@@ -1,0 +1,114 @@
+/* ============================================================
+   FORMULÁRIOS — CAMPOS PADRONIZADOS
+   ============================================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* ── INPUT BASE ───────────────────────────────────── */
+
+.input-base,
+select.input-base,
+textarea.input-base {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  outline: none;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+  font-size: 14px;
+}
+
+[data-theme="light"] .input-base,
+[data-theme="light"] select.input-base,
+[data-theme="light"] textarea.input-base {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.input-base::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input-base:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  background: var(--color-surface);
+  outline: none;
+}
+
+.input-base:hover:not(:focus) {
+  border-color: var(--color-border-strong);
+}
+
+textarea.input-base {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+select.input-base {
+  cursor: pointer;
+}
+
+/* ── RANGE ────────────────────────────────────────── */
+
+input[type="range"] {
+  width: auto;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+/* ── FORM ACTIONS ─────────────────────────────────── */
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ── INPUT (alias) ────────────────────────────────── */
+
+.input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  outline: none;
+  font-size: 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
+.input:hover:not(:focus) {
+  border-color: var(--color-border-strong);
+}
+
+[data-theme="light"] .input {
+  background: var(--color-surface);
+}

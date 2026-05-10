@@ -1,0 +1,234 @@
+/* ── layout ── */
+.cfg-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── aside ── */
+.cfg-aside {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.cfg-aside-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+}
+.cfg-aside-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.cfg-aside-list { display: flex; flex-direction: column; }
+.cfg-jornada-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.cfg-jornada-item:last-child { border-bottom: none; }
+.cfg-jornada-item:hover { background: var(--color-surface-soft); }
+.cfg-jornada-item.active { background: color-mix(in srgb, var(--color-primary, #6B4EFF) 10%, var(--color-surface)); }
+.cfg-jornada-item strong { font-size: 13px; color: var(--color-text); }
+.cfg-jornada-item span { font-size: 11px; color: var(--color-text-muted); }
+
+/* ── main ── */
+.cfg-main {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.cfg-form-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.cfg-nome-input {
+  display: block;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: 4px 0 6px;
+  margin-bottom: 6px;
+  outline: none;
+}
+.cfg-nome-input:focus { border-bottom-color: var(--color-primary, #6B4EFF); }
+.cfg-desc-input {
+  display: block;
+  width: 100%;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  outline: none;
+}
+
+.cfg-info-banner {
+  padding: 10px 14px;
+  background: color-mix(in srgb, #3b82f6 8%, var(--color-surface-soft));
+  border: 1px solid color-mix(in srgb, #3b82f6 20%, var(--color-border));
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+}
+
+/* ── grade de dias ── */
+.cfg-dias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.cfg-dia-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-soft);
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.cfg-dia-card.ativo { opacity: 1; }
+
+.cfg-dia-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.cfg-dia-nome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+}
+.cfg-dia-abrev {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.cfg-dia-folga {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── períodos ── */
+.cfg-periodos {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cfg-periodo-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cfg-hora-input {
+  width: 64px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+}
+.cfg-hora-input:focus { border-color: var(--color-primary, #6B4EFF); }
+.cfg-periodo-sep { font-size: 11px; color: var(--color-text-muted); }
+.cfg-periodo-del {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-surface-strong, #e2e8f0);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0;
+}
+.cfg-periodo-del:hover { background: #fee2e2; color: #ef4444; }
+.cfg-add-periodo {
+  font-size: 11px;
+  color: var(--color-primary, #6B4EFF);
+  background: none;
+  border: 1px dashed color-mix(in srgb, var(--color-primary, #6B4EFF) 40%, transparent);
+  border-radius: var(--radius-xs);
+  padding: 3px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+.cfg-add-periodo:hover { background: color-mix(in srgb, var(--color-primary, #6B4EFF) 6%, transparent); }
+.cfg-almoco-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 4px 0;
+}
+
+/* ── toggle switch (reutilizável) ── */
+.ek-toggle-sw {
+  position: relative;
+  width: 34px;
+  height: 19px;
+  background: var(--color-border-strong, #cbd5e1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  transition: background 0.18s;
+  cursor: pointer;
+}
+.ek-toggle-sw.on { background: #22c55e; }
+.ek-toggle-knob {
+  position: absolute;
+  top: 2.5px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform 0.18s;
+}
+.ek-toggle-sw.on .ek-toggle-knob { transform: translateX(15px); }
+
+@media (max-width: 768px) {
+  .cfg-layout { grid-template-columns: 1fr; }
+  .cfg-dias-grid { grid-template-columns: 1fr 1fr; }
+}
