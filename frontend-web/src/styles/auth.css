@@ -519,6 +519,53 @@ body:has(.auth-screen)::after {
   }
 }
 
+/* ── ERROS POR CAMPO ── */
+.field-error {
+  font-size: 11px;
+  color: #f87171;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.auth-form .input-base.input-error {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.auth-form .input-base.input-error:focus {
+  border-color: rgba(239, 68, 68, 0.8);
+}
+
+/* ── CAMPO DE SENHA COM OLHO ── */
+.input-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password-wrap .input-base {
+  padding-right: 42px;
+}
+
+.input-eye {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.input-eye:hover {
+  color: #a78bfa;
+}
+
 @media (max-width: 480px) {
   .lp-hero-logo img {
     width: 72px;
