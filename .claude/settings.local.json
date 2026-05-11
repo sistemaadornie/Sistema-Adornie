@@ -30,7 +30,9 @@
       "Bash(grep -rn \"min\\\\`\" --include=\"*.jsx\" --include=\"*.js\")",
       "Bash(Select-Object -Property Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
-      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && cat {}')"
+      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && cat {}')",
+      "Bash(git -C \"E:\\\\Projetos\\\\sistema_operon\" status)",
+      "Bash(git -C \"E:\\\\Projetos\\\\sistema_operon\" remote -v)"
     ]
   }
 }

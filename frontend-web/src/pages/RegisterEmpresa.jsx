@@ -51,6 +51,16 @@ function validarCPF(cpf) {
   return Number(d[9]) === dig1 && Number(d[10]) === dig2;
 }
 
+function Field({ name, label, required, children, span, erros }) {
+  return (
+    <div className={`form-group${span ? ` span-${span}` : ""}`}>
+      <label>{label}{required && " *"}</label>
+      {children}
+      {erros?.[name] && <span className="field-error">{erros[name]}</span>}
+    </div>
+  );
+}
+
 const INITIAL_FORM = {
   nome_fantasia: "", razao_social: "", cnpj: "",
   email_empresa: "", telefone: "",
@@ -167,14 +177,6 @@ export default function RegisterEmpresa() {
     }
   }
 
-  const Field = ({ name, label, required, children, span }) => (
-    <div className={`form-group${span ? ` span-${span}` : ""}`}>
-      <label>{label}{required && " *"}</label>
-      {children}
-      {erros[name] && <span className="field-error">{erros[name]}</span>}
-    </div>
-  );
-
   return (
     <div className="auth-screen">
       <div className="auth-split">
@@ -236,34 +238,34 @@ export default function RegisterEmpresa() {
             <p className="auth-section-title">Dados da empresa</p>
 
             <div className="auth-form-grid">
-              <Field name="nome_fantasia" label="Nome fantasia" required>
+              <Field name="nome_fantasia" label="Nome fantasia" required erros={erros}>
                 <input className={`input-base${erros.nome_fantasia ? " input-error" : ""}`}
                   type="text" name="nome_fantasia"
                   value={form.nome_fantasia} onChange={handleChange}
                   placeholder="Nome comercial da empresa" />
               </Field>
 
-              <Field name="razao_social" label="Razão social">
+              <Field name="razao_social" label="Razão social" erros={erros}>
                 <input className="input-base" type="text" name="razao_social"
                   value={form.razao_social} onChange={handleChange}
                   placeholder="Razão social (opcional)" />
               </Field>
 
-              <Field name="cnpj" label="CNPJ" required>
+              <Field name="cnpj" label="CNPJ" required erros={erros}>
                 <input className={`input-base${erros.cnpj ? " input-error" : ""}`}
                   type="text" name="cnpj" inputMode="numeric"
                   value={form.cnpj} onChange={handleChange}
                   placeholder="00.000.000/0000-00" />
               </Field>
 
-              <Field name="email_empresa" label="Email da empresa" required>
+              <Field name="email_empresa" label="Email da empresa" required erros={erros}>
                 <input className={`input-base${erros.email_empresa ? " input-error" : ""}`}
                   type="email" name="email_empresa"
                   value={form.email_empresa} onChange={handleChange}
                   placeholder="contato@empresa.com" />
               </Field>
 
-              <Field name="telefone" label="Telefone" required span={2}>
+              <Field name="telefone" label="Telefone" required span={2} erros={erros}>
                 <input className={`input-base${erros.telefone ? " input-error" : ""}`}
                   type="text" name="telefone" inputMode="numeric"
                   value={form.telefone} onChange={handleChange}
@@ -274,28 +276,28 @@ export default function RegisterEmpresa() {
             <p className="auth-section-title" style={{ marginTop: 8 }}>Responsável principal</p>
 
             <div className="auth-form-grid">
-              <Field name="nome_responsavel" label="Nome completo" required span={2}>
+              <Field name="nome_responsavel" label="Nome completo" required span={2} erros={erros}>
                 <input className={`input-base${erros.nome_responsavel ? " input-error" : ""}`}
                   type="text" name="nome_responsavel"
                   value={form.nome_responsavel} onChange={handleChange}
                   placeholder="Nome do administrador" />
               </Field>
 
-              <Field name="email_responsavel" label="Email do responsável" required>
+              <Field name="email_responsavel" label="Email do responsável" required erros={erros}>
                 <input className={`input-base${erros.email_responsavel ? " input-error" : ""}`}
                   type="email" name="email_responsavel"
                   value={form.email_responsavel} onChange={handleChange}
                   placeholder="admin@empresa.com" />
               </Field>
 
-              <Field name="cpf_responsavel" label="CPF do responsável" required>
+              <Field name="cpf_responsavel" label="CPF do responsável" required erros={erros}>
                 <input className={`input-base${erros.cpf_responsavel ? " input-error" : ""}`}
                   type="text" name="cpf_responsavel" inputMode="numeric"
                   value={form.cpf_responsavel} onChange={handleChange}
                   placeholder="000.000.000-00" />
               </Field>
 
-              <Field name="senha" label="Senha" required>
+              <Field name="senha" label="Senha" required erros={erros}>
                 <div className="input-password-wrap">
                   <input className={`input-base${erros.senha ? " input-error" : ""}`}
                     type={showSenha ? "text" : "password"} name="senha"
@@ -308,7 +310,7 @@ export default function RegisterEmpresa() {
                 </div>
               </Field>
 
-              <Field name="confirmar_senha" label="Confirmar senha" required>
+              <Field name="confirmar_senha" label="Confirmar senha" required erros={erros}>
                 <div className="input-password-wrap">
                   <input className={`input-base${erros.confirmar_senha ? " input-error" : ""}`}
                     type={showConf ? "text" : "password"} name="confirmar_senha"
