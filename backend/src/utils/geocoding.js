@@ -145,6 +145,7 @@ async function geocodificarAgendamento(ag) {
   const { rua, numero, bairro, cidade, estado, endereco } = ag;
 
   const avaliacao = avaliarEndereco(ag);
+  console.log(`[geocod] id=${ag.id} qualidade=${avaliacao.qualidade} cidade=${cidade} rua=${rua} motivo=${avaliacao.motivo || "-"}`);
   if (avaliacao.qualidade === "invalido") return null;
 
   const ruaSimples = simplificarRua(rua);
@@ -183,6 +184,7 @@ async function geocodificarAgendamento(ag) {
   for (const q of queriesPhoton) {
     if (!q) continue;
     const r = await photon(q);
+    console.log(`[geocod] photon query="${q}" result=${r ? `${r.lat},${r.lng}` : "null"}`);
     if (r) return r;
     await sleep(600);
   }
