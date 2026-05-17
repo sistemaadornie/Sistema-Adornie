@@ -117,8 +117,10 @@ export default function ResetarSenha() {
           <Link to="/" className="auth-back-link">← Voltar ao site</Link>
           <Link to="/" className="auth-brand-logo-link">
             <div className="auth-brand-logo">
-              <img src="/logooperon.png" alt="Operon" className="auth-brand-logo-img" />
-              <span className="auth-brand-logo-text">OPER<span>ON</span></span>
+              <img src="/logo-adornie.png" alt="Adornie" className="auth-brand-logo-img" />
+              <span className="auth-logo-sub">agenda</span>
+              <span className="auth-logo-main">Adornie</span>
+              <div className="auth-logo-rule" />
             </div>
           </Link>
           <p className="auth-brand-tagline">

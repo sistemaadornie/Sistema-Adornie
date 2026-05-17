@@ -396,8 +396,21 @@ export function runSmartEngine(teams, allAppointments, options = {}) {
       continue;
     }
 
-    const { order, totalKm } = optimizeRoute(stops, origin);
-    const orderedStops = order.map((i) => stops[i]);
+    // Se todos os agendamentos têm horário definido, respeitar a ordem cronológica
+    // em vez de aplicar 2-opt geográfico (que ignora os horários agendados)
+    const todosComHora = stops.every((s) => s.hora);
+    let orderedStops, order, totalKm;
+    if (todosComHora) {
+      orderedStops = [...stops].sort((a, b) => a.hora.localeCompare(b.hora));
+      order = orderedStops.map((s) => stops.indexOf(s));
+      totalKm = orderedStops.reduce((acc, s, i) => {
+        const prev = i === 0 ? origin : orderedStops[i - 1];
+        return acc + haversineKm(prev, s);
+      }, 0);
+    } else {
+      ({ order, totalKm } = optimizeRoute(stops, origin));
+      orderedStops = order.map((i) => stops[i]);
+    }
     const simulation   = simulateRoute(orderedStops, origin, speedKmh);
 
     optimizedRoutes[team.id] = {

@@ -1,5 +1,29 @@
 const db = require("../database/db");
 
+// ── Notificação de equipe formada ─────────────────────────
+async function notificarMembrosCrew(crew, empresaId) {
+  if (!crew || !crew.membros?.length) return;
+
+  const dataFmt = new Date(crew.data).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
+  const veiculo = crew.veiculo ? `${crew.veiculo.nome}${crew.veiculo.placa ? ` (${crew.veiculo.placa})` : ""}` : null;
+  const colegas = crew.membros.map((m) => m.nome.split(" ")[0]).join(", ");
+
+  for (const membro of crew.membros) {
+    const outrosColegas = crew.membros.filter((m) => m.usuario_id !== membro.usuario_id).map((m) => m.nome.split(" ")[0]);
+    const colegasStr = outrosColegas.length ? outrosColegas.join(", ") : "ninguém mais";
+
+    let mensagem = `Você está na equipe **${crew.nome}** no dia ${dataFmt}.`;
+    if (veiculo) mensagem += ` Veículo: ${veiculo}.`;
+    mensagem += ` Colegas: ${colegasStr}.`;
+
+    await db.query(
+      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone)
+       VALUES ($1,$2,'info',$3,$4,'/agendamentos/mapa','🚗')`,
+      [empresaId, membro.usuario_id, `Equipe formada — ${dataFmt}`, mensagem]
+    ).catch(() => {});
+  }
+}
+
 // ── Crews ─────────────────────────────────────────────────
 
 async function listarCrew(empresaId, data) {
@@ -80,7 +104,9 @@ async function criarCrew(empresaId, { data, nome, veiculo_id, membros = [], agen
   ]);
 
   const lista = await listarCrew(empresaId, data);
-  return lista.find((c) => c.id === crewId);
+  const crew = lista.find((c) => c.id === crewId);
+  await notificarMembrosCrew(crew, empresaId);
+  return crew;
 }
 
 async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendamento_ids }) {
@@ -125,7 +151,9 @@ async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendam
   }
 
   const lista = await listarCrew(empresaId, data);
-  return lista.find((c) => c.id === id);
+  const crew = lista.find((c) => c.id === id);
+  await notificarMembrosCrew(crew, empresaId);
+  return crew;
 }
 
 async function deletarCrew(id, empresaId) {

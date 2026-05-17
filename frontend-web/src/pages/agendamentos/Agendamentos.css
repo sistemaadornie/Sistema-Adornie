@@ -80,21 +80,72 @@
 
 /* ── LAYOUT PRINCIPAL ────────────────────────────── */
 
-.ag-layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 20px;
-  align-items: start;
+/* ── BARRA DE NAVEGAÇÃO COM FILTROS INLINE ───────── */
+
+.ag-nav-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-/* ── SIDEBAR ─────────────────────────────────────── */
+.ag-status-pills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.ag-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ag-status-pill:hover {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+}
+
+.ag-status-pill.active {
+  font-weight: 700;
+}
+
+.ag-status-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ag-status-pill-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-left: 1px;
+}
+
+/* ── SIDEBAR (mantido para compatibilidade mas oculto) ── */
+
+.ag-layout {
+  display: block;
+}
 
 .ag-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: 24px;
+  display: none;
 }
 
 .ag-sidebar-card {
@@ -450,13 +501,6 @@
   overflow: hidden;
 }
 
-.ag-cal-dow-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: var(--color-surface-soft);
-  border-bottom: 1px solid var(--color-border);
-}
-
 .ag-cal-dow-cell {
   text-align: center;
   font-size: 11px;
@@ -465,6 +509,16 @@
   letter-spacing: 0.6px;
   color: var(--color-text-muted);
   padding: 10px 0;
+  background: var(--color-surface-soft);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ag-cal-dow-cell:nth-child(7n) {
+  border-right: none;
 }
 
 .ag-cal-month-grid {
@@ -564,6 +618,19 @@
   color: var(--color-text);
 }
 
+/* ── BADGE DE CONFLITO NO DIA ─────────────────────── */
+.ag-cal-cell.has-conflict {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.ag-cal-conflict-badge {
+  font-size: 9px;
+  margin-left: 3px;
+  color: #ef4444;
+  line-height: 1;
+  vertical-align: middle;
+}
+
 /* ── CALENDÁRIO SEMANA ───────────────────────────── */
 
 .ag-week-grid {
@@ -580,6 +647,10 @@
 }
 
 .ag-week-header-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 10px 4px;
   border-left: 1px solid var(--color-border);
@@ -590,6 +661,9 @@
 }
 
 .ag-week-dow {
+  display: block;
+  width: 100%;
+  text-align: center;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;

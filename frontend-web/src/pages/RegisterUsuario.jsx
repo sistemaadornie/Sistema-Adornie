@@ -90,22 +90,24 @@ export default function RegisterUsuario() {
 
           <Link to="/" className="auth-brand-logo-link">
             <div className="auth-brand-logo">
-              <img src="/logooperon.png" alt="Operon" className="auth-brand-logo-img" />
-              <span className="auth-brand-logo-text">OPER<span>ON</span></span>
+              <img src="/logo-adornie.png" alt="Adornie" className="auth-brand-logo-img" />
+              <span className="auth-logo-sub">agenda</span>
+              <span className="auth-logo-main">Adornie</span>
+              <div className="auth-logo-rule" />
             </div>
           </Link>
 
-          <p className="auth-brand-tagline">Solicite acesso à sua empresa</p>
+          <p className="auth-brand-tagline">Solicitar acesso ao sistema</p>
           <p className="auth-brand-sub">
-            Preencha o formulário e aguarde a aprovação do administrador para começar a usar o sistema.
+            Preencha o formulário e aguarde a aprovação do administrador para começar a usar a Agenda Adornie.
           </p>
 
           <div className="auth-brand-features">
             <div className="auth-brand-feature">
-              <div className="auth-brand-feature-icon">🏢</div>
+              <div className="auth-brand-feature-icon">🏠</div>
               <div className="auth-brand-feature-text">
-                <strong>Vínculo por Empresa</strong>
-                <span>Seu acesso é isolado por empresa e setor.</span>
+                <strong>Adornie Home Decor</strong>
+                <span>Acesso exclusivo para colaboradores da Adornie.</span>
               </div>
             </div>
             <div className="auth-brand-feature">
@@ -196,7 +198,6 @@ export default function RegisterUsuario() {
 
           <div className="auth-links">
             <span>Já tem conta? <Link to="/login">Entrar</Link></span>
-            <span>Quer cadastrar uma empresa? <Link to="/cadastro-empresa">Criar empresa</Link></span>
           </div>
         </div>
 

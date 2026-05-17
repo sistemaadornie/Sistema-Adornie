@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE } from "../services/api";
 
-/* Armazena apenas os campos necessários — nunca o objeto completo do servidor */
 function salvarUser(u) {
   const seguro = {
     id: u.id, email: u.email, nome_completo: u.nome_completo,
@@ -20,23 +19,25 @@ const BrandPanel = ({ forgotMode }) => (
 
     <Link to="/" className="auth-brand-logo-link">
       <div className="auth-brand-logo">
-        <img src="/logooperon.png" alt="Operon" className="auth-brand-logo-img" />
-        <span className="auth-brand-logo-text">OPER<span>ON</span></span>
+        <img src="/logo-adornie.png" alt="Adornie" className="auth-brand-logo-img" />
+        <span className="auth-logo-sub">agenda</span>
+        <span className="auth-logo-main">Adornie</span>
+        <div className="auth-logo-rule" />
       </div>
     </Link>
 
     <p className="auth-brand-tagline">
-      {forgotMode ? "Recupere seu acesso" : "Bem-vindo de volta"}
+      {forgotMode ? "Recupere seu acesso" : "Bem-vinda de volta"}
     </p>
     <p className="auth-brand-sub">
       {forgotMode
-        ? "Informe o e-mail cadastrado e enviaremos um link para você criar uma nova senha."
-        : "Acesse o painel da sua empresa e gerencie toda a operação em um único lugar."}
+        ? "Informe o e-mail cadastrado e enviaremos um link para criar uma nova senha."
+        : "Acesse o painel da sua empresa e gerencie toda a agenda em um único lugar."}
     </p>
 
     {!forgotMode && (
       <div className="auth-brand-features">
-<div className="auth-brand-feature">
+        <div className="auth-brand-feature">
           <div className="auth-brand-feature-icon">📅</div>
           <div className="auth-brand-feature-text">
             <strong>Agendamentos</strong>
@@ -164,8 +165,7 @@ export default function Login() {
               </form>
 
               <div className="auth-links">
-                <span>Não tem conta? <Link to="/cadastro-usuario">Solicitar acesso</Link></span>
-                <span>É empresa? <Link to="/cadastro-empresa">Criar empresa</Link></span>
+                <span>Primeiro acesso? <Link to="/solicitar-acesso">Solicitar acesso</Link></span>
               </div>
             </>
           ) : (
@@ -194,7 +194,7 @@ export default function Login() {
               <div className="auth-links" style={{ marginTop: forgotMsg ? "20px" : "16px" }}>
                 <span>
                   <button type="button" className="auth-forgot-link"
-                    style={{ fontSize: 13, color: "#a78bfa" }}
+                    style={{ fontSize: 13, color: "var(--color-primary)" }}
                     onClick={voltarParaLogin}>
                     ← Voltar para o login
                   </button>

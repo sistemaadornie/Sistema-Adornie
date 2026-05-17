@@ -32,7 +32,20 @@
       "Bash(Format-Table -AutoSize)",
       "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && cat {}')",
       "Bash(git -C \"E:\\\\Projetos\\\\sistema_operon\" status)",
-      "Bash(git -C \"E:\\\\Projetos\\\\sistema_operon\" remote -v)"
+      "Bash(git -C \"E:\\\\Projetos\\\\sistema_operon\" remote -v)",
+      "Bash(powershell *)",
+      "Bash(Copy-Item \"C:\\\\Users\\\\Usuario\\\\Pictures\\\\Screenshots\\\\AF_Simbolo_Adornie-gold-205x300.png\" \"E:\\\\Projetos\\\\sistema_operon\\\\frontend-web\\\\public\\\\logo-adornie.png\" -Force)",
+      "Bash(Copy-Item \"C:\\\\Users\\\\Usuario\\\\Pictures\\\\Screenshots\\\\EM_211122_ADN_0463.jpg\" \"E:\\\\Projetos\\\\sistema_operon\\\\frontend-web\\\\public\\\\hero-adornie.jpg\" -Force)",
+      "Bash(Write-Host \"Copiado com sucesso\")",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:3001/api/auth/empresas)",
+      "Bash(curl *)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(Get-Content E:\\\\Projetos\\\\sistema_operon\\\\backend\\\\.env)",
+      "Bash(Select-String \"DATABASE|DB_\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 1896 /F)",
+      "Bash(taskkill *)"
     ]
   }
 }

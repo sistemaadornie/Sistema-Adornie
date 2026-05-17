@@ -52,7 +52,7 @@ function estadoNome(sigla) {
 /* ── Photon (Komoot) — rápido, boa cobertura geral ── */
 async function photon(query) {
   if (!query) return null;
-  const path = `/api/?q=${encodeURIComponent(query)}&limit=1&bbox=${BRAZIL_BBOX}&lang=pt`;
+  const path = `/api/?q=${encodeURIComponent(query)}&limit=1&bbox=${BRAZIL_BBOX}`;
   const { status, body } = await httpGet("photon.komoot.io", path);
   if (status !== 200) return null;
   try {
@@ -237,4 +237,4 @@ async function geocodificarLote(db, empresaId) {
   return { total: rows.length, ok, falhou, falhaIds };
 }
 
-module.exports = { geocodificarAgendamento, geocodificarLote, avaliarEndereco };
+module.exports = { geocodificarAgendamento, geocodificarLote, avaliarEndereco, photon };

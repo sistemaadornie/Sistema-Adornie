@@ -3,7 +3,13 @@ import { FaCar, FaEdit, FaTrash, FaPlus, FaSearch, FaCamera, FaMapMarkerAlt, FaG
 import useVeiculos from "./hooks/useVeiculos";
 import ConfirmModal from "../../components/ConfirmModal";
 import { api } from "../../services/api";
+import useAuth from "../../hooks/useAuth";
 import "./Veiculos.css";
+
+function isInstaladorPuro(user) {
+  const altas = ["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
+  return user?.permissoes?.includes("AGENDAMENTO_INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
+}
 
 /* ── CONSTANTES ── */
 const TIPOS = [
@@ -33,6 +39,8 @@ function labelCombustivel(v) {
 
 /* ── COMPONENTE PRINCIPAL ── */
 export default function Veiculos() {
+  const { user } = useAuth();
+  const instalador = isInstaladorPuro(user);
   const { veiculos, loading, erro, carregar, criar, atualizar, excluir } = useVeiculos();
 
   const [busca,         setBusca]         = useState("");
@@ -98,13 +106,15 @@ export default function Veiculos() {
       <div className="ek-head">
         <div className="ek-head-info">
           <h1>Veículos</h1>
-          <p>Gerencie os veículos da empresa</p>
+          <p>{instalador ? "Consulte informações e registre abastecimentos" : "Gerencie os veículos da empresa"}</p>
         </div>
-        <div className="ek-head-actions">
-          <button className="ek-btn ek-btn-primary" onClick={() => setModal("novo")}>
-            <FaPlus /> Novo veículo
-          </button>
-        </div>
+        {!instalador && (
+          <div className="ek-head-actions">
+            <button className="ek-btn ek-btn-primary" onClick={() => setModal("novo")}>
+              <FaPlus /> Novo veículo
+            </button>
+          </div>
+        )}
       </div>
 
       {/* TOOLBAR */}
@@ -139,6 +149,7 @@ export default function Veiculos() {
               key={v.id}
               veiculo={v}
               excluindo={excluindoId === v.id}
+              instalador={instalador}
               onEditar={() => setModal(v)}
               onExcluir={() => setConfirmEx(v.id)}
               onPartida={() => setModalPartida(v)}
@@ -149,8 +160,8 @@ export default function Veiculos() {
         </div>
       )}
 
-      {/* MODAL EDITAR */}
-      {modal && (
+      {/* MODAL EDITAR (oculto para instaladores) */}
+      {modal && !instalador && (
         <VeiculoModal
           veiculo={modal === "novo" ? null : modal}
           salvando={salvando}
@@ -231,7 +242,7 @@ function calcularNivelCombustivel(veiculo) {
   return Math.max(0, Math.min(100, Math.round((1 - kmDesde / autonomia) * 100)));
 }
 
-function VeiculoCard({ veiculo, excluindo, onEditar, onExcluir, onPartida, onAbastecer, onAtualizarKm }) {
+function VeiculoCard({ veiculo, excluindo, instalador, onEditar, onExcluir, onPartida, onAbastecer, onAtualizarKm }) {
   const combClass = `vei-badge vei-badge-comb-${veiculo.combustivel || "flex"}`;
   const nivel     = calcularNivelCombustivel(veiculo);
   const nivelCor  = nivel === null ? "var(--color-border-strong)"
@@ -258,18 +269,22 @@ function VeiculoCard({ veiculo, excluindo, onEditar, onExcluir, onPartida, onAba
 
       {/* Ações */}
       <div className="vei-card-actions">
-        <button className="vei-icon-btn" title="Endereços de partida" onClick={onPartida}>
-          <FaMapMarkerAlt />
-        </button>
-        <button className="vei-icon-btn" title="Atualizar odômetro" onClick={onAtualizarKm}>
-          <FaTachometerAlt />
-        </button>
-        <button className="vei-icon-btn" title="Editar" onClick={onEditar}>
-          <FaEdit />
-        </button>
-        <button className="vei-icon-btn danger" title="Excluir" onClick={onExcluir} disabled={excluindo}>
-          <FaTrash />
-        </button>
+        {!instalador && (
+          <>
+            <button className="vei-icon-btn" title="Endereços de partida" onClick={onPartida}>
+              <FaMapMarkerAlt />
+            </button>
+            <button className="vei-icon-btn" title="Atualizar odômetro" onClick={onAtualizarKm}>
+              <FaTachometerAlt />
+            </button>
+            <button className="vei-icon-btn" title="Editar" onClick={onEditar}>
+              <FaEdit />
+            </button>
+            <button className="vei-icon-btn danger" title="Excluir" onClick={onExcluir} disabled={excluindo}>
+              <FaTrash />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Foto */}

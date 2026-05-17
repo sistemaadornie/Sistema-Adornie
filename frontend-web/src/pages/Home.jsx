@@ -23,7 +23,7 @@ export default function Home() {
   const MODULOS = [
     {
       icon: <FaCalendarAlt />,
-      cor: "#6B4EFF",
+      cor: "var(--color-primary)",
       titulo: "Agendamentos",
       desc: "Gerencie serviços, visitas e manutenções com calendário e mapa.",
       rota: "/agendamentos",

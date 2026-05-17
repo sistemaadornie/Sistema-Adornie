@@ -1,8 +1,8 @@
 /* ============================================================
-   RESET + BASE GLOBAL
+   RESET + BASE GLOBAL — Agenda Adornie
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap');
 
 *,
 *::before,
@@ -23,8 +23,6 @@ body,
   min-height: 100%;
 }
 
-/* ── FUNDO GLOBAL ─────────────────────────────────── */
-
 body {
   font-family: var(--font-body);
   font-size: 15px;
@@ -37,8 +35,6 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
   position: relative;
 }
-
-/* ── ELEMENTOS BASE ───────────────────────────────── */
 
 a {
   color: inherit;
@@ -65,8 +61,8 @@ ol {
 /* ── SCROLLBAR ────────────────────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -76,7 +72,6 @@ ol {
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-strong);
   border-radius: 999px;
-  transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -86,7 +81,7 @@ ol {
 /* ── FOCO VISÍVEL ─────────────────────────────────── */
 
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 1.5px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }

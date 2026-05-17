@@ -39,10 +39,10 @@
 
 .page-header-left h1 {
   font-family: var(--font-title);
-  font-size: clamp(26px, 2.8vw, 38px);
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-size: clamp(28px, 2.8vw, 40px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
   color: var(--color-text);
   margin: 0;
 }
@@ -66,10 +66,10 @@
 
 .page-title {
   font-family: var(--font-title);
-  font-size: clamp(28px, 3.5vw, 44px);
-  font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
+  font-size: clamp(30px, 3.5vw, 46px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
   color: var(--color-text);
 }
 
@@ -146,9 +146,9 @@
 
 .home-header h1 {
   font-family: var(--font-title);
-  font-size: clamp(26px, 2.5vw, 36px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: clamp(28px, 2.5vw, 38px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
 

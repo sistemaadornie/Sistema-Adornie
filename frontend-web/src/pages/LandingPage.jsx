@@ -2,43 +2,54 @@ import { Link } from "react-router-dom";
 import "./LandingPage.css";
 
 const FEATURES = [
-{ icon: "📅", title: "Agendamentos", text: "Organize visitas, instalações e manutenções com calendário visual, mapa e status em tempo real." },
-  { icon: "👥", title: "Gestão de Equipe", text: "Controle de acesso por setor, permissões personalizadas e aprovação de novos membros." },
-  { icon: "🗺", title: "Mapa de Operações", text: "Visualize seus agendamentos no mapa e planeje rotas com eficiência geográfica." },
-  { icon: "📊", title: "Relatórios", text: "Indicadores em tempo real para tomar decisões com dados atualizados da operação." },
-  { icon: "🔒", title: "Segurança", text: "Dados isolados por empresa, autenticação JWT e controle granular de permissões." },
-];
-
-const MODULES = [
-{ emoji: "📅", name: "Agendamentos", desc: "Calendário, mapa e status de serviços" },
-  { emoji: "👥", name: "Usuários", desc: "Equipe, setores e permissões" },
-  { emoji: "🏠", name: "Dashboard", desc: "Visão geral da operação" },
-];
-
-const PLANS = [
   {
-    name: "Básico",
-    price: "Grátis",
-    period: "",
-    desc: "Para pequenas equipes começando a organizar a operação.",
-    features: ["Até 3 usuários", "Agendamentos básicos", "Suporte por e-mail"],
-    featured: false,
+    icon: "📅",
+    title: "Agendamentos",
+    desc: "Calendário visual completo com status em tempo real, filtros por equipe e controle de cada etapa do serviço.",
+    placeholder: "Calendário de agendamentos",
+    screen: null,
   },
   {
-    name: "Profissional",
-    price: "R$ 97",
-    period: "/mês",
-    desc: "Para empresas em crescimento que precisam de controle total.",
-    features: ["Usuários ilimitados", "Todos os módulos", "Mapa de operações", "Relatórios avançados", "Suporte prioritário"],
-    featured: true,
+    icon: "🗺",
+    title: "Mapa de Rotas",
+    desc: "Visualize todos os pontos de atendimento no mapa, otimize rotas e acompanhe o deslocamento das equipes.",
+    placeholder: "Mapa com rotas otimizadas",
+    screen: "/screen-mapa.png",
   },
   {
-    name: "Empresarial",
-    price: "R$ 247",
-    period: "/mês",
-    desc: "Para operações complexas com múltiplos setores e equipes.",
-    features: ["Multi-empresa", "API de integração", "Backup diário", "Onboarding dedicado", "SLA garantido"],
-    featured: false,
+    icon: "👥",
+    title: "Clientes",
+    desc: "Cadastro completo de clientes com histórico de serviços, endereços e todas as informações em um só lugar.",
+    placeholder: "Cadastro de clientes",
+    screen: "/screen-clientes.png",
+  },
+  {
+    icon: "📋",
+    title: "Histórico",
+    desc: "Histórico completo de todos os serviços com status, responsável e linha do tempo de cada atendimento.",
+    placeholder: "Histórico de serviços",
+    screen: "/screen-historico.png",
+  },
+  {
+    icon: "📊",
+    title: "Relatórios",
+    desc: "Indicadores de desempenho, histórico de serviços e análises para apoiar decisões estratégicas.",
+    placeholder: "Relatórios e indicadores",
+    screen: "/screen-relatorios.png",
+  },
+  {
+    icon: "👤",
+    title: "Equipe",
+    desc: "Gerencie colaboradores com controle de permissões por função, aprovação de acesso e setores.",
+    placeholder: "Gestão de equipe",
+    screen: "/screen-equipes.png",
+  },
+  {
+    icon: "🚗",
+    title: "Veículos",
+    desc: "Controle da frota com registro de quilometragem por rota e histórico de uso por equipe.",
+    placeholder: "Controle de veículos",
+    screen: null,
   },
 ];
 
@@ -46,179 +57,127 @@ export default function LandingPage() {
   return (
     <div className="lp">
 
-      {/* FUNDO: logo Operon com blur */}
-      <div className="lp-logo-blur" aria-hidden="true" />
-
-      {/* NAV */}
+      {/* ── NAV ── */}
       <nav className="lp-nav">
         <Link to="/" className="lp-nav-logo">
-          <img src="/logooperon.png" alt="Operon" />
-          <span className="lp-nav-logo-text">OPER<span>ON</span></span>
+          <img src="/logo-adornie.png" alt="Adornie" className="lp-nav-logo-img" />
+          <div className="lp-nav-logo-text">
+            <span className="lp-nav-logo-sub">agenda</span>
+            <span className="lp-nav-logo-main">Adornie</span>
+          </div>
         </Link>
         <div className="lp-nav-actions">
-          <Link to="/login" className="lp-btn-ghost">Entrar</Link>
-          <Link to="/cadastro-usuario" className="lp-btn-ghost">Sou funcionário</Link>
-          <Link to="/cadastro-empresa" className="lp-btn-primary">Criar empresa</Link>
+          <Link to="/solicitar-acesso" className="lp-btn-ghost">Solicitar acesso</Link>
+          <Link to="/login" className="lp-btn-primary">Entrar</Link>
         </div>
       </nav>
 
-      {/* HERO */}
+      {/* ── HERO ── */}
       <section className="lp-hero">
+        {/* Foto decorativa de fundo */}
+        <div className="lp-hero-bg" />
 
-        {/* Logo grande no hero */}
-        <div className="lp-hero-logo">
-          <img src="/logooperon.png" alt="Operon" />
-          <span className="lp-hero-logo-text">OPER<span>ON</span></span>
-        </div>
-
-        <div className="lp-hero-badge">
-          <span className="lp-hero-badge-dot" />
-          Sistema de gestão operacional completo
-        </div>
-
-        <h1 className="lp-hero-title">
-          Gestão inteligente para<br />
-          <span className="lp-hero-title-accent">sua empresa crescer</span>
-        </h1>
-
-        <p className="lp-hero-sub">
-          Controle equipes, agendamentos e operações em um único sistema moderno. Do campo ao escritório.
-        </p>
-
-        <div className="lp-hero-actions">
-          <Link to="/cadastro-empresa" className="lp-btn-primary lp-btn-lg">
-            Começar agora — grátis
-          </Link>
-          <Link to="/login" className="lp-btn-outline lp-btn-lg">
-            Já tenho conta
-          </Link>
-        </div>
-
-        <div className="lp-hero-stats">
-          <div className="lp-hero-stat">
-            <span className="lp-hero-stat-num">100%</span>
-            <span className="lp-hero-stat-label">Web-based</span>
+        <div className="lp-hero-inner">
+          <div className="lp-hero-eyebrow">
+            <span className="lp-eyebrow-line" />
+            <span>Sistema de gestão interno</span>
+            <span className="lp-eyebrow-line" />
           </div>
-          <div className="lp-hero-stat">
-            <span className="lp-hero-stat-num">4+</span>
-            <span className="lp-hero-stat-label">Módulos integrados</span>
+
+          <div className="lp-hero-logo">
+            <img src="/logo-adornie.png" alt="Adornie" className="lp-hero-logo-img" />
+            <div className="lp-hero-logo-text">
+              <span className="lp-hero-logo-sub">agenda</span>
+              <span className="lp-hero-logo-main">Adornie</span>
+            </div>
           </div>
-          <div className="lp-hero-stat">
-            <span className="lp-hero-stat-num">∞</span>
-            <span className="lp-hero-stat-label">Usuários por empresa</span>
+
+          <p className="lp-hero-desc">
+            Plataforma de gestão desenvolvida exclusivamente para a Adornie Home Decor.
+            Agendamentos, equipes, clientes e rotas em um só lugar.
+          </p>
+
+          <div className="lp-hero-actions">
+            <Link to="/login" className="lp-btn-primary lp-btn-lg">Acessar o sistema</Link>
+            <Link to="/solicitar-acesso" className="lp-btn-outline lp-btn-lg">Solicitar acesso</Link>
           </div>
         </div>
       </section>
 
-      <div className="lp-divider" />
-
-      {/* FEATURES */}
-      <section className="lp-section">
-        <span className="lp-section-tag">Funcionalidades</span>
-        <h2 className="lp-section-title">Tudo que sua operação precisa</h2>
-        <p className="lp-section-sub">
-          Ferramentas práticas para equipes de campo, gestores e administradores trabalharem em sintonia.
-        </p>
-        <div className="lp-features-grid">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="lp-feature-card">
-              <div className="lp-feature-icon">{f.icon}</div>
-              <div className="lp-feature-title">{f.title}</div>
-              <p className="lp-feature-text">{f.text}</p>
-            </div>
-          ))}
+      {/* ── FOTOS DECORATIVAS ── */}
+      <div className="lp-photos">
+        <div className="lp-photo-item">
+          <img src="/foto-sala.jpg" alt="Adornie — ambiente" />
         </div>
-      </section>
-
-      <div className="lp-divider" />
-
-      {/* MODULES */}
-      <section className="lp-section">
-        <span className="lp-section-tag">Módulos</span>
-        <h2 className="lp-section-title">Uma plataforma, tudo integrado</h2>
-        <p className="lp-section-sub">
-          Cada módulo foi pensado para comunicar com os demais — sem planilhas separadas, sem retrabalho.
-        </p>
-        <div className="lp-modules-strip">
-          {MODULES.map((m) => (
-            <div key={m.name} className="lp-module-card">
-              <div className="lp-module-emoji">{m.emoji}</div>
-              <div className="lp-module-name">{m.name}</div>
-              <p className="lp-module-desc">{m.desc}</p>
-            </div>
-          ))}
+        <div className="lp-photo-item lp-photo-wide">
+          <img src="/hero-adornie.jpg" alt="Adornie — showroom" />
         </div>
-      </section>
-
-      <div className="lp-divider" />
-
-      {/* PRICING */}
-      <section className="lp-section">
-        <span className="lp-section-tag">Planos</span>
-        <h2 className="lp-section-title">Simples e transparente</h2>
-        <p className="lp-section-sub">
-          Comece de graça e escale conforme sua empresa cresce. Sem taxas escondidas.
-        </p>
-        <div className="lp-pricing-grid">
-          {PLANS.map((p) => (
-            <div key={p.name} className={`lp-plan-card${p.featured ? " featured" : ""}`}>
-              {p.featured && <span className="lp-plan-featured-badge">Mais popular</span>}
-              <div>
-                <div className="lp-plan-name">{p.name}</div>
-                <div className="lp-plan-price">
-                  <span className="lp-plan-price-val">{p.price}</span>
-                  {p.period && <span className="lp-plan-price-period">{p.period}</span>}
-                </div>
-              </div>
-              <p className="lp-plan-desc">{p.desc}</p>
-              <div className="lp-plan-divider" />
-              <div className="lp-plan-features">
-                {p.features.map((f) => (
-                  <div key={f} className="lp-plan-feature">
-                    <span className="lp-plan-feature-check">✓</span>
-                    {f}
-                  </div>
-                ))}
-              </div>
-              <Link
-                to="/cadastro-empresa"
-                className={p.featured ? "lp-btn-primary" : "lp-btn-ghost"}
-                style={{ textAlign: "center", justifyContent: "center" }}
-              >
-                {p.price === "Grátis" ? "Começar grátis" : "Assinar plano"}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <div className="lp-cta">
-        <h2 className="lp-cta-title">Pronto para organizar sua operação?</h2>
-        <p className="lp-cta-sub">
-          Crie sua empresa agora e convide sua equipe em minutos.
-        </p>
-        <div className="lp-cta-actions">
-          <Link to="/cadastro-empresa" className="lp-btn-primary lp-btn-lg">
-            Criar minha empresa
-          </Link>
-          <Link to="/cadastro-usuario" className="lp-btn-outline lp-btn-lg">
-            Já faço parte de uma empresa
-          </Link>
+        <div className="lp-photo-item">
+          <img src="/foto-mesa.jpg" alt="Adornie — reunião" />
         </div>
       </div>
 
-      {/* FOOTER */}
+      {/* ── FEATURES ── */}
+      <section className="lp-section">
+        <div className="lp-section-inner">
+          <div className="lp-section-head">
+            <span className="lp-section-tag">Funcionalidades</span>
+            <h2 className="lp-section-title">Tudo para sua operação</h2>
+            <p className="lp-section-sub">
+              Cada módulo foi construído pensando nos fluxos reais da Adornie.
+            </p>
+          </div>
+
+          <div className="lp-features-grid">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="lp-feature-card">
+                {f.screen ? (
+                  <div className="lp-feature-screen lp-feature-screen--img">
+                    <img src={f.screen} alt={f.title} className="lp-feature-screen-img" />
+                  </div>
+                ) : (
+                  <div className="lp-feature-screen">
+                    <span className="lp-feature-screen-icon">{f.icon}</span>
+                    <span className="lp-feature-screen-label">{f.placeholder}</span>
+                  </div>
+                )}
+                <div className="lp-feature-body">
+                  <div className="lp-feature-title">{f.title}</div>
+                  <p className="lp-feature-desc">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── QUOTE ── */}
+      <div className="lp-quote-wrap">
+        <div className="lp-quote">
+          <div className="lp-quote-line" />
+          <blockquote className="lp-quote-text">
+            "Inspired by Him and for Him"
+          </blockquote>
+          <cite className="lp-quote-ref">RM 11:36</cite>
+          <div className="lp-quote-line" />
+        </div>
+      </div>
+
+      {/* ── FOOTER ── */}
       <footer className="lp-footer">
         <Link to="/" className="lp-footer-logo">
-          <img src="/logooperon.png" alt="Operon" />
-          <span className="lp-footer-logo-text">OPER<span>ON</span></span>
+          <img src="/logo-adornie.png" alt="Adornie" className="lp-footer-logo-img" />
+          <div className="lp-footer-logo-text">
+            <span className="lp-footer-logo-sub">agenda</span>
+            <span className="lp-footer-logo-main">Adornie</span>
+          </div>
         </Link>
-        <span className="lp-footer-copy">© {new Date().getFullYear()} Operon. Todos os direitos reservados.</span>
+        <span className="lp-footer-copy">
+          © {new Date().getFullYear()} Adornie Home Decor · Todos os direitos reservados
+        </span>
         <div className="lp-footer-links">
-          <Link to="/login">Login</Link>
-          <Link to="/cadastro-empresa">Criar empresa</Link>
-          <Link to="/cadastro-usuario">Cadastro</Link>
+          <Link to="/login">Entrar</Link>
+          <Link to="/solicitar-acesso">Solicitar acesso</Link>
         </div>
       </footer>
 

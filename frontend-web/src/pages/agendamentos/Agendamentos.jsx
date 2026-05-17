@@ -166,6 +166,7 @@ function AgendamentosOperador() {
   const [curAno,     setCurAno]     = useState(hoje.getFullYear());
   const [curMes,     setCurMes]     = useState(hoje.getMonth());
   const [curDia,     setCurDia]     = useState(hoje);
+  const [diasComConflito, setDiasComConflito] = useState(new Set());
 
   const {
     agendamentos: agsDoBanco,
@@ -185,6 +186,20 @@ function AgendamentosOperador() {
   } = useAgendamentos();
 
   const equipeDisponivel = equipeDoBanco.length > 0 ? equipeDoBanco : EQUIPE_MOCK;
+
+  /* Busca conflitos do mês sempre que curAno/curMes mudam */
+  useEffect(() => {
+    let cancelled = false;
+    async function buscarConflitos() {
+      try {
+        const { api } = await import("../../services/api");
+        const res = await api.get(`/crews/conflitos-mes?ano=${curAno}&mes=${curMes + 1}`);
+        if (!cancelled) setDiasComConflito(new Set(res.diasComConflito || []));
+      } catch { /* silencioso */ }
+    }
+    buscarConflitos();
+    return () => { cancelled = true; };
+  }, [curAno, curMes]);
 
   /* Polling: recarrega a cada 30s — pausa quando a aba está em background */
   useEffect(() => {
@@ -388,12 +403,13 @@ function AgendamentosOperador() {
       const isHoje = dataCell.toDateString() === hoje.toDateString();
       const iso = `${ano}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
       const eventos = agsFiltrados.filter((a) => a.data === iso);
+      const temConflito = diasComConflito.has(iso);
       const MAX_VIS = 3;
 
       cells.push(
         <div
           key={i}
-          className={`ag-cal-cell${isHoje ? " today" : ""}${outroMes ? " other-month" : ""}`}
+          className={`ag-cal-cell${isHoje ? " today" : ""}${outroMes ? " other-month" : ""}${temConflito ? " has-conflict" : ""}`}
           onClick={() => {
             setCurDia(dataCell);
             if (eventos.length === 0 && podeCriar) setModalNovo(true);
@@ -407,7 +423,10 @@ function AgendamentosOperador() {
             if (ag && iso !== ag.data) moverAgendamento(ag, iso, ag.hora, ag.duracao_minutos);
           }}
         >
-          <span className="ag-cal-day-num">{dia}</span>
+          <span className="ag-cal-day-num">
+            {dia}
+            {temConflito && <span className="ag-cal-conflict-badge" title="Conflitos de rota detectados">⚠</span>}
+          </span>
           {eventos.slice(0, MAX_VIS).map((ev) => (
             <div
               key={ev.id}
@@ -806,13 +825,41 @@ function AgendamentosOperador() {
         </div>
       )}
 
-      {/* TABS DE VIEW */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+      {/* BARRA DE NAVEGAÇÃO COM FILTROS INLINE */}
+      <div className="ag-nav-toolbar">
         <div className="ag-cal-nav">
           <button className="ag-cal-nav-btn" onClick={navAnterior}>‹</button>
           <button className="ag-cal-nav-btn today" onClick={irHoje}>Hoje</button>
           <button className="ag-cal-nav-btn" onClick={navProximo}>›</button>
           <span className="ag-cal-title" style={{ marginLeft: 8 }}>{tituloNav()}</span>
+        </div>
+
+        {/* Filtros de status inline */}
+        <div className="ag-status-pills">
+          <button
+            className={`ag-status-pill${filtrosStatus.length === 0 ? " active" : ""}`}
+            onClick={() => setFiltrosStatus([])}
+          >
+            Todos
+            <span className="ag-status-pill-count">{agsDoView.length}</span>
+          </button>
+          {Object.entries(STATUS_META)
+            .filter(([key]) => key !== "cancelado" && (contagemDoView[key] ?? 0) > 0)
+            .map(([key, meta]) => {
+              const ativo = filtrosStatus.includes(key);
+              return (
+                <button
+                  key={key}
+                  className={`ag-status-pill${ativo ? " active" : ""}`}
+                  style={ativo ? { background: `color-mix(in srgb, ${meta.cor} 18%, var(--color-surface))`, borderColor: meta.cor, color: meta.cor } : {}}
+                  onClick={() => setFiltrosStatus(ativo ? filtrosStatus.filter(k => k !== key) : [...filtrosStatus, key])}
+                >
+                  <span className="ag-status-pill-dot" style={{ background: meta.cor }} />
+                  {meta.label}
+                  <span className="ag-status-pill-count" style={ativo ? { color: meta.cor } : {}}>{contagemDoView[key]}</span>
+                </button>
+              );
+            })}
         </div>
 
         <div className="ag-view-tabs">
@@ -826,33 +873,16 @@ function AgendamentosOperador() {
         </div>
       </div>
 
-      {/* LAYOUT CALENDÁRIO: SIDEBAR + MAIN */}
-      {(
-        <div className="ag-layout">
-
-          {/* SIDEBAR — filtro por status */}
-          <div className="ag-sidebar">
-            <FiltroStatus
-              filtros={filtrosStatus}
-              onChange={setFiltrosStatus}
-              contagem={contagemDoView}
-              statusMeta={STATUS_META}
-              total={agsDoView.length}
-            />
-
-          </div>
-
-          {/* ÁREA DO CALENDÁRIO */}
-          <div className="ag-main">
-            <div className="ag-cal-grid-wrap">
+      {/* CALENDÁRIO — largura total */}
+      <div className="ag-cal-grid-wrap">
               {view === "mes" && (
                 <>
-                  <div className="ag-cal-dow-row">
+                  <div className="ag-cal-month-grid">
                     {DIAS_SEMANA_ABREV.map((d) => (
                       <div key={d} className="ag-cal-dow-cell">{d}</div>
                     ))}
+                    {renderMes()}
                   </div>
-                  <div className="ag-cal-month-grid">{renderMes()}</div>
                   {agsFiltrados.length === 0 && !loading && (
                     <div className="ek-empty" style={{ padding: "28px 16px", textAlign: "center" }}>
                       <div className="ek-empty-icon" style={{ fontSize: 28 }}>📅</div>
@@ -877,9 +907,6 @@ function AgendamentosOperador() {
               {view === "semana" && renderSemana()}
               {view === "dia"    && renderDia()}
             </div>
-          </div>
-        </div>
-      )}
 
       {/* ── GHOST DRAG TOOLTIP ── */}
       {ghost && (

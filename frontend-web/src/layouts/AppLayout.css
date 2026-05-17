@@ -73,11 +73,53 @@
   flex-shrink: 0;
 }
 
+/* Logo Adornie no sidebar */
+.sidebar-logo-adornie {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  user-select: none;
+}
+
+.sidebar-logo-sub {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.sidebar-logo-main {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-text);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Collapsed: "A" em dourado */
+.sidebar-logo-collapsed {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--color-primary);
+  user-select: none;
+}
+
+/* compat para código legado */
 .sidebar-logo-text {
   font-family: var(--font-title);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 16px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--color-text);
   white-space: nowrap;
@@ -85,7 +127,7 @@
 }
 
 .sidebar-logo-text span {
-  color: #6B4EFF;
+  color: var(--color-primary);
 }
 
 .sidebar-toggle-btn {
@@ -339,17 +381,9 @@
   isolation: isolate;
 }
 
-/* Logo de fundo com blur — watermark Operon */
+/* watermark removida — design limpo Adornie */
 .app-main::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: url('/logooperon.png') no-repeat center center;
-  background-size: 50vmin;
-  filter: blur(90px);
-  opacity: 0.07;
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .app-header,

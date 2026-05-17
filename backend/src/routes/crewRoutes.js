@@ -1,6 +1,8 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const svc = require("../services/crewService");
+const { photon } = require("../utils/geocoding");
+const { analisarDia } = require("../services/rotaAnaliseService");
 
 const router = express.Router();
 
@@ -50,6 +52,54 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// ── Análise de conflitos de rota ──────────────────────────
+
+router.get("/analisar", authMiddleware, async (req, res) => {
+  try {
+    const { data } = req.query;
+    if (!data) return res.status(400).json({ message: "Parâmetro 'data' obrigatório (YYYY-MM-DD)." });
+    const analise = await analisarDia(req.user.empresa_id, data);
+    return res.json(analise);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao analisar rotas." });
+  }
+});
+
+// Resumo de conflitos do mês — retorna apenas as datas com problema
+router.get("/conflitos-mes", authMiddleware, async (req, res) => {
+  try {
+    const { ano, mes } = req.query;
+    if (!ano || !mes) return res.status(400).json({ message: "Parâmetros 'ano' e 'mes' obrigatórios." });
+
+    // Busca dias do mês que têm crews configuradas
+    const db = require("../database/db");
+    const { rows } = await db.query(
+      `SELECT DISTINCT data::date::text AS data
+       FROM crews
+       WHERE empresa_id = $1
+         AND EXTRACT(YEAR  FROM data) = $2
+         AND EXTRACT(MONTH FROM data) = $3
+       ORDER BY data`,
+      [req.user.empresa_id, Number(ano), Number(mes)]
+    );
+
+    // Analisa cada dia em paralelo (leve: só lê DB, sem HTTP externo)
+    const resultados = await Promise.all(
+      rows.map(({ data }) => analisarDia(req.user.empresa_id, data))
+    );
+
+    const diasComConflito = resultados
+      .filter((r) => r.tem_conflitos)
+      .map((r) => r.data);
+
+    return res.json({ diasComConflito });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao analisar mês." });
+  }
+});
+
 // ── Pontos de Partida ─────────────────────────────────────
 
 router.get("/pontos-partida", authMiddleware, async (req, res) => {
@@ -70,6 +120,10 @@ router.post("/pontos-partida", authMiddleware, async (req, res) => {
     const { veiculo_id, data, ...rest } = req.body;
     if (!veiculo_id || !data || !rest.endereco)
       return res.status(400).json({ message: "Campos obrigatórios: veiculo_id, data, endereco." });
+    if ((!rest.lat || !rest.lng) && rest.endereco) {
+      const coords = await photon(rest.endereco);
+      if (coords) { rest.lat = coords.lat; rest.lng = coords.lng; }
+    }
     const ponto = await svc.upsertPontoPartidaDia(req.user.empresa_id, veiculo_id, data, rest);
     return res.json({ ponto });
   } catch (err) {
@@ -95,6 +149,10 @@ router.post("/pontos-partida/padrao", authMiddleware, async (req, res) => {
     const { veiculo_id, ...rest } = req.body;
     if (!veiculo_id || !rest.label || !rest.endereco)
       return res.status(400).json({ message: "Campos obrigatórios: veiculo_id, label, endereco." });
+    if ((!rest.lat || !rest.lng) && rest.endereco) {
+      const coords = await photon(rest.endereco);
+      if (coords) { rest.lat = coords.lat; rest.lng = coords.lng; }
+    }
     const endereco = await svc.criarEnderecoPadrao(req.user.empresa_id, veiculo_id, rest);
     return res.status(201).json({ endereco });
   } catch (err) {

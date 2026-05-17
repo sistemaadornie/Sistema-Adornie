@@ -16,7 +16,6 @@ import {
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
 
-/* ── helpers de perfil ── */
 function temPerm(user, ...perms) {
   return perms.some((p) => user?.permissoes?.includes(p));
 }
@@ -33,10 +32,10 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const instaladorPuro       = isInstaladorPuro(user);
   const podeVerHome          = true;
   const podeVerClientes      = temPerm(user, "VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER");
-  const podeVerVeiculos      = temPerm(user, "OPERADOR_AGENDA","ADMIN_MASTER");
+  const podeVerVeiculos      = temPerm(user, "AGENDAMENTO_INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER");
   const podeVerCalendario    = !instaladorPuro;
   const podeVerHistorico     = !instaladorPuro;
-  const podeVerMapa          = !instaladorPuro;
+  const podeVerMapa          = true; // instaladores veem o mapa em modo leitura
   const podeVerInstalador    = temPerm(user, "AGENDAMENTO_INSTALADOR");
   const podeVerUsuarios      =
     user?.permissoes?.includes("USUARIO_APROVAR") ||
@@ -55,13 +54,14 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
       {/* LOGO + TOGGLE */}
       <div className="sidebar-header">
         {collapsed ? (
-          <img src="/logooperon.png" alt="Operon" className="sidebar-logo-icon" />
+          <img src="/logo-adornie.png" alt="Adornie" className="sidebar-logo-icon" />
         ) : (
           <div className="sidebar-logo">
-            <img src="/logooperon.png" alt="Operon" className="sidebar-logo-icon" />
-            <span className="sidebar-logo-text">
-              OPER<span>ON</span>
-            </span>
+            <img src="/logo-adornie.png" alt="Adornie" className="sidebar-logo-icon" />
+            <div className="sidebar-logo-adornie">
+              <span className="sidebar-logo-sub">agenda</span>
+              <span className="sidebar-logo-main">Adornie</span>
+            </div>
           </div>
         )}
         <button
@@ -77,7 +77,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
       {/* NAVEGAÇÃO */}
       <nav className="sidebar-nav">
 
-        {/* GERAL */}
         {podeVerHome && !collapsed && <span className="sidebar-section-label">Geral</span>}
 
         {podeVerHome && (
@@ -87,11 +86,9 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </NavLink>
         )}
 
-        {/* MÓDULOS */}
         {!collapsed && <span className="sidebar-section-label">Módulos</span>}
         {collapsed && <div className="sidebar-divider" />}
 
-        {/* Agendamentos — grupo expansível */}
         <button
           className={`sidebar-item sidebar-group-header${
             agendamentosOpen && !collapsed ? " active" : ""
@@ -139,7 +136,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </div>
         )}
 
-        {/* Veículos */}
         {podeVerVeiculos && (
           <NavLink to="/veiculos" className={navItemClass} title="Veículos">
             <FaCar className="sidebar-icon" />
@@ -147,7 +143,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </NavLink>
         )}
 
-        {/* Clientes */}
         {podeVerClientes && (
           <>
             {collapsed && <div className="sidebar-divider" />}
@@ -158,7 +153,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </>
         )}
 
-        {/* Relatórios */}
         {podeVerRelatorios && (
           <NavLink to="/relatorios" className={navItemClass} title="Relatórios">
             <FaChartBar className="sidebar-icon" />
@@ -166,7 +160,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </NavLink>
         )}
 
-        {/* Administração */}
         {(podeVerUsuarios || podeVerConfiguracoes) && (
           <>
             {!collapsed && <span className="sidebar-section-label">Administração</span>}
