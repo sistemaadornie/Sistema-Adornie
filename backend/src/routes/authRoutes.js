@@ -127,9 +127,9 @@ db.query(
 (async () => {
   const SETORES_CANONICOS = [
     "Administração",
-    "Operação",
+    "Instalação",
     "Comercial",
-    "Campo",
+    "Operador de Agenda",
   ];
 
   try {
@@ -508,7 +508,7 @@ router.post("/register-empresa", async (req, res) => {
 
     const empresa = novaEmpresa.rows[0];
 
-    const setoresCanonicos = ["Administração", "Operação", "Comercial", "Campo"];
+    const setoresCanonicos = ["Administração", "Instalação", "Comercial", "Operador de Agenda"];
     let setorAdminId = null;
     for (const nomeSetor of setoresCanonicos) {
       const res = await db.query(

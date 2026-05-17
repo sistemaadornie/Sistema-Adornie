@@ -38,7 +38,7 @@ export default function DevSetup() {
   async function verificarEmpresa() {
     setLoadingEmpresa(true);
     try {
-      const res = await fetch(`${API_BASE}/empresas`, {
+      const res = await fetch(`${API_BASE}/auth/empresas`, {
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
@@ -57,7 +57,7 @@ export default function DevSetup() {
     setLoadingEmpresa(true);
     setMsgEmpresa("");
     try {
-      const res = await fetch(`${API_BASE}/empresas`, {
+      const res = await fetch(`${API_BASE}/auth/register-empresa`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
