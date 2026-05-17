@@ -362,7 +362,7 @@
 /* ── FEATURES GRID ── */
 .lp-features-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   max-width: 960px;
   margin: 0 auto;
@@ -383,7 +383,7 @@
 
 /* Área de screenshot placeholder */
 .lp-feature-screen {
-  height: 480px;
+  height: 220px;
   background: #161512;
   border-bottom: 1px solid #2C2A25;
   display: flex;
@@ -589,7 +589,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 960px) {
-  .lp-features-grid { max-width: 100%; }
+  .lp-features-grid { max-width: 100%; grid-template-columns: repeat(2, 1fr); }
   .lp-photos { height: 220px; }
 }
 

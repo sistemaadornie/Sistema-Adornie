@@ -4,7 +4,7 @@ import "./LandingPage.css";
 const FEATURES = [
   {
     icon: "📅",
-    title: "Agendamentos",
+    title: "Calendário",
     desc: "Calendário visual completo com status em tempo real, filtros por equipe e controle de cada etapa do serviço.",
     placeholder: "Calendário de agendamentos",
     screen: null,
@@ -17,18 +17,11 @@ const FEATURES = [
     screen: "/screen-mapa.png",
   },
   {
-    icon: "👥",
-    title: "Clientes",
-    desc: "Cadastro completo de clientes com histórico de serviços, endereços e todas as informações em um só lugar.",
-    placeholder: "Cadastro de clientes",
-    screen: "/screen-clientes.png",
-  },
-  {
-    icon: "📋",
-    title: "Histórico",
-    desc: "Histórico completo de todos os serviços com status, responsável e linha do tempo de cada atendimento.",
-    placeholder: "Histórico de serviços",
-    screen: "/screen-historico.png",
+    icon: "🚗",
+    title: "Veículos",
+    desc: "Controle da frota com registro de quilometragem por rota e histórico de uso por equipe.",
+    placeholder: "Controle de veículos",
+    screen: null,
   },
   {
     icon: "📊",
@@ -36,20 +29,6 @@ const FEATURES = [
     desc: "Indicadores de desempenho, histórico de serviços e análises para apoiar decisões estratégicas.",
     placeholder: "Relatórios e indicadores",
     screen: "/screen-relatorios.png",
-  },
-  {
-    icon: "👤",
-    title: "Equipe",
-    desc: "Gerencie colaboradores com controle de permissões por função, aprovação de acesso e setores.",
-    placeholder: "Gestão de equipe",
-    screen: "/screen-equipes.png",
-  },
-  {
-    icon: "🚗",
-    title: "Veículos",
-    desc: "Controle da frota com registro de quilometragem por rota e histórico de uso por equipe.",
-    placeholder: "Controle de veículos",
-    screen: null,
   },
 ];
 
