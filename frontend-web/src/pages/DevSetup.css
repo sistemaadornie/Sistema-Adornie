@@ -200,6 +200,15 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.dev-section-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 20px 0 10px;
+}
+
 /* Status cards */
 .dev-status-card {
   display: flex;

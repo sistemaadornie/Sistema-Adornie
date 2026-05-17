@@ -21,7 +21,11 @@ export default function DevSetup() {
     razao_social: "Adornie Home Decor LTDA",
     cnpj: "",
     telefone: "",
-    email: "contato@adornie.com.br",
+    email_empresa: "contato@adornie.com.br",
+    nome_responsavel: "",
+    email_responsavel: "",
+    cpf_responsavel: "",
+    senha: "",
   });
 
   function handlePin(e) {
@@ -168,20 +172,39 @@ export default function DevSetup() {
                   <input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} required />
                 </div>
                 <div className="dev-field">
-                  <label>Razão social *</label>
-                  <input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} required />
+                  <label>Razão social</label>
+                  <input value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} />
                 </div>
                 <div className="dev-field">
-                  <label>CNPJ</label>
-                  <input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} placeholder="00.000.000/0001-00" />
+                  <label>CNPJ *</label>
+                  <input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} placeholder="00.000.000/0001-00" required />
                 </div>
                 <div className="dev-field">
-                  <label>Telefone</label>
-                  <input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
+                  <label>Telefone *</label>
+                  <input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" required />
                 </div>
                 <div className="dev-field span-2">
-                  <label>E-mail</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  <label>E-mail da empresa *</label>
+                  <input type="email" value={form.email_empresa} onChange={(e) => setForm({ ...form, email_empresa: e.target.value })} required />
+                </div>
+              </div>
+              <h3 className="dev-section-subtitle">Administrador principal</h3>
+              <div className="dev-form-grid">
+                <div className="dev-field">
+                  <label>Nome completo *</label>
+                  <input value={form.nome_responsavel} onChange={(e) => setForm({ ...form, nome_responsavel: e.target.value })} required />
+                </div>
+                <div className="dev-field">
+                  <label>CPF *</label>
+                  <input value={form.cpf_responsavel} onChange={(e) => setForm({ ...form, cpf_responsavel: e.target.value })} placeholder="000.000.000-00" required />
+                </div>
+                <div className="dev-field">
+                  <label>E-mail *</label>
+                  <input type="email" value={form.email_responsavel} onChange={(e) => setForm({ ...form, email_responsavel: e.target.value })} required />
+                </div>
+                <div className="dev-field">
+                  <label>Senha *</label>
+                  <input type="password" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} required />
                 </div>
               </div>
               <button type="submit" className="dev-submit" disabled={loadingEmpresa}>
