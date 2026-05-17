@@ -246,29 +246,29 @@ export default function DevSetup() {
             <div className={`dev-step ${empresa ? "done" : ""}`}>
               <span className="dev-step-num">{empresa ? "✓" : "1"}</span>
               <div>
-                <strong>Criar a empresa Adornie</strong>
-                <p>Cadastra o CNPJ e dados da empresa no sistema.</p>
+                <strong>Criar a empresa e o admin</strong>
+                <p>Preencha o formulário acima. A empresa é criada com os 4 setores padrão e o responsável já recebe acesso total (ADMIN_MASTER).</p>
               </div>
             </div>
             <div className="dev-step">
               <span className="dev-step-num">2</span>
               <div>
-                <strong>Criar o primeiro admin</strong>
-                <p>Acesse <a href="/cadastro-usuario">/cadastro-usuario</a> e registre o administrador principal. Depois aprove e atribua a permissão ADMIN_MASTER pelo painel de Usuários.</p>
+                <strong>Fazer login com o admin</strong>
+                <p>Acesse <a href="/login">/login</a> com o e-mail e senha do responsável cadastrado acima.</p>
               </div>
             </div>
             <div className="dev-step">
               <span className="dev-step-num">3</span>
               <div>
-                <strong>Configurar setores e expediente</strong>
-                <p>Com o admin criado, acesse <strong>Expediente</strong> no sistema para configurar jornada de trabalho e setores.</p>
+                <strong>Configurar expediente</strong>
+                <p>No sistema, acesse <strong>Expediente</strong> para definir a jornada de trabalho da equipe.</p>
               </div>
             </div>
             <div className="dev-step">
               <span className="dev-step-num">4</span>
               <div>
-                <strong>Convidar equipe</strong>
-                <p>Cada funcionário acessa <a href="/solicitar-acesso">/solicitar-acesso</a> e o admin aprova pelo painel.</p>
+                <strong>Convidar a equipe</strong>
+                <p>Cada funcionário acessa <a href="/solicitar-acesso">/solicitar-acesso</a> para solicitar entrada. O admin aprova e atribui o setor pelo painel de Usuários.</p>
               </div>
             </div>
           </div>
