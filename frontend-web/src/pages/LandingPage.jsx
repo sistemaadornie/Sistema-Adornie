@@ -22,10 +22,6 @@ const FEATURES = [
     desc: "Controle da frota com registro de quilometragem por rota e histórico de uso por equipe.",
     placeholder: "Controle de veículos",
     screen: null,
-    // imgPosition: "center top",   // ex: "left center", "50% 20%"
-    // imgFit:      "cover",        // "cover" | "contain"
-    // imgScale:    1,              // ex: 1.2 para zoom
-    // imgOrigin:   "top center",   // ponto de origem do scale
   },
   {
     icon: "📊",
@@ -116,17 +112,7 @@ export default function LandingPage() {
               <div key={f.title} className="lp-feature-card">
                 {f.screen ? (
                   <div className="lp-feature-screen lp-feature-screen--img">
-                    <img
-                      src={f.screen}
-                      alt={f.title}
-                      className="lp-feature-screen-img"
-                      style={{
-                        objectPosition: f.imgPosition ?? "top center",
-                        objectFit:      f.imgFit      ?? "cover",
-                        transform:      f.imgScale    ? `scale(${f.imgScale})` : undefined,
-                        transformOrigin: f.imgOrigin  ?? "top center",
-                      }}
-                    />
+                    <img src={f.screen} alt={f.title} className="lp-feature-screen-img" />
                   </div>
                 ) : (
                   <div className="lp-feature-screen">
