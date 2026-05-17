@@ -4,6 +4,31 @@ import "./DevSetup.css";
 
 const DEV_PIN = "adornie@dev";
 
+function maskCNPJ(v) {
+  v = v.replace(/\D/g, "").slice(0, 14);
+  if (v.length <= 2)  return v;
+  if (v.length <= 5)  return `${v.slice(0,2)}.${v.slice(2)}`;
+  if (v.length <= 8)  return `${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5)}`;
+  if (v.length <= 12) return `${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5,8)}/${v.slice(8)}`;
+  return `${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5,8)}/${v.slice(8,12)}-${v.slice(12)}`;
+}
+
+function maskCPF(v) {
+  v = v.replace(/\D/g, "").slice(0, 11);
+  if (v.length <= 3)  return v;
+  if (v.length <= 6)  return `${v.slice(0,3)}.${v.slice(3)}`;
+  if (v.length <= 9)  return `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6)}`;
+  return `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6,9)}-${v.slice(9)}`;
+}
+
+function maskPhone(v) {
+  v = v.replace(/\D/g, "").slice(0, 11);
+  if (v.length <= 2)  return `(${v}`;
+  if (v.length <= 6)  return `(${v.slice(0,2)}) ${v.slice(2)}`;
+  if (v.length <= 10) return `(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`;
+  return `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+}
+
 export default function DevSetup() {
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
@@ -177,11 +202,11 @@ export default function DevSetup() {
                 </div>
                 <div className="dev-field">
                   <label>CNPJ *</label>
-                  <input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} placeholder="00.000.000/0001-00" required />
+                  <input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })} placeholder="00.000.000/0001-00" required />
                 </div>
                 <div className="dev-field">
                   <label>Telefone *</label>
-                  <input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" required />
+                  <input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: maskPhone(e.target.value) })} placeholder="(00) 00000-0000" required />
                 </div>
                 <div className="dev-field span-2">
                   <label>E-mail da empresa *</label>
@@ -196,7 +221,7 @@ export default function DevSetup() {
                 </div>
                 <div className="dev-field">
                   <label>CPF *</label>
-                  <input value={form.cpf_responsavel} onChange={(e) => setForm({ ...form, cpf_responsavel: e.target.value })} placeholder="000.000.000-00" required />
+                  <input value={form.cpf_responsavel} onChange={(e) => setForm({ ...form, cpf_responsavel: maskCPF(e.target.value) })} placeholder="000.000.000-00" required />
                 </div>
                 <div className="dev-field">
                   <label>E-mail *</label>
