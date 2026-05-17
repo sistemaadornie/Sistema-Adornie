@@ -7,7 +7,7 @@ const FEATURES = [
     title: "Calendário",
     desc: "Calendário visual completo com status em tempo real, filtros por equipe e controle de cada etapa do serviço.",
     placeholder: "Calendário de agendamentos",
-    screen: null,
+    screen: "/screen-calendario.png",
   },
   {
     icon: "🗺",
