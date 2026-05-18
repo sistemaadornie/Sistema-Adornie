@@ -394,3 +394,88 @@
 .vei-foto-upload.tem-foto:hover .vei-foto-upload-hint {
   opacity: 1;
 }
+
+/* ── Editor de foto ── */
+.vei-foto-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #000;
+}
+
+.vei-foto-editor-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  display: block;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.vei-foto-editor-canvas:active {
+  cursor: grabbing;
+}
+
+.vei-foto-editor-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  background: var(--color-surface);
+}
+
+.vei-foto-editor-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.vei-foto-editor-slider {
+  width: 100%;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.vei-foto-editor-acoes {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.vei-foto-editor-btn-cancel {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.vei-foto-editor-btn-cancel:hover {
+  background: var(--color-surface-soft);
+}
+
+.vei-foto-editor-btn-ok {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.vei-foto-editor-btn-ok:hover {
+  opacity: 0.88;
+}

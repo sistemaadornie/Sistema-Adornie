@@ -537,6 +537,122 @@ function ModalEnderecosPartida({ veiculo, onClose }) {
   );
 }
 
+/* ── EDITOR DE FOTO (recorte por arrastar + zoom) ── */
+function FotoEditor({ src, onConfirm, onCancelar }) {
+  const FRAME_W = 480;
+  const FRAME_H = 270;
+
+  const canvasRef  = useRef(null);
+  const imgRef     = useRef(new Image());
+  const dragging   = useRef(false);
+  const lastPos    = useRef({ x: 0, y: 0 });
+
+  const [zoom,   setZoom]   = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [loaded, setLoaded] = useState(false);
+
+  // Carrega imagem e calcula zoom mínimo para preencher o frame
+  useEffect(() => {
+    const img = imgRef.current;
+    img.onload = () => {
+      const minZ = Math.max(FRAME_W / img.naturalWidth, FRAME_H / img.naturalHeight);
+      setZoom(minZ);
+      setOffset({ x: 0, y: 0 });
+      setLoaded(true);
+    };
+    img.src = src;
+  }, [src]);
+
+  // Desenha no canvas sempre que zoom/offset mudam
+  useEffect(() => {
+    if (!loaded) return;
+    const canvas = canvasRef.current;
+    const ctx    = canvas.getContext("2d");
+    const img    = imgRef.current;
+    const dw     = img.naturalWidth  * zoom;
+    const dh     = img.naturalHeight * zoom;
+
+    // Limita offset para não deixar borda branca
+    const minX = Math.min(0, FRAME_W - dw);
+    const minY = Math.min(0, FRAME_H - dh);
+    const clampedX = Math.max(minX, Math.min(0, offset.x));
+    const clampedY = Math.max(minY, Math.min(0, offset.y));
+
+    ctx.clearRect(0, 0, FRAME_W, FRAME_H);
+    ctx.drawImage(img, clampedX, clampedY, dw, dh);
+  }, [zoom, offset, loaded]);
+
+  function onMouseDown(e) {
+    dragging.current = true;
+    lastPos.current  = { x: e.clientX, y: e.clientY };
+  }
+
+  function onMouseMove(e) {
+    if (!dragging.current) return;
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+    setOffset((p) => ({ x: p.x + dx, y: p.y + dy }));
+  }
+
+  function onMouseUp() { dragging.current = false; }
+
+  function onTouchStart(e) {
+    dragging.current = true;
+    lastPos.current  = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+
+  function onTouchMove(e) {
+    if (!dragging.current) return;
+    const dx = e.touches[0].clientX - lastPos.current.x;
+    const dy = e.touches[0].clientY - lastPos.current.y;
+    lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    setOffset((p) => ({ x: p.x + dx, y: p.y + dy }));
+  }
+
+  function confirmar() {
+    canvasRef.current.toBlob((blob) => onConfirm(blob), "image/jpeg", 0.92);
+  }
+
+  const minZoom = loaded
+    ? Math.max(FRAME_W / imgRef.current.naturalWidth, FRAME_H / imgRef.current.naturalHeight)
+    : 0.5;
+
+  return (
+    <div className="vei-foto-editor">
+      <canvas
+        ref={canvasRef}
+        width={FRAME_W}
+        height={FRAME_H}
+        className="vei-foto-editor-canvas"
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onMouseUp}
+      />
+      <div className="vei-foto-editor-controles">
+        <span className="vei-foto-editor-label">Zoom</span>
+        <input
+          type="range"
+          min={minZoom}
+          max={minZoom * 4}
+          step={0.01}
+          value={zoom}
+          onChange={(e) => setZoom(Number(e.target.value))}
+          className="vei-foto-editor-slider"
+        />
+        <div className="vei-foto-editor-acoes">
+          <button type="button" className="vei-foto-editor-btn-cancel" onClick={onCancelar}>Cancelar</button>
+          <button type="button" className="vei-foto-editor-btn-ok"     onClick={confirmar}>Usar esta área</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── MODAL ── */
 function VeiculoModal({ veiculo, salvando, onClose, onSalvar }) {
   const [form, setForm] = useState({
@@ -551,6 +667,8 @@ function VeiculoModal({ veiculo, salvando, onClose, onSalvar }) {
   const [fotoFile,    setFotoFile]    = useState(null);
   const [fotoPreview, setFotoPreview] = useState(veiculo?.foto_url ?? null);
   const [erroForm,    setErroForm]    = useState("");
+  const [editandoFoto, setEditandoFoto] = useState(false);
+  const [fotoOrigem,   setFotoOrigem]   = useState(null); // URL da imagem original para o editor
   const inputFotoRef = useRef(null);
 
   function set(k, v) { setForm((p) => ({ ...p, [k]: v })); if (erroForm) setErroForm(""); }
@@ -558,8 +676,17 @@ function VeiculoModal({ veiculo, salvando, onClose, onSalvar }) {
   function handleFoto(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setFotoOrigem(URL.createObjectURL(file));
+    setEditandoFoto(true);
+    e.target.value = "";
+  }
+
+  function handleCropConfirm(blob) {
+    const file = new File([blob], "foto.jpg", { type: "image/jpeg" });
     setFotoFile(file);
-    setFotoPreview(URL.createObjectURL(file));
+    setFotoPreview(URL.createObjectURL(blob));
+    setEditandoFoto(false);
+    setFotoOrigem(null);
   }
 
   function handlePlaca(v) {
@@ -606,24 +733,34 @@ function VeiculoModal({ veiculo, salvando, onClose, onSalvar }) {
           {/* Upload de foto */}
           <div className="ag-form-field">
             <label>Foto do veículo</label>
-            <div
-              className={`vei-foto-upload${temFoto ? " tem-foto" : ""}`}
-              onClick={() => inputFotoRef.current?.click()}
-              title="Clique para selecionar uma foto"
-            >
-              {fotoPreview && <img src={fotoPreview} alt="Preview" />}
-              <div className="vei-foto-upload-hint">
-                <FaCamera />
-                <span>{temFoto ? "Clique para trocar a foto" : "Clique para adicionar foto"}</span>
-              </div>
-            </div>
-            <input
-              ref={inputFotoRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleFoto}
-            />
+            {editandoFoto && fotoOrigem ? (
+              <FotoEditor
+                src={fotoOrigem}
+                onConfirm={handleCropConfirm}
+                onCancelar={() => { setEditandoFoto(false); setFotoOrigem(null); }}
+              />
+            ) : (
+              <>
+                <div
+                  className={`vei-foto-upload${temFoto ? " tem-foto" : ""}`}
+                  onClick={() => inputFotoRef.current?.click()}
+                  title="Clique para selecionar uma foto"
+                >
+                  {fotoPreview && <img src={fotoPreview} alt="Preview" />}
+                  <div className="vei-foto-upload-hint">
+                    <FaCamera />
+                    <span>{temFoto ? "Clique para trocar a foto" : "Clique para adicionar foto"}</span>
+                  </div>
+                </div>
+                <input
+                  ref={inputFotoRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleFoto}
+                />
+              </>
+            )}
           </div>
 
           {/* Nome */}
