@@ -21,7 +21,7 @@ const FEATURES = [
     title: "Veículos",
     desc: "Controle da frota com registro de quilometragem por rota e histórico de uso por equipe.",
     placeholder: "Controle de veículos",
-    screen: null,
+    screen: "/screen-veiculos.png",
   },
   {
     icon: "📊",
