@@ -364,8 +364,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  max-width: 960px;
-  margin: 0 auto;
 }
 
 .lp-feature-card {
@@ -589,7 +587,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 960px) {
-  .lp-features-grid { max-width: 100%; grid-template-columns: repeat(2, 1fr); }
+  .lp-features-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-photos { height: 220px; }
 }
 
