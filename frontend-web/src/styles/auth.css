@@ -111,17 +111,17 @@ body:has(.auth-screen)::after {
 }
 
 .auth-brand-logo-img {
-  width: 64px;
+  width: 88px;
   height: auto;
   object-fit: contain;
-  margin-bottom: 10px;
-  filter: drop-shadow(0 0 20px rgba(201, 169, 110, 0.35));
+  margin-bottom: 14px;
+  filter: drop-shadow(0 0 28px rgba(201, 169, 110, 0.45));
 }
 
 .auth-logo-sub {
   font-family: var(--font-body);
   font-weight: 400;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 4px;
   text-transform: uppercase;
   color: var(--color-primary);
@@ -131,7 +131,7 @@ body:has(.auth-screen)::after {
 .auth-logo-main {
   font-family: var(--font-title);
   font-weight: 600;
-  font-size: 52px;
+  font-size: 60px;
   letter-spacing: 6px;
   text-transform: uppercase;
   color: var(--color-text);
@@ -151,19 +151,19 @@ body:has(.auth-screen)::after {
 /* tagline */
 .auth-brand-tagline {
   font-family: var(--font-title);
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 500;
   font-style: italic;
   color: var(--color-text);
   line-height: 1.35;
   margin-top: 36px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   position: relative;
   z-index: 1;
 }
 
 .auth-brand-sub {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 300;
   color: var(--color-text-muted);
   line-height: 1.75;
@@ -203,7 +203,7 @@ body:has(.auth-screen)::after {
 
 .auth-brand-feature-text strong {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 2px;
@@ -211,7 +211,7 @@ body:has(.auth-screen)::after {
 }
 
 .auth-brand-feature-text span {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 300;
   color: var(--color-text-muted);
   line-height: 1.55;
@@ -231,15 +231,15 @@ body:has(.auth-screen)::after {
 
 .auth-form-title {
   font-family: var(--font-title);
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 600;
   color: var(--color-text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   letter-spacing: 0.5px;
 }
 
 .auth-form-subtitle {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 300;
   color: var(--color-text-muted);
   margin-bottom: 36px;
@@ -408,7 +408,7 @@ body:has(.auth-screen)::after {
 }
 
 .auth-links span {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 300;
   color: var(--color-text-muted);
 }
@@ -519,7 +519,7 @@ body:has(.auth-screen)::after {
   }
 
   .auth-logo-main {
-    font-size: 38px;
+    font-size: 46px;
   }
 
   .auth-brand-features {

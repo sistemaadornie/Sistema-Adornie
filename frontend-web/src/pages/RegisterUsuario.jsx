@@ -165,7 +165,7 @@ export default function RegisterUsuario() {
               </div>
 
               <div className="form-group">
-                <label>Empresa *</label>
+                <label>Empresa * <span style={{ fontWeight: "normal", fontSize: "0.85em", color: "#888" }}>(exemplo: Adornie Brasil, Adornie EUA)</span></label>
                 <select className="select-base" name="empresa_id"
                   value={form.empresa_id} onChange={handleChange} required>
                   <option value="">Selecione a empresa</option>

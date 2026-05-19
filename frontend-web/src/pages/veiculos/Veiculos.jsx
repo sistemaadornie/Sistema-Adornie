@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { FaCar, FaEdit, FaTrash, FaPlus, FaSearch, FaCamera, FaMapMarkerAlt, FaGasPump, FaTachometerAlt } from "react-icons/fa";
 import useVeiculos from "./hooks/useVeiculos";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -7,8 +8,8 @@ import useAuth from "../../hooks/useAuth";
 import "./Veiculos.css";
 
 function isInstaladorPuro(user) {
-  const altas = ["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
-  return user?.permissoes?.includes("AGENDAMENTO_INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
+  const altas = ["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"];
+  return user?.permissoes?.includes("INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
 }
 
 /* ── CONSTANTES ── */
@@ -108,13 +109,16 @@ export default function Veiculos() {
           <h1>Veículos</h1>
           <p>{instalador ? "Consulte informações e registre abastecimentos" : "Gerencie os veículos da empresa"}</p>
         </div>
-        {!instalador && (
-          <div className="ek-head-actions">
+        <div className="ek-head-actions">
+          <Link to="/veiculos/historico" className="ek-btn ek-btn-secondary">
+            Histórico
+          </Link>
+          {!instalador && (
             <button className="ek-btn ek-btn-primary" onClick={() => setModal("novo")}>
               <FaPlus /> Novo veículo
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

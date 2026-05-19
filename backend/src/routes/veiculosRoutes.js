@@ -1,7 +1,11 @@
 const express = require("express");
 const multer  = require("multer");
-const authMiddleware = require("../middlewares/authMiddleware");
+const authMiddleware       = require("../middlewares/authMiddleware");
+const permissionMiddleware = require("../middlewares/permissionMiddleware");
+const db  = require("../database/db");
 const svc = require("../services/veiculoService");
+
+const PERM_GESTAO_VEICULO = ["OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS"];
 
 const router = express.Router();
 
@@ -26,6 +30,62 @@ function handleUploadErro(err, _req, res, next) {
   next(err);
 }
 
+/* ── HISTÓRICO GLOBAL DE ABASTECIMENTOS ── */
+router.get("/historico", authMiddleware, async (req, res) => {
+  try {
+    const { empresa_id } = req.user;
+    const { data_inicio, data_fim, veiculo_id } = req.query;
+
+    const params = [empresa_id];
+    const conds  = ["ab.empresa_id = $1", "v.deleted_at IS NULL"];
+
+    if (data_inicio) { params.push(data_inicio); conds.push(`ab.data >= $${params.length}`); }
+    if (data_fim)    { params.push(data_fim);    conds.push(`ab.data <= $${params.length}`); }
+    if (veiculo_id)  { params.push(Number(veiculo_id)); conds.push(`ab.veiculo_id = $${params.length}`); }
+
+    const where = conds.join(" AND ");
+
+    const [rows, kpisRow, veiculosRow] = await Promise.all([
+      db.query(
+        `SELECT ab.id, ab.data, ab.km_atual, ab.litros, ab.valor_total,
+                ab.combustivel, ab.posto_nome, ab.observacoes, ab.created_at,
+                v.id AS veiculo_id, v.nome AS veiculo_nome, v.placa,
+                u.nome_completo AS registrado_por_nome
+         FROM abastecimentos ab
+         JOIN veiculos v ON v.id = ab.veiculo_id
+         LEFT JOIN usuarios u ON u.id = ab.registrado_por
+         WHERE ${where}
+         ORDER BY ab.data DESC, ab.created_at DESC`,
+        params
+      ),
+      db.query(
+        `SELECT
+           COUNT(ab.id)::int AS total,
+           COALESCE(SUM(ab.litros),0)::numeric AS total_litros,
+           COALESCE(SUM(ab.valor_total),0)::numeric AS total_gasto,
+           ROUND(COALESCE(AVG(ab.valor_total / NULLIF(ab.litros,0)),0)::numeric, 2) AS preco_medio_litro
+         FROM abastecimentos ab
+         JOIN veiculos v ON v.id = ab.veiculo_id
+         WHERE ${where}`,
+        params
+      ),
+      db.query(
+        `SELECT id, nome, placa FROM veiculos WHERE empresa_id=$1 AND deleted_at IS NULL ORDER BY nome`,
+        [empresa_id]
+      ),
+    ]);
+
+    return res.json({
+      abastecimentos: rows.rows,
+      kpis:           kpisRow.rows[0],
+      veiculos:       veiculosRow.rows,
+    });
+  } catch (err) {
+    console.error("Erro ao buscar histórico de abastecimentos:", err);
+    return res.status(500).json({ message: "Erro ao buscar histórico." });
+  }
+});
+
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const veiculos = await svc.listar(req.user.empresa_id, req.query.q);
@@ -36,7 +96,7 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/", authMiddleware, uploadFoto.single("foto"), handleUploadErro, async (req, res) => {
+router.post("/", authMiddleware, permissionMiddleware(PERM_GESTAO_VEICULO), uploadFoto.single("foto"), handleUploadErro, async (req, res) => {
   try {
     const veiculo = await svc.criar(req.user.empresa_id, req.body, req.file);
     return res.status(201).json({ veiculo });
@@ -46,7 +106,7 @@ router.post("/", authMiddleware, uploadFoto.single("foto"), handleUploadErro, as
   }
 });
 
-router.put("/:id", authMiddleware, uploadFoto.single("foto"), handleUploadErro, async (req, res) => {
+router.put("/:id", authMiddleware, permissionMiddleware(PERM_GESTAO_VEICULO), uploadFoto.single("foto"), handleUploadErro, async (req, res) => {
   try {
     const veiculo = await svc.atualizar(req.params.id, req.user.empresa_id, req.body, req.file);
     return res.json({ veiculo });
@@ -113,7 +173,7 @@ router.post("/:id/km-rota", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", authMiddleware, permissionMiddleware(PERM_GESTAO_VEICULO), async (req, res) => {
   try {
     await svc.excluir(req.params.id, req.user.empresa_id);
     return res.json({ ok: true });

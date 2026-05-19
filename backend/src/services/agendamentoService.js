@@ -1,7 +1,7 @@
 const db = require("../database/db");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
-const { isInstaladorPuro, isVendedorPuro, podeGerenciarAgendamentos } = require("./permissionService");
+const { isInstaladorPuro, isComercialPuro, podeGerenciarAgendamentos } = require("./permissionService");
 const { geocodificarAgendamento, geocodificarLote, avaliarEndereco } = require("../utils/geocoding");
 const { resolverCliente } = require("./clienteService");
 
@@ -176,7 +176,7 @@ async function getEquipe(empresaId) {
     JOIN permissoes p ON p.id = up.permissao_id
     WHERE u.empresa_id=$1
       AND u.status = 'aprovado'
-      AND (p.codigo = 'AGENDAMENTO_INSTALADOR' OR p.nome = 'AGENDAMENTO_INSTALADOR')
+      AND (p.codigo = 'INSTALADOR' OR p.nome = 'INSTALADOR')
     ORDER BY u.nome_completo
     `,
     [empresaId]
@@ -197,7 +197,7 @@ async function listar(empresaId, userId, permissoes, filtros) {
     params.push(usuario_id);
     wheres.push(`EXISTS (SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id=a.id AND ae.usuario_id=$${params.length})`);
   }
-  if (isVendedorPuro(permissoes)) {
+  if (isComercialPuro(permissoes)) {
     params.push(userId);
     wheres.push(`(a.criado_por=$${params.length} OR EXISTS (SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id=a.id AND ae.usuario_id=$${params.length}))`);
   }
@@ -481,7 +481,7 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     const e = new Error("Instaladores não podem alterar para este status."); e.status = 403; throw e;
   }
 
-  if (status === "cancelado" && isVendedorPuro(permissoes)) {
+  if (status === "cancelado" && isComercialPuro(permissoes)) {
     const criadorCheck = await db.query(
       `SELECT criado_por FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
       [id, empresaId]
@@ -680,10 +680,10 @@ async function excluir(id, empresaId, userId, nomeCompleto, permissoes) {
 
   const ag         = agResult.rows[0];
   const isGestor   = podeGerenciarAgendamentos(permissoes);
-  const isVendedor = (permissoes || []).includes("VENDEDOR");
-  const isCriador  = ag.criado_por === userId;
+  const isComercial = (permissoes || []).includes("COMERCIAL");
+  const isCriador   = ag.criado_por === userId;
 
-  if (!isGestor && !(isVendedor && isCriador)) {
+  if (!isGestor && !(isComercial && isCriador)) {
     const e = new Error("Sem permissão para excluir este agendamento."); e.status = 403; throw e;
   }
 
@@ -785,7 +785,7 @@ async function reagendar(id, empresaId, userId, nomeCompleto, permissoes, { data
   }
 
   const podeGer = podeGerenciarAgendamentos(permissoes);
-  const ehVend  = isVendedorPuro(permissoes);
+  const ehVend  = isComercialPuro(permissoes);
   if (!podeGer && !(ehVend && ag.criado_por === userId)) {
     const e = new Error("Sem permissão para reagendar este agendamento."); e.status = 403; throw e;
   }

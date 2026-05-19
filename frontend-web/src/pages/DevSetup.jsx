@@ -29,62 +29,65 @@ function maskPhone(v) {
   return `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
 }
 
+const emptyForm = {
+  nome_fantasia: "",
+  razao_social: "",
+  cnpj: "",
+  telefone: "",
+  email_empresa: "",
+  nome_responsavel: "",
+  email_responsavel: "",
+  cpf_responsavel: "",
+  senha: "",
+};
+
 export default function DevSetup() {
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
   const [pinErro, setPinErro] = useState("");
 
-  // Estado da empresa
-  const [empresa, setEmpresa] = useState(null);
-  const [loadingEmpresa, setLoadingEmpresa] = useState(false);
-  const [msgEmpresa, setMsgEmpresa] = useState("");
-  const [tipoMsgEmpresa, setTipoMsgEmpresa] = useState("");
-
-  // Formulário empresa
-  const [form, setForm] = useState({
-    nome_fantasia: "Adornie Home Decor",
-    razao_social: "Adornie Home Decor LTDA",
-    cnpj: "",
-    telefone: "",
-    email_empresa: "contato@adornie.com.br",
-    nome_responsavel: "",
-    email_responsavel: "",
-    cpf_responsavel: "",
-    senha: "",
-  });
+  const [empresas, setEmpresas] = useState([]);
+  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [tipoMsg, setTipoMsg] = useState("");
+  const [form, setForm] = useState(emptyForm);
 
   function handlePin(e) {
     e.preventDefault();
     if (pin === DEV_PIN) {
       setUnlocked(true);
-      verificarEmpresa();
+      carregarEmpresas();
     } else {
       setPinErro("PIN incorreto.");
       setTimeout(() => setPinErro(""), 2000);
     }
   }
 
-  async function verificarEmpresa() {
-    setLoadingEmpresa(true);
+  async function carregarEmpresas() {
+    setLoadingEmpresas(true);
     try {
       const res = await fetch(`${API_BASE}/auth/empresas`, {
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
       if (res.ok && data.empresas?.length > 0) {
-        setEmpresa(data.empresas[0]);
+        setEmpresas(data.empresas);
+        setShowForm(false);
+      } else {
+        setShowForm(true);
       }
     } catch {
-      // sem empresa cadastrada ainda
+      setShowForm(true);
     } finally {
-      setLoadingEmpresa(false);
+      setLoadingEmpresas(false);
     }
   }
 
   async function criarEmpresa(e) {
     e.preventDefault();
-    setLoadingEmpresa(true);
-    setMsgEmpresa("");
+    setLoadingEmpresas(true);
+    setMsg("");
     try {
       const res = await fetch(`${API_BASE}/auth/register-empresa`, {
         method: "POST",
@@ -93,18 +96,21 @@ export default function DevSetup() {
       });
       const data = await res.json();
       if (res.ok) {
-        setEmpresa(data.empresa);
-        setTipoMsgEmpresa("success");
-        setMsgEmpresa("✓ Empresa criada com sucesso!");
+        setEmpresas((prev) => [...prev, data.empresa]);
+        setForm(emptyForm);
+        setShowForm(false);
+        setTipoMsg("success");
+        setMsg(`✓ "${data.empresa.nome_fantasia}" criada com sucesso!`);
+        setTimeout(() => setMsg(""), 4000);
       } else {
-        setTipoMsgEmpresa("error");
-        setMsgEmpresa(data.message || "Erro ao criar empresa.");
+        setTipoMsg("error");
+        setMsg(data.message || "Erro ao criar empresa.");
       }
     } catch {
-      setTipoMsgEmpresa("error");
-      setMsgEmpresa("Erro de conexão com o servidor.");
+      setTipoMsg("error");
+      setMsg("Erro de conexão com o servidor.");
     } finally {
-      setLoadingEmpresa(false);
+      setLoadingEmpresas(false);
     }
   }
 
@@ -151,50 +157,61 @@ export default function DevSetup() {
 
       <main className="dev-main">
 
-        {/* STATUS EMPRESA */}
+        {/* STATUS EMPRESAS */}
         <section className="dev-section">
-          <h2 className="dev-section-title">Empresa</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <h2 className="dev-section-title" style={{ marginBottom: 0 }}>
+              Empresas {empresas.length > 0 && <span style={{ fontSize: "0.75em", color: "#888", fontWeight: 400 }}>({empresas.length} cadastrada{empresas.length > 1 ? "s" : ""})</span>}
+            </h2>
+            {empresas.length > 0 && !showForm && (
+              <button
+                className="dev-submit"
+                style={{ marginTop: 0, padding: "8px 18px", fontSize: "0.9em" }}
+                onClick={() => { setShowForm(true); setMsg(""); }}
+              >
+                + Nova filial
+              </button>
+            )}
+          </div>
 
-          {loadingEmpresa && (
-            <div className="dev-loading">Verificando…</div>
-          )}
+          {loadingEmpresas && <div className="dev-loading">Verificando…</div>}
 
-          {empresa && !loadingEmpresa && (
-            <div className="dev-status-card ok">
-              <div className="dev-status-icon">✓</div>
-              <div>
-                <div className="dev-status-label">Empresa cadastrada</div>
-                <div className="dev-status-value">{empresa.nome_fantasia}</div>
-                <div className="dev-status-meta">ID: {empresa.id} · {empresa.email}</div>
-              </div>
-            </div>
-          )}
+          {msg && <div className={`dev-msg ${tipoMsg}`}>{msg}</div>}
 
-          {!empresa && !loadingEmpresa && (
+          {!loadingEmpresas && empresas.length === 0 && !showForm && (
             <div className="dev-status-card pending">
               <div className="dev-status-icon">!</div>
               <div>
                 <div className="dev-status-label">Nenhuma empresa cadastrada</div>
-                <div className="dev-status-meta">Preencha o formulário abaixo para criar a Adornie no sistema.</div>
+                <div className="dev-status-meta">Preencha o formulário abaixo para criar a primeira empresa.</div>
               </div>
             </div>
           )}
+
+          {empresas.map((emp, i) => (
+            <div key={emp.id} className="dev-status-card ok" style={{ marginBottom: 8 }}>
+              <div className="dev-status-icon">✓</div>
+              <div>
+                <div className="dev-status-label">{i === 0 ? "Empresa principal" : `Filial ${i}`}</div>
+                <div className="dev-status-value">{emp.nome_fantasia}</div>
+                <div className="dev-status-meta">ID: {emp.id} · {emp.email}</div>
+              </div>
+            </div>
+          ))}
         </section>
 
-        {/* CRIAR EMPRESA */}
-        {!empresa && !loadingEmpresa && (
+        {/* FORMULÁRIO CRIAR EMPRESA */}
+        {showForm && (
           <section className="dev-section">
-            <h2 className="dev-section-title">Criar empresa Adornie</h2>
-
-            {msgEmpresa && (
-              <div className={`dev-msg ${tipoMsgEmpresa}`}>{msgEmpresa}</div>
-            )}
+            <h2 className="dev-section-title">
+              {empresas.length === 0 ? "Criar empresa" : "Criar filial"}
+            </h2>
 
             <form onSubmit={criarEmpresa} className="dev-form">
               <div className="dev-form-grid">
                 <div className="dev-field">
                   <label>Nome fantasia *</label>
-                  <input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} required />
+                  <input value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} placeholder="Ex: Adornie Brasil" required />
                 </div>
                 <div className="dev-field">
                   <label>Razão social</label>
@@ -232,9 +249,20 @@ export default function DevSetup() {
                   <input type="password" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} required />
                 </div>
               </div>
-              <button type="submit" className="dev-submit" disabled={loadingEmpresa}>
-                {loadingEmpresa ? "Criando…" : "Criar empresa"}
-              </button>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <button type="submit" className="dev-submit" style={{ marginTop: 0 }} disabled={loadingEmpresas}>
+                  {loadingEmpresas ? "Criando…" : empresas.length === 0 ? "Criar empresa" : "Criar filial"}
+                </button>
+                {empresas.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowForm(false); setMsg(""); }}
+                    style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "0.9em" }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           </section>
         )}
@@ -243,11 +271,11 @@ export default function DevSetup() {
         <section className="dev-section">
           <h2 className="dev-section-title">Próximos passos</h2>
           <div className="dev-steps">
-            <div className={`dev-step ${empresa ? "done" : ""}`}>
-              <span className="dev-step-num">{empresa ? "✓" : "1"}</span>
+            <div className={`dev-step ${empresas.length > 0 ? "done" : ""}`}>
+              <span className="dev-step-num">{empresas.length > 0 ? "✓" : "1"}</span>
               <div>
                 <strong>Criar a empresa e o admin</strong>
-                <p>Preencha o formulário acima. A empresa é criada com os 4 setores padrão e o responsável já recebe acesso total (ADMIN_MASTER).</p>
+                <p>Preencha o formulário acima. A empresa é criada com os 4 setores padrão e o responsável já recebe acesso total (ADMIN_MASTER). Para filiais, clique em <strong>+ Nova filial</strong>.</p>
               </div>
             </div>
             <div className="dev-step">

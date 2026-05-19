@@ -566,7 +566,7 @@ function AbaVeiculos({ periodo }) {
   if (loading) return <Skeleton />;
   if (!dados)  return <Empty />;
 
-  const { kpis, porVeiculo, recentes } = dados;
+  const { kpis, porVeiculo } = dados;
   const maxGasto = Math.max(...(porVeiculo?.map((v) => Number(v.gasto)) || [1]), 1);
 
   return (
@@ -580,100 +580,28 @@ function AbaVeiculos({ periodo }) {
           sub={`${fmtN(kpis.total_abastecimentos)} abastecimentos`} />
       </div>
 
-      <div className="rel-row-2">
-
-        {/* Por veículo — gasto */}
-        <div className="rel-card">
-          <div className="rel-card-title">Gasto com combustível por veículo</div>
-          {porVeiculo?.filter((v) => v.abastecimentos > 0).length ? (
-            <div className="rel-barras">
-              {porVeiculo.filter((v) => v.abastecimentos > 0).map((v) => (
-                <BarraHorizontal
-                  key={v.nome}
-                  label={`${v.nome}${v.placa ? ` (${v.placa})` : ""}`}
-                  value={Number(v.gasto)}
-                  max={maxGasto}
-                  cor={COMB_COR[v.combustivel] || "#3b82f6"}
-                />
-              ))}
-            </div>
-          ) : <Empty />}
-        </div>
-
-        {/* Tabela por veículo */}
-        <div className="rel-card">
-          <div className="rel-card-title">Resumo por veículo</div>
-          <div className="rel-table-wrap">
-            <table className="rel-table">
-              <thead>
-                <tr>
-                  <th>Veículo</th>
-                  <th>Abastes.</th>
-                  <th>Litros</th>
-                  <th>Gasto total</th>
-                  <th>R$/L médio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {porVeiculo?.map((v) => (
-                  <tr key={v.nome}>
-                    <td>
-                      <strong>{v.nome}</strong>
-                      {v.placa && <span className="rel-td-muted"> · {v.placa}</span>}
-                    </td>
-                    <td>{fmtN(v.abastecimentos)}</td>
-                    <td>{fmtL(v.litros)}</td>
-                    <td style={{ color: Number(v.gasto) > 0 ? "#ef4444" : "var(--color-text-muted)" }}>
-                      {fmtR(v.gasto)}
-                    </td>
-                    <td>{Number(v.preco_medio) > 0 ? fmtR(v.preco_medio) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Histórico recente */}
+      {/* Gasto por veículo — barras */}
       <div className="rel-card">
-        <div className="rel-card-title">Últimos abastecimentos registrados</div>
-        {recentes?.length ? (
-          <div className="rel-table-wrap">
-            <table className="rel-table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Veículo</th>
-                  <th>Litros</th>
-                  <th>Valor total</th>
-                  <th>R$/L</th>
-                  <th>Posto</th>
-                  <th>Registrado por</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentes.map((ab, i) => {
-                  const ppl = ab.litros && ab.valor_total ? Number(ab.valor_total) / Number(ab.litros) : null;
-                  return (
-                    <tr key={i}>
-                      <td className="rel-td-muted">{ab.data?.slice(0,10)}</td>
-                      <td>
-                        <strong>{ab.veiculo}</strong>
-                        {ab.placa && <span className="rel-td-muted"> · {ab.placa}</span>}
-                      </td>
-                      <td>{ab.litros ? fmtL(ab.litros) : "—"}</td>
-                      <td style={{ color:"#ef4444" }}>{ab.valor_total ? fmtR(ab.valor_total) : "—"}</td>
-                      <td className="rel-td-muted">{ppl ? `R$ ${ppl.toFixed(2)}` : "—"}</td>
-                      <td>{ab.posto_nome || <span className="rel-td-muted">—</span>}</td>
-                      <td className="rel-td-muted">{ab.registrado_por || "—"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <div className="rel-card-title">Gasto com combustível por veículo</div>
+        {porVeiculo?.filter((v) => v.abastecimentos > 0).length ? (
+          <div className="rel-barras">
+            {porVeiculo.filter((v) => v.abastecimentos > 0).map((v) => (
+              <BarraHorizontal
+                key={v.nome}
+                label={`${v.nome}${v.placa ? ` (${v.placa})` : ""}`}
+                value={Number(v.gasto)}
+                max={maxGasto}
+                cor={COMB_COR[v.combustivel] || "#3b82f6"}
+              />
+            ))}
           </div>
         ) : <Empty />}
+      </div>
+
+      <div style={{ textAlign: "center", paddingTop: 4 }}>
+        <a href="/veiculos/historico" style={{ fontSize: 13, color: "var(--color-primary)" }}>
+          Ver histórico completo de abastecimentos →
+        </a>
       </div>
 
     </div>

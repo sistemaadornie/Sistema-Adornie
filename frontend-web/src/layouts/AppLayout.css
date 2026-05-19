@@ -196,7 +196,7 @@
   border: none;
   background: transparent;
   color: var(--sidebar-text);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -316,7 +316,7 @@
   padding: 6px 10px;
   border-radius: var(--radius-xs);
   color: var(--sidebar-text);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);

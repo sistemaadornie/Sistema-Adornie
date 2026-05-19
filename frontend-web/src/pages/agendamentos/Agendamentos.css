@@ -934,76 +934,6 @@
   border: 1px solid rgba(249,115,22,0.3);
 }
 
-/* ── MODAL ───────────────────────────────────────── */
-
-.ag-modal-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.ag-modal-grid.full {
-  grid-template-columns: 1fr;
-}
-
-.ag-form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.ag-form-field label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
-}
-
-.ag-form-field input,
-.ag-form-field select,
-.ag-form-field textarea {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  font-size: 13px;
-  padding: 8px 12px;
-  outline: none;
-  transition: border-color var(--transition-fast);
-  font-family: inherit;
-}
-
-.ag-form-field input:focus,
-.ag-form-field select:focus,
-.ag-form-field textarea:focus {
-  border-color: var(--color-border-strong);
-}
-
-.ag-form-field textarea {
-  resize: vertical;
-  min-height: 70px;
-}
-
-.ag-form-field select {
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%234d5568' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 28px;
-}
-
-[data-theme="light"] .ag-form-field input,
-[data-theme="light"] .ag-form-field select,
-[data-theme="light"] .ag-form-field textarea {
-  background-color: var(--color-surface);
-}
-
-[data-theme="light"] .ag-form-field select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-}
-
 /* ── SELEÇÃO DE EQUIPE ───────────────────────────── */
 
 .ag-team-list {
@@ -1256,19 +1186,6 @@
   .ag-graf-period-btns {
     flex-wrap: wrap;
   }
-}
-
-/* ── SEPARADOR DE SEÇÃO NO MODAL ─────────────────── */
-
-.ag-section-divider {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  color: var(--color-text-muted);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 2px;
 }
 
 /* ── MELHORIAS VISUAIS DO CALENDÁRIO ─────────────── */

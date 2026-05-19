@@ -12,9 +12,9 @@ export default function Home() {
   const nome = user?.nome_completo?.split(" ")[0] || "Usuário";
 
   const temPerm = (...perms) => perms.some((p) => user?.permissoes?.includes(p));
-  const podeVerClientes   = temPerm("VENDEDOR", "OPERADOR_AGENDA", "ADMIN_MASTER");
-  const podeVerVeiculos   = temPerm("OPERADOR_AGENDA", "ADMIN_MASTER");
-  const podeVerUsuarios   = temPerm("USUARIO_APROVAR", "USUARIO_ATRIBUIR_PERMISSOES");
+  const podeVerClientes   = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
+  const podeVerVeiculos   = temPerm("INSTALADOR", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
+  const podeVerUsuarios   = temPerm("GESTOR_USUARIOS", "ADMIN_MASTER");
   const podeVerRelatorios = temPerm("OPERADOR_AGENDA", "ADMIN_MASTER");
 
   const hora = new Date().getHours();

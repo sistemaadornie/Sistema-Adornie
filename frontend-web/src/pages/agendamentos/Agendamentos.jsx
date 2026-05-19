@@ -5,7 +5,6 @@ import useAgendamentos from "./hooks/useAgendamentos";
 import { api } from "../../services/api";
 import useAuth from "../../hooks/useAuth";
 import FiltroStatus from "./FiltroStatus";
-import AgendamentosInstalador from "./AgendamentosInstalador";
 import { faixaHora } from "../../utils/horario";
 
 /* ── qualidade do endereço para geocodificação ── */
@@ -21,32 +20,32 @@ function temPerm(user, ...perms) {
   return perms.some((p) => user?.permissoes?.includes(p));
 }
 function isInstaladorPuro(user) {
-  const altas = ["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
-  return temPerm(user, "AGENDAMENTO_INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
+  const altas = ["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"];
+  return temPerm(user, "INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
 }
-function isVendedorPuro(user) {
-  const altas = ["OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
-  return temPerm(user, "VENDEDOR") && !altas.some((p) => user?.permissoes?.includes(p));
+function isComercialPuro(user) {
+  const altas = ["OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"];
+  return temPerm(user, "COMERCIAL") && !altas.some((p) => user?.permissoes?.includes(p));
 }
 function podeGerenciar(user) {
   return temPerm(user, "OPERADOR_AGENDA","ADMIN_MASTER");
 }
 function podeCriarAgendamento(user) {
-  return temPerm(user, "VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER");
+  return temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER");
 }
 function podeEditarAgendamento(user, ag) {
   if (podeGerenciar(user)) return true;
-  if (isVendedorPuro(user)) return ag?.criado_por === user?.id;
+  if (isComercialPuro(user)) return ag?.criado_por === user?.id;
   return false;
 }
 function podeCancelarAgendamento(user, ag) {
   if (podeGerenciar(user)) return true;
-  if (isVendedorPuro(user)) return ag?.criado_por === user?.id;
+  if (isComercialPuro(user)) return ag?.criado_por === user?.id;
   return false;
 }
 function podeExcluirAgendamento(user, ag) {
   if (podeGerenciar(user)) return true;
-  if (isVendedorPuro(user)) return ag?.criado_por === user?.id;
+  if (isComercialPuro(user)) return ag?.criado_por === user?.id;
   return false;
 }
 
@@ -147,10 +146,7 @@ function dateToISO(d) {
 
 /* ── COMPONENTE PRINCIPAL ────────────────────────── */
 
-/* Wrapper que separa a tela por perfil */
 export default function Agendamentos() {
-  const { user } = useAuth();
-  if (isInstaladorPuro(user)) return <AgendamentosInstalador />;
   return <AgendamentosOperador />;
 }
 
@@ -778,8 +774,8 @@ function AgendamentosOperador() {
       {/* HEADER */}
       <div className="ek-head">
         <div className="ek-head-info">
-          <h1>Agendamentos</h1>
-          <p>{instaladorPuro ? "Visualize sua agenda de serviços" : "Gerencie suas instalações"}</p>
+          <h1>Calendário</h1>
+          <p>{isInstaladorPuro(user) ? "Visualize os agendamentos e atualize o status dos seus serviços" : "Gerencie suas instalações"}</p>
         </div>
         <div className="ek-head-actions">
           {podeCriar && (
@@ -1703,7 +1699,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
     andamento:  ["concluido", "nao_concluido"],
     atrasado:   ["andamento"],
   };
-  const STATUS_ACOES_VENDEDOR = {
+  const STATUS_ACOES_COMERCIAL = {
     agendado:   ["andamento", "cancelado"],
     andamento:  ["concluido", "nao_concluido"],
     atrasado:   ["andamento", "cancelado"],
@@ -1711,10 +1707,11 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
 
   let acoesBase;
   if (instaladorPuro) {
-    acoesBase = STATUS_ACOES_INSTALADOR[ag.status] || [];
-  } else if (isVendedorPuro(user)) {
-    /* Vendedor só pode cancelar agendamento que ele criou */
-    const acoesBruto = STATUS_ACOES_VENDEDOR[ag.status] || [];
+    const estaNaEquipe = ag.equipe?.includes(user?.id);
+    acoesBase = estaNaEquipe ? (STATUS_ACOES_INSTALADOR[ag.status] || []) : [];
+  } else if (isComercialPuro(user)) {
+    /* Comercial só pode cancelar agendamento que ele criou */
+    const acoesBruto = STATUS_ACOES_COMERCIAL[ag.status] || [];
     acoesBase = acoesBruto.filter((s) =>
       s !== "cancelado" || ag.criado_por === user?.id
     );

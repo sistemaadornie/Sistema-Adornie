@@ -13,8 +13,8 @@ import useAuth from "../../hooks/useAuth";
 import "./MapaAgendamentos.css";
 
 function isInstaladorPuro(user) {
-  const altas = ["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
-  return user?.permissoes?.includes("AGENDAMENTO_INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
+  const altas = ["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"];
+  return user?.permissoes?.includes("INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
 }
 
 // ── Detecta tema via MutationObserver (zero polling) ────

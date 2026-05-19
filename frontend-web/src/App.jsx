@@ -20,8 +20,8 @@ const Clientes               = lazy(() => import("./pages/clientes/Clientes"));
 const Agendamentos           = lazy(() => import("./pages/agendamentos/Agendamentos"));
 const AgendamentosHistorico  = lazy(() => import("./pages/agendamentos/AgendamentosHistorico"));
 const AgendamentosMapa       = lazy(() => import("./pages/agendamentos/MapaAgendamentos"));
-const AgendamentosInstalador = lazy(() => import("./pages/agendamentos/AgendamentosInstalador"));
 const Veiculos               = lazy(() => import("./pages/veiculos/Veiculos"));
+const VeiculosHistorico      = lazy(() => import("./pages/veiculos/VeiculosHistorico"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
 
@@ -73,28 +73,25 @@ export default function App() {
 
                 <Route path="/home" element={<Home />} />
 
-                <Route element={<PermissionRoute perms={["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
+                <Route element={<PermissionRoute perms={["INSTALADOR","COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/agendamentos"           element={<Agendamentos />} />
                   <Route path="/agendamentos/historico" element={<AgendamentosHistorico />} />
                 </Route>
 
-                <Route element={<PermissionRoute perms={["AGENDAMENTO_INSTALADOR","VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
+                <Route element={<PermissionRoute perms={["INSTALADOR","COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/agendamentos/mapa" element={<AgendamentosMapa />} />
                 </Route>
 
-                <Route element={<PermissionRoute perms={["AGENDAMENTO_INSTALADOR"]} />}>
-                  <Route path="/agendamentos/instalador" element={<AgendamentosInstalador />} />
-                </Route>
-
-                <Route element={<PermissionRoute perms={["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
+                <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/clientes" element={<Clientes />} />
                 </Route>
 
-                <Route element={<PermissionRoute perms={["AGENDAMENTO_INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
-                  <Route path="/veiculos" element={<Veiculos />} />
+                <Route element={<PermissionRoute perms={["INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
+                  <Route path="/veiculos"           element={<Veiculos />} />
+                  <Route path="/veiculos/historico" element={<VeiculosHistorico />} />
                 </Route>
 
-                <Route element={<PermissionRoute perms={["USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"]} />}>
+                <Route element={<PermissionRoute perms={["GESTOR_USUARIOS","ADMIN_MASTER"]} />}>
                   <Route path="/usuarios" element={<Usuarios />} />
                 </Route>
 

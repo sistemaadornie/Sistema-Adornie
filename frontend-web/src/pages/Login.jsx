@@ -27,7 +27,7 @@ const BrandPanel = ({ forgotMode }) => (
     </Link>
 
     <p className="auth-brand-tagline">
-      {forgotMode ? "Recupere seu acesso" : "Bem-vinda de volta"}
+      {forgotMode ? "Recupere seu acesso" : "Bem-vindo de volta"}
     </p>
     <p className="auth-brand-sub">
       {forgotMode

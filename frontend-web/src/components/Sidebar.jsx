@@ -21,8 +21,8 @@ function temPerm(user, ...perms) {
 }
 
 function isInstaladorPuro(user) {
-  const altas = ["VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
-  return temPerm(user, "AGENDAMENTO_INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
+  const altas = ["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"];
+  return temPerm(user, "INSTALADOR") && !altas.some((p) => user?.permissoes?.includes(p));
 }
 
 export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
@@ -31,15 +31,12 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
 
   const instaladorPuro       = isInstaladorPuro(user);
   const podeVerHome          = true;
-  const podeVerClientes      = temPerm(user, "VENDEDOR","OPERADOR_AGENDA","ADMIN_MASTER");
-  const podeVerVeiculos      = temPerm(user, "AGENDAMENTO_INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER");
-  const podeVerCalendario    = !instaladorPuro;
+  const podeVerClientes      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
+  const podeVerVeiculos      = temPerm(user, "INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
+  const podeVerCalendario    = true;
   const podeVerHistorico     = !instaladorPuro;
-  const podeVerMapa          = true; // instaladores veem o mapa em modo leitura
-  const podeVerInstalador    = temPerm(user, "AGENDAMENTO_INSTALADOR");
-  const podeVerUsuarios      =
-    user?.permissoes?.includes("USUARIO_APROVAR") ||
-    user?.permissoes?.includes("USUARIO_ATRIBUIR_PERMISSOES");
+  const podeVerMapa          = true;
+  const podeVerUsuarios      = temPerm(user, "GESTOR_USUARIOS","ADMIN_MASTER");
   const podeVerRelatorios    = temPerm(user, "OPERADOR_AGENDA", "ADMIN_MASTER");
   const podeVerConfiguracoes = temPerm(user, "ADMIN_MASTER");
 
@@ -125,12 +122,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
               <NavLink to="/agendamentos/mapa" className={subItemClass}>
                 <span className="sidebar-sub-dot" />
                 Mapa
-              </NavLink>
-            )}
-            {podeVerInstalador && (
-              <NavLink to="/agendamentos/instalador" className={subItemClass}>
-                <span className="sidebar-sub-dot" />
-                Agenda
               </NavLink>
             )}
           </div>

@@ -2,7 +2,7 @@ const express = require("express");
 const db = require("../database/db");
 const authMiddleware = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
-const { isInstaladorPuro, isVendedorPuro } = require("../services/permissionService");
+const { isInstaladorPuro, isComercialPuro } = require("../services/permissionService");
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
     let result;
 
-    if (isInstaladorPuro(permissoes) || isVendedorPuro(permissoes)) {
+    if (isInstaladorPuro(permissoes) || isComercialPuro(permissoes)) {
       /* Instaladores e vendedores: apenas notificações endereçadas diretamente a eles.
          Notificações globais (usuario_id = NULL) são exclusivas de admins/operadores.
          As individuais já são enviadas corretamente pelo serviço de agendamentos. */

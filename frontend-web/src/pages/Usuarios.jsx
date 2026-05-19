@@ -38,10 +38,7 @@ export default function Usuarios() {
 
   /* Permissões do usuário atual */
   const isAdminMaster = user?.permissoes?.includes("ADMIN_MASTER");
-  const podeAtribuirPermissoes = user?.permissoes?.includes("USUARIO_ATRIBUIR_PERMISSOES");
-  const podeAprovar = user?.permissoes?.includes("USUARIO_APROVAR");
-  /* Operador de Agenda: pode aprovar e mudar setor, mas não gerenciar permissões */
-  const isOperadorApenasAprovar = podeAprovar && !podeAtribuirPermissoes;
+  const podeGerenciarUsuarios = user?.permissoes?.includes("GESTOR_USUARIOS") || isAdminMaster;
 
   const [pendentes,        setPendentes]        = useState([]);
   const [usuarios,         setUsuarios]         = useState([]);
@@ -129,12 +126,12 @@ export default function Usuarios() {
       carregarSetores(),
     ];
     /* Apenas Admin Master pode ver permissões e resets */
-    if (podeAtribuirPermissoes) {
+    if (podeGerenciarUsuarios) {
       tarefas.push(carregarPermissoes());
       tarefas.push(carregarSolicitacoesReset());
     }
     Promise.all(tarefas);
-  }, [carregarPendentes, carregarUsuarios, carregarSetores, carregarPermissoes, carregarSolicitacoesReset, podeAtribuirPermissoes]);
+  }, [carregarPendentes, carregarUsuarios, carregarSetores, carregarPermissoes, carregarSolicitacoesReset, podeGerenciarUsuarios]);
 
   /* ── agrupamento de permissões ── */
   const gruposPermissoes = useMemo(() => {
@@ -312,7 +309,7 @@ export default function Usuarios() {
         <div className="ek-head-info">
           <h1>Gestão de usuários</h1>
           <p>
-            {podeAtribuirPermissoes
+            {podeGerenciarUsuarios
               ? "Gerencie acessos, permissões e aprovações da equipe"
               : "Aprove novos usuários e gerencie setores"}
           </p>
@@ -340,7 +337,7 @@ export default function Usuarios() {
       </div>
 
       {/* ── SEÇÃO: SOLICITAÇÕES DE RESET ── (somente Admin Master) */}
-      {podeAtribuirPermissoes && solicitacoesReset.length > 0 && (
+      {podeGerenciarUsuarios && solicitacoesReset.length > 0 && (
         <div className="ek-section">
           <div className="ek-section-head">
             <div>
@@ -454,7 +451,7 @@ export default function Usuarios() {
                           <button className="ek-action-btn success" onClick={() => aprovarUsuario(u.id)}>
                             Aprovar
                           </button>
-                          {podeAtribuirPermissoes && (
+                          {podeGerenciarUsuarios && (
                             <button className="ek-action-btn danger" onClick={() => excluirUsuario(u.id)}>
                               Excluir
                             </button>
@@ -544,7 +541,7 @@ export default function Usuarios() {
                         </td>
                         <td>
                           <div className="ek-row-actions">
-                            {podeAtribuirPermissoes && (
+                            {podeGerenciarUsuarios && (
                               <>
                                 <button className="ek-action-btn" onClick={() => abrirModal(u)}>
                                   Editar
@@ -566,12 +563,7 @@ export default function Usuarios() {
                                 </button>
                               </>
                             )}
-                            {isOperadorApenasAprovar && (
-                              <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                                Somente leitura
-                              </span>
-                            )}
-                          </div>
+                                          </div>
                         </td>
                       </tr>
                     );

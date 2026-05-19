@@ -191,15 +191,15 @@ db.query(
 (async () => {
   const PERMISSOES_CANONICAS = [
     {
-      codigo: "AGENDAMENTO_INSTALADOR",
+      codigo: "INSTALADOR",
       nome_exibicao: "Instalador",
-      descricao: "Acessa e executa os agendamentos em que está escalado.",
+      descricao: "Acessa o calendário, executa agendamentos da sua equipe e registra abastecimentos.",
       modulo: "Campo",
       ordem: 1,
     },
     {
-      codigo: "VENDEDOR",
-      nome_exibicao: "Vendedor / Comercial",
+      codigo: "COMERCIAL",
+      nome_exibicao: "Comercial",
       descricao: "Cria e gerencia clientes e os próprios agendamentos.",
       modulo: "Operação",
       ordem: 2,
@@ -207,30 +207,23 @@ db.query(
     {
       codigo: "OPERADOR_AGENDA",
       nome_exibicao: "Operador de Agenda",
-      descricao: "Gerencia toda a operação: agendamentos, clientes e veículos. Pode aprovar usuários e mudar setor.",
+      descricao: "Gerencia toda a operação: agendamentos, clientes, veículos e relatórios.",
       modulo: "Operação",
       ordem: 3,
     },
     {
-      codigo: "USUARIO_APROVAR",
-      nome_exibicao: "Aprovar Usuários",
-      descricao: "Aprova novos usuários pendentes e altera seus setores.",
+      codigo: "GESTOR_USUARIOS",
+      nome_exibicao: "Gestor de Usuários",
+      descricao: "Aprova usuários, atribui permissões, gerencia acessos e senhas.",
       modulo: "Administração",
       ordem: 4,
-    },
-    {
-      codigo: "USUARIO_ATRIBUIR_PERMISSOES",
-      nome_exibicao: "Gerenciar Permissões",
-      descricao: "Atribui permissões, reseta senhas e bloqueia/desbloqueia usuários.",
-      modulo: "Administração",
-      ordem: 5,
     },
     {
       codigo: "ADMIN_MASTER",
       nome_exibicao: "Admin Master",
       descricao: "Acesso total ao sistema.",
       modulo: "Administração",
-      ordem: 6,
+      ordem: 5,
     },
   ];
 
@@ -567,7 +560,7 @@ router.post("/register-empresa", async (req, res) => {
     await db.query("COMMIT");
 
     const allPerms = permissoesResult.rows.map((p) => p.id); // já buscado acima
-    const permissoesCodigos = ["ADMIN_MASTER","OPERADOR_AGENDA","VENDEDOR","AGENDAMENTO_INSTALADOR","USUARIO_APROVAR","USUARIO_ATRIBUIR_PERMISSOES"];
+    const permissoesCodigos = ["ADMIN_MASTER","OPERADOR_AGENDA","COMERCIAL","INSTALADOR","GESTOR_USUARIOS"];
 
     const token = jwt.sign(
       {
@@ -591,6 +584,11 @@ router.post("/register-empresa", async (req, res) => {
       message: "Empresa cadastrada com sucesso!",
       token,
       refreshToken,
+      empresa: {
+        id:           empresa.id,
+        nome_fantasia: empresa.nome_fantasia,
+        email:        email_empresa,
+      },
       user: {
         id:           usuarioAdmin.id,
         email:        usuarioAdmin.email,
@@ -920,7 +918,7 @@ router.post("/resetar-senha", async (req, res) => {
 router.get(
   "/admin/usuarios-pendentes",
   authMiddleware,
-  permissionMiddleware("USUARIO_APROVAR"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const resultado = await db.query(
@@ -949,7 +947,7 @@ router.get(
 router.get(
   "/admin/solicitacoes-reset",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const resultado = await db.query(
@@ -978,7 +976,7 @@ router.get(
 router.get(
   "/admin/usuarios",
   authMiddleware,
-  permissionMiddleware(["USUARIO_APROVAR", "USUARIO_ATRIBUIR_PERMISSOES"]),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const resultado = await db.query(
@@ -1006,7 +1004,7 @@ router.get(
 router.get(
   "/admin/permissoes-disponiveis",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const result = await db.query(
@@ -1038,7 +1036,7 @@ router.get(
 router.get(
   "/admin/permissoes/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1082,7 +1080,7 @@ router.get(
 router.put(
   "/admin/aprovar/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_APROVAR"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1115,7 +1113,7 @@ router.put(
 router.put(
   "/admin/usuarios/:id/setor",
   authMiddleware,
-  permissionMiddleware("USUARIO_APROVAR"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1174,7 +1172,7 @@ router.put(
 router.put(
   "/admin/usuarios/:id/editar",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1269,7 +1267,7 @@ router.put(
 router.put(
   "/admin/resetar-senha/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1322,7 +1320,7 @@ router.put(
 router.put(
   "/admin/bloquear/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1355,7 +1353,7 @@ router.put(
 router.put(
   "/admin/desbloquear/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -1388,7 +1386,7 @@ router.put(
 router.delete(
   "/admin/excluir/:id",
   authMiddleware,
-  permissionMiddleware("USUARIO_ATRIBUIR_PERMISSOES"),
+  permissionMiddleware("GESTOR_USUARIOS"),
   async (req, res) => {
     try {
       const { id } = req.params;
