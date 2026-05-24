@@ -4,7 +4,7 @@ const https = require('https');
 function sanitizeName(str) {
   return str
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036F]/gu, '')
     .replace(/[^a-zA-Z0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
@@ -19,24 +19,39 @@ function _getDrive() {
   return google.drive({ version: 'v3', auth });
 }
 
-async function findOrCreateFolder(drive, name, parentId) {
-  const safe = name.replace(/'/g, "\\'");
-  const res = await drive.files.list({
-    q: `name = '${safe}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: 'files(id)',
-    spaces: 'drive',
-  });
-  if (res.data.files.length > 0) return res.data.files[0].id;
+const _pendingFolders = new Map();
 
-  const folder = await drive.files.create({
-    requestBody: {
-      name,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentId],
-    },
-    fields: 'id',
-  });
-  return folder.data.id;
+async function findOrCreateFolder(drive, name, parentId) {
+  const key = `${parentId}/${name}`;
+  const pending = _pendingFolders.get(key);
+  if (pending) return pending;
+
+  const promise = (async () => {
+    const safe = name.replace(/'/g, "\\'");
+    const res = await drive.files.list({
+      q: `name = '${safe}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    if (res.data.files.length > 0) return res.data.files[0].id;
+
+    const folder = await drive.files.create({
+      requestBody: {
+        name,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentId],
+      },
+      fields: 'id',
+    });
+    return folder.data.id;
+  })();
+
+  _pendingFolders.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    _pendingFolders.delete(key);
+  }
 }
 
 async function getOrCreateOsFolder({ empresa, pedido, item }) {
@@ -80,8 +95,10 @@ async function initiateResumableUpload({ folderId, fileName, mimeType, fileSize 
       },
     };
     const req = https.request(options, (res) => {
-      const location = res.headers['location'];
-      if (res.statusCode === 200 && location) return resolve(location);
+      if (res.statusCode === 200 && res.headers['location']) {
+        res.resume();
+        return resolve(res.headers['location']);
+      }
       let data = '';
       res.on('data', (c) => (data += c));
       res.on('end', () => reject(new Error(`Drive API ${res.statusCode}: ${data}`)));
