@@ -40,6 +40,13 @@ describe('PATCH /api/os/:id/status', () => {
     const res = await request(app).patch('/api/os/1/status').send({ status: 'desconhecido' });
     expect(res.status).toBe(400);
   });
+
+  test('404 quando OS não encontrada', async () => {
+    const err = Object.assign(new Error('OS não encontrada'), { status: 404 });
+    svc.atualizarStatus.mockRejectedValueOnce(err);
+    const res = await request(app).patch('/api/os/999/status').send({ status: 'encerrada' });
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('GET /api/pedidos/:pedidoId/os', () => {

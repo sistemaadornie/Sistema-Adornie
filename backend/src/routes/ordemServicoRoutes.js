@@ -21,8 +21,10 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
   if (!STATUS_VALIDOS.includes(status)) {
     return res.status(400).json({ message: `status deve ser um de: ${STATUS_VALIDOS.join(', ')}` });
   }
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.status(400).json({ message: 'id inválido' });
   try {
-    const os = await svc.atualizarStatus(Number(req.params.id), status);
+    const os = await svc.atualizarStatus(id, status);
     res.json(os);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -31,7 +33,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 
 router.get('/pedidos/:pedidoId/os', authMiddleware, async (req, res) => {
   try {
-    const rows = await svc.listarPorPedido(Number(req.params.pedidoId));
+    const pedidoId = Number(req.params.pedidoId);
+    if (!Number.isFinite(pedidoId)) return res.status(400).json({ message: 'pedidoId inválido' });
+    const rows = await svc.listarPorPedido(pedidoId);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });

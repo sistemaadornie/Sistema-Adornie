@@ -47,4 +47,9 @@ describe('atualizarStatus', () => {
     const sql = db.query.mock.calls[0][0];
     expect(sql).not.toContain('encerrada_em = NOW()');
   });
+
+  test('lança erro 404 quando OS não existe', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    await expect(svc.atualizarStatus(999, 'encerrada')).rejects.toMatchObject({ status: 404 });
+  });
 });
