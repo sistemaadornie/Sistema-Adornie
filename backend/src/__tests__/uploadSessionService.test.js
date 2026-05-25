@@ -1,8 +1,24 @@
-jest.mock('../database/db', () => ({ query: jest.fn() }));
+// db.js exports a pg Pool directly. For non-transaction functions the pool exposes
+// pool.query directly; for confirmar we mock pool.connect() returning a fake client.
+const mockClientQuery = jest.fn();
+const mockClientRelease = jest.fn();
+const mockClient = { query: mockClientQuery, release: mockClientRelease };
+
+jest.mock('../database/db', () => {
+  const mockPoolQuery = jest.fn();
+  const mock = { query: mockPoolQuery, connect: jest.fn() };
+  return mock;
+});
+
 const db  = require('../database/db');
 const svc = require('../services/uploadSessionService');
 
-afterEach(() => jest.clearAllMocks());
+afterEach(() => {
+  jest.clearAllMocks();
+  // reset client-level mocks too
+  mockClientQuery.mockReset();
+  mockClientRelease.mockReset();
+});
 
 describe('verificarDuplicata', () => {
   test('retorna null quando não há duplicata', async () => {
@@ -64,10 +80,13 @@ describe('confirmar', () => {
       nome_arquivo: 'foto.jpg', tamanho_bytes: 500000, tipo: 'foto',
       iniciado_por: 7, drive_folder_id: 'folder-xyz', hash_md5: 'abc',
     };
-    db.query
-      .mockResolvedValueOnce({ rows: [fakeSession] })       // SELECT sessão
-      .mockResolvedValueOnce({ rows: [{ id: 55 }] })         // INSERT pedido_midias
-      .mockResolvedValueOnce({ rows: [] });                  // UPDATE sessão
+    db.connect.mockResolvedValueOnce(mockClient);
+    mockClientQuery
+      .mockResolvedValueOnce({ rows: [] })              // BEGIN
+      .mockResolvedValueOnce({ rows: [fakeSession] })   // SELECT sessão
+      .mockResolvedValueOnce({ rows: [{ id: 55 }] })    // INSERT pedido_midias
+      .mockResolvedValueOnce({ rows: [] })              // UPDATE sessão
+      .mockResolvedValueOnce({ rows: [] });             // COMMIT
 
     const result = await svc.confirmar('uuid-1', {
       driveFileId: 'file-111',
@@ -75,7 +94,23 @@ describe('confirmar', () => {
       duracaoSegundos: null,
     });
 
-    expect(db.query).toHaveBeenCalledTimes(3);
+    expect(mockClientQuery).toHaveBeenCalledTimes(5);
+    expect(mockClientRelease).toHaveBeenCalledTimes(1);
     expect(result.midia_id).toBe(55);
+  });
+
+  test('lança erro 404 quando sessão não existe', async () => {
+    db.connect.mockResolvedValueOnce(mockClient);
+    mockClientQuery
+      .mockResolvedValueOnce({ rows: [] })   // BEGIN
+      .mockResolvedValueOnce({ rows: [] })   // SELECT returns empty
+      .mockResolvedValueOnce({ rows: [] })   // ROLLBACK (inside if-block)
+      .mockResolvedValueOnce({ rows: [] });  // ROLLBACK (catch block)
+
+    await expect(
+      svc.confirmar('uuid-nao-existe', { driveFileId: 'x', driveUrl: 'y', duracaoSegundos: null })
+    ).rejects.toMatchObject({ status: 404 });
+
+    expect(mockClientRelease).toHaveBeenCalledTimes(1);
   });
 });

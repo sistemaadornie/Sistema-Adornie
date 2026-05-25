@@ -39,30 +39,45 @@ async function buscarStatus(sessionId, userId) {
 }
 
 async function confirmar(sessionId, { driveFileId, driveUrl, duracaoSegundos }) {
-  const { rows: sessionRows } = await db.query(
-    `SELECT * FROM upload_sessions WHERE id = $1`, [sessionId]
-  );
-  const s = sessionRows[0];
-  if (!s) throw Object.assign(new Error('Sessão não encontrada'), { status: 404 });
+  // db is the pg Pool; use a dedicated client so all queries run in one transaction
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
 
-  const { rows: midiaRows } = await db.query(
-    `INSERT INTO pedido_midias
-       (pedido_id, pedido_item_id, ordem_servico_id, drive_file_id, drive_url,
-        drive_folder_id, nome_original, tipo, tamanho_bytes, duracao_segundos,
-        hash_md5, enviado_por)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-     RETURNING id`,
-    [s.pedido_id, s.pedido_item_id, s.ordem_servico_id, driveFileId, driveUrl,
-     s.drive_folder_id, s.nome_arquivo, s.tipo, s.tamanho_bytes,
-     duracaoSegundos ?? null, s.hash_md5, s.iniciado_por]
-  );
+    const { rows: sessionRows } = await client.query(
+      `SELECT * FROM upload_sessions WHERE id = $1`, [sessionId]
+    );
+    const s = sessionRows[0];
+    if (!s) {
+      await client.query('ROLLBACK');
+      throw Object.assign(new Error('Sessão não encontrada'), { status: 404 });
+    }
 
-  await db.query(
-    `UPDATE upload_sessions SET status = 'concluido', concluido_em = NOW() WHERE id = $1`,
-    [sessionId]
-  );
+    const { rows: midiaRows } = await client.query(
+      `INSERT INTO pedido_midias
+         (pedido_id, pedido_item_id, ordem_servico_id, drive_file_id, drive_url,
+          drive_folder_id, nome_original, tipo, tamanho_bytes, duracao_segundos,
+          hash_md5, enviado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING id`,
+      [s.pedido_id, s.pedido_item_id, s.ordem_servico_id, driveFileId, driveUrl,
+       s.drive_folder_id, s.nome_arquivo, s.tipo, s.tamanho_bytes,
+       duracaoSegundos ?? null, s.hash_md5, s.iniciado_por]
+    );
 
-  return { midia_id: midiaRows[0].id };
+    await client.query(
+      `UPDATE upload_sessions SET status = 'concluido', concluido_em = NOW() WHERE id = $1`,
+      [sessionId]
+    );
+
+    await client.query('COMMIT');
+    return { midia_id: midiaRows[0].id };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function listarPorPedido(pedidoId, { itemId, osId, tipo } = {}) {
