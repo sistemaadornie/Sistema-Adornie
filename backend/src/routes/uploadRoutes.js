@@ -7,7 +7,8 @@ const db        = require('../database/db');
 const router = express.Router();
 const CHUNK_SIZE = 5 * 1024 * 1024;
 
-router.post('/iniciar', authMiddleware, async (req, res) => {
+// POST /api/midias/iniciar
+router.post('/midias/iniciar', authMiddleware, async (req, res) => {
   const { pedido_id, pedido_item_id, ordem_servico_id, nome_arquivo,
           tamanho_bytes, mime_type, tipo, hash_md5 } = req.body;
 
@@ -50,7 +51,7 @@ router.post('/iniciar', authMiddleware, async (req, res) => {
     });
 
     const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const ext = nome_arquivo.split('.').pop();
+    const ext = nome_arquivo.includes('.') ? nome_arquivo.split('.').pop() : 'bin';
     const driveFileName = `${tipo}_${ts}.${ext}`;
 
     const driveUploadUri = await driveSvc.initiateResumableUpload({
@@ -74,17 +75,20 @@ router.post('/iniciar', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/:sessionId/status', authMiddleware, async (req, res) => {
+// GET /api/midias/:sessionId/status
+router.get('/midias/:sessionId/status', authMiddleware, async (req, res) => {
   try {
     const sessao = await uploadSvc.buscarStatus(req.params.sessionId, req.user.id);
     if (!sessao) return res.status(404).json({ message: 'Sessão não encontrada' });
     res.json(sessao);
   } catch (err) {
+    console.error('[uploadRoutes] status:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-router.post('/:sessionId/confirmar', authMiddleware, async (req, res) => {
+// POST /api/midias/:sessionId/confirmar
+router.post('/midias/:sessionId/confirmar', authMiddleware, async (req, res) => {
   const { drive_file_id, drive_url, duracao_segundos } = req.body;
   if (!drive_file_id || !drive_url) {
     return res.status(400).json({ message: 'drive_file_id e drive_url obrigatórios' });
@@ -100,6 +104,7 @@ router.post('/:sessionId/confirmar', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/pedidos/:pedidoId/midias
 router.get('/pedidos/:pedidoId/midias', authMiddleware, async (req, res) => {
   try {
     const rows = await uploadSvc.listarPorPedido(Number(req.params.pedidoId), {
@@ -113,6 +118,7 @@ router.get('/pedidos/:pedidoId/midias', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/os/:osId/midias
 router.get('/os/:osId/midias', authMiddleware, async (req, res) => {
   try {
     const rows = await uploadSvc.listarPorOs(Number(req.params.osId));

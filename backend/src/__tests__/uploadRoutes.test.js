@@ -15,7 +15,6 @@ const db         = require('../database/db');
 
 const app = express();
 app.use(express.json());
-app.use('/api/midias', router);
 app.use('/api', router);
 
 const fakePedido = { id: 1, numero_sequencial: 42, data_pedido: '2026-05-24', empresa_id: 1, empresa_nome: 'Adornies' };
