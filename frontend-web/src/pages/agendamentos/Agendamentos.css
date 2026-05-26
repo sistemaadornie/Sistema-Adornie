@@ -20,6 +20,10 @@
   --ag-nao_concluido-soft: rgba(249,115,22,0.12);
   --ag-cancelado-soft:     rgba(239,68,68,0.12);
   --ag-atrasado-soft:      rgba(239,68,68,0.12);
+
+  /* ── cores por tipo de agendamento ── */
+  --ag-tipo-pre:         #94a3b8;
+  --ag-tipo-conferencia: #8b5cf6;
 }
 
 /* ── LOADING BAR ─────────────────────────────────── */
@@ -917,6 +921,8 @@
 .ag-badge.cancelado     { background: var(--ag-cancelado-soft);     color: var(--ag-cancelado);     }
 .ag-badge.atrasado      { background: var(--ag-atrasado-soft);      color: var(--ag-atrasado);      }
 .ag-badge.atrasado::before      { content: "⚠"; font-size: 10px; }
+.ag-badge.pre_agendado  { background: rgba(148,163,184,0.12);       color: #94a3b8;                  }
+.ag-badge.conferencia   { background: rgba(139,92,246,0.12);        color: #8b5cf6;                  }
 
 /* ── ALERTA DE REAGENDAMENTO PENDENTE ─────────────── */
 
@@ -1517,6 +1523,7 @@
 
 .hist-row:hover { background: var(--color-surface-soft); }
 
+.hist-row--pre_agendado:hover  { border-left-color: #94a3b8; }
 .hist-row--agendado:hover      { border-left-color: #3b82f6; }
 .hist-row--andamento:hover     { border-left-color: #eab308; }
 .hist-row--concluido:hover     { border-left-color: #22c55e; }

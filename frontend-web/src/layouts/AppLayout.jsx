@@ -97,7 +97,7 @@ export default function AppLayout() {
 
       {/* OVERLAY MOBILE */}
       {mobileOpen && (
-        <div className="sidebar-overlay" onClick={closeMobile} />
+        <div className="sidebar-overlay" />
       )}
 
       {/* ÁREA PRINCIPAL */}

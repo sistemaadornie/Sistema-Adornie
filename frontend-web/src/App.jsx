@@ -22,8 +22,16 @@ const AgendamentosHistorico  = lazy(() => import("./pages/agendamentos/Agendamen
 const AgendamentosMapa       = lazy(() => import("./pages/agendamentos/MapaAgendamentos"));
 const Veiculos               = lazy(() => import("./pages/veiculos/Veiculos"));
 const VeiculosHistorico      = lazy(() => import("./pages/veiculos/VeiculosHistorico"));
+const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
+const Crm                    = lazy(() => import("./pages/crm/Crm"));
+const Produtos               = lazy(() => import("./pages/catalogo/Produtos"));
+const Fornecedores           = lazy(() => import("./pages/fornecedores/Fornecedores"));
+const Arquitetos             = lazy(() => import("./pages/arquitetos/Arquitetos"));
+const Etiquetas              = lazy(() => import("./pages/etiquetas/Etiquetas"));
+const Kanban                = lazy(() => import("./pages/kanban/Kanban"));
+const KanbanConfig          = lazy(() => import("./pages/kanban/KanbanConfig"));
 
 import "./styles/theme.css";
 import "./styles/globals.css";
@@ -86,6 +94,14 @@ export default function App() {
                   <Route path="/clientes" element={<Clientes />} />
                 </Route>
 
+                <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
+                  <Route path="/pedidos" element={<Pedidos />} />
+                  <Route path="/crm" element={<Crm />} />
+                  <Route path="/catalogo/produtos" element={<Produtos />} />
+                  <Route path="/fornecedores" element={<Fornecedores />} />
+                  <Route path="/arquitetos"  element={<Arquitetos />} />
+                </Route>
+
                 <Route element={<PermissionRoute perms={["INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/veiculos"           element={<Veiculos />} />
                   <Route path="/veiculos/historico" element={<VeiculosHistorico />} />
@@ -97,6 +113,18 @@ export default function App() {
 
                 <Route element={<PermissionRoute perms={["OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
                   <Route path="/relatorios" element={<Relatorios />} />
+                </Route>
+
+                <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
+                  <Route path="/etiquetas" element={<Etiquetas />} />
+                </Route>
+
+                <Route element={<PermissionRoute perms={["KANBAN_VIEW","KANBAN_ADMIN","KANBAN_COMPRAS","KANBAN_CONFECCAO","KANBAN_CONFIG","ADMIN_MASTER"]} />}>
+                  <Route path="/kanban" element={<Kanban />} />
+                </Route>
+
+                <Route element={<PermissionRoute perms={["KANBAN_CONFIG","ADMIN_MASTER"]} />}>
+                  <Route path="/kanban/config" element={<KanbanConfig />} />
                 </Route>
 
                 <Route element={<PermissionRoute perms={["ADMIN_MASTER"]} />}>

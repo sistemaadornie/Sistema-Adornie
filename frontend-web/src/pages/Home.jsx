@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
-  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar,
+  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar, FaHandshake, FaColumns
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
 import "./Home.css";
@@ -13,9 +13,11 @@ export default function Home() {
 
   const temPerm = (...perms) => perms.some((p) => user?.permissoes?.includes(p));
   const podeVerClientes   = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
+  const podeVerCrm        = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
   const podeVerVeiculos   = temPerm("INSTALADOR", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
   const podeVerUsuarios   = temPerm("GESTOR_USUARIOS", "ADMIN_MASTER");
   const podeVerRelatorios = temPerm("OPERADOR_AGENDA", "ADMIN_MASTER");
+  const podeVerKanban     = temPerm("KANBAN_VIEW", "KANBAN_ADMIN", "KANBAN_COMPRAS", "KANBAN_CONFECCAO", "KANBAN_CONFIG", "ADMIN_MASTER");
 
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
@@ -28,6 +30,15 @@ export default function Home() {
       desc: "Gerencie serviços, visitas e manutenções com calendário e mapa.",
       rota: "/agendamentos",
     },
+    ...(podeVerCrm
+      ? [{
+          icon: <FaHandshake />,
+          cor: "var(--color-primary)",
+          titulo: "CRM & Gestão",
+          desc: "Painel de vendas, orçamentos, financeiro, compras e comissões.",
+          rota: "/crm",
+        }]
+      : []),
     ...(podeVerClientes
       ? [{
           icon: <FaUserFriends />,
@@ -53,6 +64,15 @@ export default function Home() {
           titulo: "Relatórios",
           desc: "Análises e indicadores de desempenho de toda a operação.",
           rota: "/relatorios",
+        }]
+      : []),
+    ...(podeVerKanban
+      ? [{
+          icon: <FaColumns />,
+          cor: "var(--color-primary)",
+          titulo: "Fluxo de Vendas",
+          desc: "Kanban de projetos do orçamento ao agendamento confirmado.",
+          rota: "/kanban",
         }]
       : []),
     ...(podeVerUsuarios

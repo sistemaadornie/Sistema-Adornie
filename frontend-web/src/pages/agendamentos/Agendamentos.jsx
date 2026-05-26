@@ -60,6 +60,7 @@ const MESES = [
 const HORAS_DIA = Array.from({ length: 14 }, (_, i) => i + 7); // 07h–20h
 
 const STATUS_META = {
+  pre_agendado:  { label: "Pré agendado",    cor: "#94a3b8", classe: "pre_agendado"  },
   agendado:      { label: "Agendado",        cor: "#3b82f6", classe: "agendado"      },
   andamento:     { label: "Em andamento",    cor: "#eab308", classe: "andamento"     },
   concluido:     { label: "Concluído",       cor: "#22c55e", classe: "concluido"     },
@@ -68,7 +69,12 @@ const STATUS_META = {
   atrasado:      { label: "Atrasado",        cor: "#ef4444", classe: "atrasado"      },
 };
 
-const TIPOS = ["Instalação", "Manutenção", "Retorno/Finalização"];
+const TIPOS = ["Instalação", "Manutenção", "Retorno/Finalização", "Conferência"];
+
+const TIPO_COR = {
+  "Pré Agendamento": "var(--ag-tipo-pre)",
+  "Conferência":     "var(--ag-tipo-conferencia)",
+};
 
 /* ── EQUIPE_MOCK (fallback quando API não retorna ninguém) ── */
 const EQUIPE_MOCK = [];
@@ -91,7 +97,7 @@ function isoParaDate(iso) {
 }
 
 function detectarAtrasado(ag) {
-  if (ag.status === "concluido" || ag.status === "nao_concluido" || ag.status === "cancelado" || ag.status === "atrasado") {
+  if (ag.status === "concluido" || ag.status === "nao_concluido" || ag.status === "cancelado" || ag.status === "atrasado" || ag.status === "pre_agendado") {
     return ag;
   }
   const agora   = new Date();
@@ -142,6 +148,15 @@ function minsToHora(m) {
 }
 function dateToISO(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function corEvento(ev) {
+  if (ev.tipo === "Conferência") return "#8b5cf6";
+  return STATUS_META[ev.status]?.cor || "#888";
+}
+
+function metaEvento(ev) {
+  return STATUS_META[ev.status] || STATUS_META.agendado;
 }
 
 /* ── COMPONENTE PRINCIPAL ────────────────────────── */
@@ -427,7 +442,7 @@ function AgendamentosOperador() {
             <div
               key={ev.id}
               className="ag-cal-event"
-              style={{ background: STATUS_META[ev.status]?.cor || "#888", cursor: podeEditarAgendamento(user, ev) ? "grab" : "pointer" }}
+              style={{ background: corEvento(ev), cursor: podeEditarAgendamento(user, ev) ? "grab" : "pointer" }}
               draggable={podeEditarAgendamento(user, ev)}
               onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("agEvId", String(ev.id)); }}
               onClick={(e) => { e.stopPropagation(); setAgDetalhe(ev); }}
@@ -491,7 +506,7 @@ function AgendamentosOperador() {
                       className="ag-week-event"
                       style={{
                         top: topOffset, height: alturaBase,
-                        background: STATUS_META[ev.status]?.cor || "#888",
+                        background: corEvento(ev),
                         cursor: canEdit ? (isDragging ? "grabbing" : "grab") : "pointer",
                         opacity: isDragging ? 0.35 : 1,
                         userSelect: "none",
@@ -560,7 +575,7 @@ function AgendamentosOperador() {
                   className="ag-week-event"
                   style={{
                     top: topOffset, height: alturaBase,
-                    background: STATUS_META[ev.status]?.cor || "#888",
+                    background: corEvento(ev),
                     cursor: canEdit ? (isDragging ? "grabbing" : "grab") : "pointer",
                     opacity: isDragging ? 0.35 : 1,
                     userSelect: "none",
@@ -707,7 +722,7 @@ function AgendamentosOperador() {
       preview: { data: ev.data, hora: ev.hora, duracao_minutos: ev.duracao_minutos || 60 },
     };
     setDraggingId(ev.id);
-    setGhost({ x: e.clientX, y: e.clientY, hora: ev.hora, durMin: ev.duracao_minutos || 60, color: STATUS_META[ev.status]?.cor || "#888", type });
+    setGhost({ x: e.clientX, y: e.clientY, hora: ev.hora, durMin: ev.duracao_minutos || 60, color: corEvento(ev), type });
   }
 
   /* Handlers globais — zero setState no mousemove */
@@ -1012,11 +1027,12 @@ function AgendamentosOperador() {
 
 /* ── EVENT CARD (lista dia) ──────────────────────── */
 function EventCard({ ev, equipe, onClick }) {
-  const meta = STATUS_META[ev.status] || STATUS_META.agendado;
+  const meta = metaEvento(ev);
+  const corBorda = TIPO_COR[ev.tipo] ?? meta.cor;
   return (
     <div
       className="ag-event-card"
-      style={{ borderLeftColor: meta.cor, borderLeftWidth: 5 }}
+      style={{ borderLeftColor: corBorda, borderLeftWidth: 5 }}
       onClick={onClick}
     >
       <div className="ag-event-card-time">
@@ -1122,6 +1138,7 @@ function horaFimFromDuracao(hora, duracaoMin) {
 
 function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamentos, agEditar, dataInicial }) {
   const modoEditar = !!agEditar;
+  const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado");
   const [form, setForm] = useState({
     titulo:      agEditar?.titulo      ?? "",
     cliente:     agEditar?.cliente     ?? "",
@@ -1137,6 +1154,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
     cidade:      agEditar?.cidade      ?? "",
     estado:      agEditar?.estado      ?? "",
     descricao: [agEditar?.descricao, agEditar?.observacoes].filter(Boolean).join("\n\n"),
+    pedido_id:   agEditar?.pedido_id   ?? "",
   });
   const [pessoaObrigatoria, setPessoaObrigatoria] = useState(agEditar?.pessoa_obrigatoria_id ?? null);
   const [buscandoCEP,  setBuscandoCEP]  = useState(false);
@@ -1146,6 +1164,11 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [anexos,       setAnexos]       = useState([]);
   const [dragOver,     setDragOver]     = useState(false);
   const [erroForm,     setErroForm]     = useState("");
+  const [pedidosLista, setPedidosLista] = useState([]);
+  const [clienteTel,   setClienteTel]   = useState("");
+  const [clienteEmail, setClienteEmail] = useState("");
+  const [criandoPedido,    setCriandoPedido]    = useState(false);
+  const [novoPedidoDesc,   setNovoPedidoDesc]   = useState("");
   const fileRef = useRef();
 
   /* Autocomplete de clientes */
@@ -1157,6 +1180,17 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [enderecoSel,  setEnderecoSel]  = useState("");
   const buscarTimerRef = useRef(null);
   const buscarAbortRef = useRef(null);
+
+  /* Carrega pedidos sempre que o cliente selecionado muda */
+  useEffect(() => {
+    if (clienteSel?.id) {
+      api.get(`/pedidos?cliente_id=${clienteSel.id}`)
+        .then((r) => setPedidosLista(r.pedidos || []))
+        .catch(() => {});
+    } else {
+      setPedidosLista([]);
+    }
+  }, [clienteSel?.id]); // eslint-disable-line
 
   /* Derivado: indica se o cliente que será salvo já existe no cadastro */
   const clienteExistente = clienteSel !== null;
@@ -1313,11 +1347,28 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
     setErroForm("");
     const partes = [form.rua, form.numero, form.complemento, form.bairro, form.cidade, form.estado ? `- ${form.estado}` : ""].filter(Boolean);
     const endereco = partes.length ? partes.join(", ") + (form.cep ? ` — CEP ${form.cep}` : "") : (agEditar?.endereco || null);
-    onSalvar({ ...form, observacoes: null, endereco, equipe: equipeSelec, itens, anexos, duracao_minutos: duracaoMinutos, pessoa_obrigatoria_id: pessoaObrigatoria });
+    onSalvar({
+      ...form,
+      observacoes: null,
+      endereco,
+      equipe: equipeSelec,
+      itens,
+      anexos,
+      duracao_minutos: duracaoMinutos,
+      pessoa_obrigatoria_id: pessoaObrigatoria,
+      pedido_id: form.pedido_id ? Number(form.pedido_id) : null,
+      status: preAgendado ? "pre_agendado" : "agendado",
+      cliente_novo: !clienteSel,
+      cliente_telefone: clienteTel || undefined,
+      cliente_email: clienteEmail || undefined,
+      novo_pedido: criandoPedido && novoPedidoDesc.trim()
+        ? { descricao: novoPedidoDesc.trim() }
+        : undefined,
+    });
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box modal-lg"
         style={{ maxWidth: 780, maxHeight: "90vh", overflowY: "auto" }}
@@ -1333,7 +1384,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
 
         <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* Linha 1 */}
+          {/* Linha 1 — Título */}
           <div className="ag-modal-grid">
             <div className="ag-form-field" style={{ gridColumn: "1 / -1" }}>
               <label>Título *</label>
@@ -1341,6 +1392,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
             </div>
           </div>
 
+          {/* Linha 2 — Cliente | Pedido */}
           <div className="ag-modal-grid">
             <div className="ag-form-field" style={{ position: "relative" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1369,8 +1421,13 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
                 value={form.cliente}
                 onChange={(e) => {
                   set("cliente", e.target.value);
+                  set("pedido_id", "");
                   buscarClientes(e.target.value);
                   setClienteSel(null);
+                  setClienteTel("");
+                  setClienteEmail("");
+                  setCriandoPedido(false);
+                  setNovoPedidoDesc("");
                 }}
                 onFocus={() => form.cliente.length >= 2 && setMostrarSug(clientesSug.length > 0)}
                 onBlur={() => setTimeout(() => setMostrarSug(false), 180)}
@@ -1407,10 +1464,125 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
               )}
             </div>
             <div className="ag-form-field">
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>Pedido vinculado <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span></span>
+                {(clienteSel || clienteNovo) && !criandoPedido && (
+                  <button
+                    type="button"
+                    style={{ fontSize: 11, fontWeight: 600, color: "var(--color-primary)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    onClick={() => { setCriandoPedido(true); set("pedido_id", ""); }}
+                  >
+                    + Criar novo
+                  </button>
+                )}
+                {criandoPedido && (
+                  <button
+                    type="button"
+                    style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    onClick={() => { setCriandoPedido(false); setNovoPedidoDesc(""); }}
+                  >
+                    ← Selecionar existente
+                  </button>
+                )}
+              </label>
+              {criandoPedido ? (
+                <input
+                  placeholder="Descrição do novo pedido..."
+                  value={novoPedidoDesc}
+                  onChange={(e) => setNovoPedidoDesc(e.target.value)}
+                />
+              ) : (
+                <select
+                  value={form.pedido_id}
+                  onChange={(e) => {
+                    const pid = e.target.value;
+                    set("pedido_id", pid);
+                    if (pid) {
+                      const ped = pedidosLista.find((p) => String(p.id) === pid);
+                      if (ped && (ped.rua || ped.cidade || ped.cep)) {
+                        setForm((prev) => ({
+                          ...prev,
+                          pedido_id:   pid,
+                          cep:         ped.cep         || prev.cep,
+                          rua:         ped.rua         || prev.rua,
+                          numero:      ped.numero      || prev.numero,
+                          complemento: ped.complemento || prev.complemento,
+                          bairro:      ped.bairro      || prev.bairro,
+                          cidade:      ped.cidade      || prev.cidade,
+                          estado:      ped.estado      || prev.estado,
+                        }));
+                      }
+                    }
+                  }}
+                  disabled={!clienteSel && !clienteNovo}
+                  title={!clienteSel && !clienteNovo ? "Selecione um cliente primeiro" : undefined}
+                >
+                  <option value="">— Nenhum —</option>
+                  {pedidosLista.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.numero}{p.descricao ? ` — ${p.descricao.slice(0, 40)}` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Campos extras para novo cliente */}
+          {clienteNovo && !modoEditar && (
+            <div className="ag-modal-grid">
+              <div className="ag-form-field">
+                <label>Telefone <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span></label>
+                <input
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={clienteTel}
+                  onChange={(e) => setClienteTel(e.target.value)}
+                />
+              </div>
+              <div className="ag-form-field">
+                <label>E-mail <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span></label>
+                <input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={clienteEmail}
+                  onChange={(e) => setClienteEmail(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Linha 3 — Tipo | Pré agendamento */}
+          <div className="ag-modal-grid">
+            <div className="ag-form-field">
               <label>Tipo</label>
               <select value={form.tipo} onChange={(e) => set("tipo", e.target.value)}>
                 {TIPOS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
+            </div>
+            <div className="ag-form-field" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <label
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 12px",
+                  borderRadius: "var(--radius-md)",
+                  border: `1.5px solid ${preAgendado ? "#94a3b8" : "var(--color-border)"}`,
+                  background: preAgendado ? "rgba(148,163,184,0.08)" : "var(--color-surface-soft)",
+                  cursor: "pointer", userSelect: "none",
+                  transition: "all 0.15s",
+                  height: "38px",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={preAgendado}
+                  onChange={(e) => setPreAgendado(e.target.checked)}
+                  style={{ width: 15, height: 15, accentColor: "#94a3b8", cursor: "pointer", flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 13, fontWeight: 600, color: preAgendado ? "#94a3b8" : "var(--color-text-secondary)" }}>
+                  Pré agendamento
+                </span>
+              </label>
             </div>
           </div>
 
@@ -1632,7 +1804,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
 
 /* ── MODAL: DETALHE ──────────────────────────────── */
 function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, criarSugestao, listarSugestoes, responderSugestao }) {
-  const meta = STATUS_META[ag.status] || STATUS_META.agendado;
+  const meta = metaEvento(ag);
   const instaladorPuro = isInstaladorPuro(user);
 
   /* Carregar dados completos (incluindo anexos) */
@@ -1690,9 +1862,10 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
 
   /* Ações disponíveis por perfil */
   const STATUS_ACOES_GESTOR = {
-    agendado:   ["andamento", "cancelado"],
-    andamento:  ["concluido", "nao_concluido"],
-    atrasado:   ["andamento", "cancelado"],
+    pre_agendado: ["agendado", "cancelado"],
+    agendado:     ["andamento", "cancelado"],
+    andamento:    ["concluido", "nao_concluido"],
+    atrasado:     ["andamento", "cancelado"],
   };
   const STATUS_ACOES_INSTALADOR = {
     agendado:   ["andamento"],
@@ -1700,9 +1873,10 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
     atrasado:   ["andamento"],
   };
   const STATUS_ACOES_COMERCIAL = {
-    agendado:   ["andamento", "cancelado"],
-    andamento:  ["concluido", "nao_concluido"],
-    atrasado:   ["andamento", "cancelado"],
+    pre_agendado: ["agendado", "cancelado"],
+    agendado:     ["andamento", "cancelado"],
+    andamento:    ["concluido", "nao_concluido"],
+    atrasado:     ["andamento", "cancelado"],
   };
 
   let acoesBase;
@@ -1721,8 +1895,8 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
   const acoes = acoesBase;
 
   const ACAO_META = {
-    andamento:     { label: "Iniciar agendamento",    icon: "▶", bg: "#6366f1" },
-    agendado:      { label: "Reagendar",               icon: "📅", bg: "#3b82f6" },
+    andamento:     { label: "Iniciar agendamento",     icon: "▶", bg: "#6366f1" },
+    agendado:      { label: "Confirmar agendamento",   icon: "✓", bg: "#3b82f6" },
     concluido:     { label: "Marcar como concluído",   icon: "✓", bg: "#22c55e" },
     cancelado:     { label: "Cancelar agendamento",    icon: "■", bg: "#ef4444" },
     nao_concluido: { label: "Não concluído",           icon: "✗", bg: "#f97316" },
@@ -1746,7 +1920,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
   /* ── VIEW SIMPLIFICADA (concluído / não concluído) ── */
   if (isConcluido) {
     return (
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay">
         <div
           className="modal-box modal-lg"
           style={{ maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}
@@ -1772,6 +1946,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
                 ["Horário", ag.hora],
                 ["Data",    ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"],
                 ["Tipo",    ag.tipo],
+                ...(ag.pedido_numero ? [["Pedido", ag.pedido_numero]] : []),
               ].map(([lbl, val]) => (
                 <div key={lbl} style={{ background: "var(--color-surface-soft)", padding: "12px 16px" }}>
                   <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--color-text-muted)", marginBottom: 4 }}>{lbl}</div>
@@ -1861,7 +2036,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
 
   /* ── VIEW COMPLETA (demais status) ── */
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box modal-lg"
         style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto" }}
@@ -1898,6 +2073,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
               ["Horário", ag.hora],
               ["Data",    ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"],
               ["Tipo",    ag.tipo],
+              ...(ag.pedido_numero ? [["Pedido", ag.pedido_numero]] : []),
             ].map(([lbl, val]) => (
               <div key={lbl} style={{ background: "var(--color-surface-soft)", padding: "12px 16px" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--color-text-muted)", marginBottom: 4 }}>{lbl}</div>
@@ -2292,7 +2468,7 @@ function StatusModal({ ag, novoStatus, onClose, onConfirmar, salvando }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>

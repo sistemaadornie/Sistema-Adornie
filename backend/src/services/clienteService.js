@@ -19,7 +19,7 @@ async function listar(empresaId, q) {
   let whereExtra = "";
   if (q) {
     params.push(`%${q}%`);
-    whereExtra = ` AND (c.nome ILIKE $${params.length} OR c.telefone ILIKE $${params.length} OR c.email ILIKE $${params.length})`;
+    whereExtra = ` AND (c.nome ILIKE $${params.length} OR c.telefone ILIKE $${params.length} OR c.email ILIKE $${params.length} OR c.cpf ILIKE $${params.length} OR c.cnpj ILIKE $${params.length})`;
   }
 
   const result = await db.query(
@@ -52,24 +52,24 @@ async function buscar(id, empresaId) {
 }
 
 async function criar(empresaId, dados) {
-  const { nome, telefone, email } = dados;
+  const { nome, telefone, email, cpf, cnpj, arquiteto_id } = dados;
   if (!nome) { const e = new Error("Nome é obrigatório."); e.status = 400; throw e; }
 
   const result = await db.query(
-    `INSERT INTO clientes (empresa_id, nome, telefone, email) VALUES ($1,$2,$3,$4) RETURNING id`,
-    [empresaId, nome.trim(), telefone?.trim()||null, email?.trim()||null]
+    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj, arquiteto_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [empresaId, nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null]
   );
   return montarCliente(result.rows[0].id, empresaId);
 }
 
 async function atualizar(id, empresaId, dados) {
-  const { nome, telefone, email } = dados;
+  const { nome, telefone, email, cpf, cnpj, arquiteto_id } = dados;
   if (!nome) { const e = new Error("Nome é obrigatório."); e.status = 400; throw e; }
 
   const result = await db.query(
-    `UPDATE clientes SET nome=$1, telefone=$2, email=$3, updated_at=NOW()
-     WHERE id=$4 AND empresa_id=$5 AND deleted_at IS NULL RETURNING id`,
-    [nome.trim(), telefone?.trim()||null, email?.trim()||null, id, empresaId]
+    `UPDATE clientes SET nome=$1, telefone=$2, email=$3, cpf=$4, cnpj=$5, arquiteto_id=$6, updated_at=NOW()
+     WHERE id=$7 AND empresa_id=$8 AND deleted_at IS NULL RETURNING id`,
+    [nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null, id, empresaId]
   );
   if (result.rows.length === 0) { const e = new Error("Cliente não encontrado."); e.status = 404; throw e; }
   return montarCliente(id, empresaId);
@@ -173,25 +173,73 @@ async function removerEndereco(clienteId, endId, empresaId) {
   return montarCliente(clienteId, empresaId);
 }
 
-/* Busca cliente por nome (case-insensitive, trim). Se não existir, cria automaticamente.
-   Retorna o cliente_id. Usado internamente pelo agendamentoService. */
-async function resolverCliente(empresaId, nomeRaw) {
+/* Busca cliente por CPF, CNPJ ou nome. Se não existir, cria automaticamente.
+   Retorna { id, criado } — `criado` indica se o cliente acabou de ser criado agora. */
+async function resolverCliente(empresaId, nomeRaw, extras = {}) {
   const nome = nomeRaw?.trim();
   if (!nome) { const e = new Error("Nome do cliente é obrigatório."); e.status = 400; throw e; }
 
-  const existe = await db.query(
-    `SELECT id FROM clientes
-     WHERE empresa_id=$1 AND deleted_at IS NULL AND LOWER(TRIM(nome))=LOWER($2)
-     LIMIT 1`,
-    [empresaId, nome]
-  );
-  if (existe.rows.length > 0) return existe.rows[0].id;
+  const cpf  = extras.cpf?.trim()  || null;
+  const cnpj = extras.cnpj?.trim() || null;
 
-  const novo = await db.query(
-    `INSERT INTO clientes (empresa_id, nome) VALUES ($1,$2) RETURNING id`,
+  // 1. Match por CPF
+  if (cpf) {
+    const r = await db.query(
+      `SELECT id FROM clientes WHERE empresa_id=$1 AND deleted_at IS NULL AND cpf=$2 LIMIT 1`,
+      [empresaId, cpf]
+    );
+    if (r.rows.length > 0) {
+      const id = r.rows[0].id;
+      db.query(
+        `UPDATE clientes SET telefone=COALESCE(NULLIF(telefone,''),$1), email=COALESCE(NULLIF(email,''),$2), updated_at=NOW() WHERE id=$3`,
+        [extras.telefone?.trim()||null, extras.email?.trim()||null, id]
+      ).catch(() => {});
+      return { id, criado: false };
+    }
+  }
+
+  // 2. Match por CNPJ
+  if (cnpj) {
+    const r = await db.query(
+      `SELECT id FROM clientes WHERE empresa_id=$1 AND deleted_at IS NULL AND cnpj=$2 LIMIT 1`,
+      [empresaId, cnpj]
+    );
+    if (r.rows.length > 0) {
+      const id = r.rows[0].id;
+      db.query(
+        `UPDATE clientes SET telefone=COALESCE(NULLIF(telefone,''),$1), email=COALESCE(NULLIF(email,''),$2), updated_at=NOW() WHERE id=$3`,
+        [extras.telefone?.trim()||null, extras.email?.trim()||null, id]
+      ).catch(() => {});
+      return { id, criado: false };
+    }
+  }
+
+  // 3. Match por nome (case-insensitive)
+  const porNome = await db.query(
+    `SELECT id FROM clientes WHERE empresa_id=$1 AND deleted_at IS NULL AND LOWER(TRIM(nome))=LOWER($2) LIMIT 1`,
     [empresaId, nome]
   );
-  return novo.rows[0].id;
+  if (porNome.rows.length > 0) {
+    const id = porNome.rows[0].id;
+    db.query(
+      `UPDATE clientes
+       SET telefone = COALESCE(NULLIF(telefone,''), $1),
+           email    = COALESCE(NULLIF(email,''), $2),
+           cpf      = COALESCE(NULLIF(cpf,''), $3),
+           cnpj     = COALESCE(NULLIF(cnpj,''), $4),
+           updated_at = NOW()
+       WHERE id=$5`,
+      [extras.telefone?.trim()||null, extras.email?.trim()||null, cpf, cnpj, id]
+    ).catch(() => {});
+    return { id, criado: false };
+  }
+
+  // 4. Criar novo cliente
+  const novo = await db.query(
+    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+    [empresaId, nome, extras.telefone?.trim()||null, extras.email?.trim()||null, cpf, cnpj]
+  );
+  return { id: novo.rows[0].id, criado: true };
 }
 
 module.exports = {

@@ -1,0 +1,10 @@
+-- Endereço nos pedidos
+ALTER TABLE pedidos
+  ADD COLUMN IF NOT EXISTS cep         VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS rua         TEXT,
+  ADD COLUMN IF NOT EXISTS numero      VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS complemento TEXT,
+  ADD COLUMN IF NOT EXISTS bairro      TEXT,
+  ADD COLUMN IF NOT EXISTS cidade      TEXT,
+  ADD COLUMN IF NOT EXISTS estado      CHAR(2),
+  ADD COLUMN IF NOT EXISTS endereco    TEXT;

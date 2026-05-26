@@ -1,0 +1,197 @@
+/* ============================================================
+   FORNECEDORES — estilos específicos
+   ============================================================ */
+
+/* ── BARRA DE AÇÕES ── */
+.forn-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.forn-count {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── SPINNER ── */
+.forn-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: forn-spin 0.75s linear infinite;
+  margin: 0 auto;
+}
+@keyframes forn-spin { to { transform: rotate(360deg); } }
+
+/* ── ERRO ── */
+.forn-erro-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #dc2626;
+}
+.forn-erro-banner button {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ── TABELA ── */
+.forn-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.forn-table th,
+.forn-table td {
+  white-space: nowrap;
+}
+
+.forn-table th:nth-child(2),
+.forn-table td:nth-child(2) {
+  white-space: normal;
+  min-width: 200px;
+}
+
+.forn-row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.forn-row:hover {
+  background: var(--color-surface-soft);
+}
+
+/* ── NOME + BADGE TIPO ── */
+.forn-nome-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.forn-tipo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.forn-tipo-badge.pj {
+  background: rgba(107,154,184,0.15);
+  color: var(--color-info, #6B9AB8);
+}
+.forn-tipo-badge.pf {
+  background: rgba(201,169,110,0.15);
+  color: var(--color-primary);
+}
+
+/* ── STATUS ── */
+.forn-status-ativo {
+  color: var(--color-success);
+  font-weight: 600;
+  font-size: 12px;
+}
+.forn-status-inativo {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* ── BOTÕES ÍCONE ── */
+.forn-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+.forn-icon-btn:hover {
+  background: var(--color-surface-strong);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+.forn-icon-btn.danger:hover {
+  background: rgba(192,97,74,0.12);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ── MODAL ── */
+.forn-modal {
+  max-width: 820px;
+  width: min(100%, 820px);
+}
+
+.forn-modal-section {
+  padding: 14px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+}
+
+.forn-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.forn-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.forn-grid-4 {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── PAGINAÇÃO ── */
+.forn-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.forn-page-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ── RESPONSIVO ── */
+@media (max-width: 768px) {
+  .forn-action-bar { flex-direction: column; align-items: flex-start; }
+  .forn-grid-2, .forn-grid-3, .forn-grid-4 { grid-template-columns: 1fr; }
+}

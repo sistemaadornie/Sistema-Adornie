@@ -1,0 +1,41 @@
+# ── Credenciais e segredos ─────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# Chaves privadas e certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+dkim_private*
+
+# Google Service Account e outros arquivos de credenciais JSON
+*service_account*.json
+*service-account*.json
+*credentials*.json
+*-sa.json
+*_sa.json
+google-credentials*.json
+
+# Configuração local do Claude Code (pode conter senhas em permissões)
+.claude/settings.local.json
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+logs/
+server.log
+
+# ── Dependências ───────────────────────────────────────────────
+node_modules/
+
+# ── Build ──────────────────────────────────────────────────────
+dist/
+build/
+.next/
+out/
+
+# ── SO ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

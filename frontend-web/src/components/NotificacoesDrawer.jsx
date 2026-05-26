@@ -68,7 +68,7 @@ export default function NotificacoesDrawer({ onClose }) {
   const conteudo = (
     <>
       {/* overlay com blur */}
-      <div className="notif-overlay" onClick={onClose} />
+      <div className="notif-overlay" />
 
       <div className="notif-drawer">
 

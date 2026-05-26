@@ -20,7 +20,7 @@ function diaISO(d) {
 }
 
 function detectarAtrasado(ag) {
-  if (ag.status !== "agendado") return ag;
+  if (ag.status !== "agendado") return ag; // pre_agendado e demais não viram atrasado
   const [y, m, d] = ag.data.split("-").map(Number);
   const [h, min]  = ag.hora.split(":").map(Number);
   if (new Date(y, m - 1, d, h, min) < new Date()) return { ...ag, status: "atrasado" };
@@ -28,15 +28,17 @@ function detectarAtrasado(ag) {
 }
 
 const STATUS_META = {
-  agendado:      { label: "Agendado",      cor: "#3b82f6" },
-  andamento:     { label: "Em andamento",  cor: "#eab308" },
-  concluido:     { label: "Concluído",     cor: "#22c55e" },
-  nao_concluido: { label: "Não concluído", cor: "#f97316" },
-  cancelado:     { label: "Cancelado",     cor: "#ef4444" },
-  atrasado:      { label: "Atrasado",      cor: "#ef4444" },
+  pre_agendado:  { label: "Pré agendado",   cor: "#94a3b8" },
+  agendado:      { label: "Agendado",       cor: "#3b82f6" },
+  andamento:     { label: "Em andamento",   cor: "#eab308" },
+  concluido:     { label: "Concluído",      cor: "#22c55e" },
+  nao_concluido: { label: "Não concluído",  cor: "#f97316" },
+  cancelado:     { label: "Cancelado",      cor: "#ef4444" },
+  atrasado:      { label: "Atrasado",       cor: "#ef4444" },
 };
 
 const STATUS_ACOES = {
+  pre_agendado:  [],
   agendado:      ["andamento"],
   atrasado:      ["andamento"],
   andamento:     ["concluido", "nao_concluido"],
@@ -399,7 +401,7 @@ function ModalAcaoInstalador({ ag, user, onClose, onStatus, onDetalhe, onSugesta
   const meuAg = ag.equipe?.includes(user?.id);
   const acoes = STATUS_ACOES[ag.status] || [];
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header" style={{ borderBottom: `3px solid ${meta.cor}` }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -665,7 +667,7 @@ function ModalStatusFoto({ ag, novoStatus, onClose, onConfirmar }) {
   const aviso = AVISO_FOTO[novoStatus];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
@@ -889,7 +891,7 @@ function ModalSugestao({ ag, onClose, onEnviar }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -977,7 +979,7 @@ function ModalDetalheInstalador({ ag, onClose }) {
   const midias = d.anexos?.filter((a) => a.tipo?.startsWith("foto") || a.tipo?.startsWith("video")) || [];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box"
         style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto", padding: 0 }}

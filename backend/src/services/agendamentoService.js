@@ -88,12 +88,17 @@ async function montarAgendamento(id, empresaId) {
         TO_CHAR(a.hora, 'HH24:MI')   AS hora,
         po.id            AS pessoa_obrigatoria_id,
         po.nome_completo AS pessoa_obrigatoria_nome,
-        po.foto_url      AS pessoa_obrigatoria_foto
+        po.foto_url      AS pessoa_obrigatoria_foto,
+        CASE WHEN ped.id IS NOT NULL
+          THEN 'P-' || LPAD(ped.id::TEXT, 4, '0')
+          ELSE NULL
+        END AS pedido_numero
       FROM agendamentos a
       LEFT JOIN usuarios u   ON u.id   = a.criado_por
       LEFT JOIN usuarios ui  ON ui.id  = a.iniciado_por
       LEFT JOIN usuarios uc  ON uc.id  = a.concluido_por
       LEFT JOIN usuarios po  ON po.id  = a.pessoa_obrigatoria_id
+      LEFT JOIN pedidos   ped ON ped.id = a.pedido_id AND ped.deleted_at IS NULL
       WHERE a.id = $1 AND a.empresa_id = $2
       LIMIT 1
       `,
@@ -211,14 +216,25 @@ async function listar(empresaId, userId, permissoes, filtros) {
       a.lat, a.lng, a.geocod_falhou,
       a.descricao, a.observacoes, a.status, a.duracao_minutos,
       a.criado_por, a.criado_em, a.atualizado_em, a.iniciado_em, a.concluido_em,
-      a.pessoa_obrigatoria_id,
+      a.pessoa_obrigatoria_id, a.pedido_id, a.cliente_id,
       uc.nome_completo AS criado_por_nome,
       ui.nome_completo AS iniciado_por_nome,
-      uf.nome_completo AS concluido_por_nome
+      uf.nome_completo AS concluido_por_nome,
+      (SELECT l.usuario_nome FROM agendamento_logs l
+         WHERE l.agendamento_id=a.id AND l.acao='editado'
+         ORDER BY l.criado_em DESC LIMIT 1) AS editado_por_nome,
+      (SELECT l.criado_em FROM agendamento_logs l
+         WHERE l.agendamento_id=a.id AND l.acao='editado'
+         ORDER BY l.criado_em DESC LIMIT 1) AS editado_em,
+      CASE WHEN ped.id IS NOT NULL
+        THEN 'P-' || LPAD(ped.id::TEXT, 4, '0')
+        ELSE NULL
+      END AS pedido_numero
     FROM agendamentos a
-    LEFT JOIN usuarios uc ON uc.id = a.criado_por
-    LEFT JOIN usuarios ui ON ui.id = a.iniciado_por
-    LEFT JOIN usuarios uf ON uf.id = a.concluido_por
+    LEFT JOIN usuarios uc  ON uc.id  = a.criado_por
+    LEFT JOIN usuarios ui  ON ui.id  = a.iniciado_por
+    LEFT JOIN usuarios uf  ON uf.id  = a.concluido_por
+    LEFT JOIN pedidos   ped ON ped.id = a.pedido_id AND ped.deleted_at IS NULL
     WHERE ${wheres.join(" AND ")}
     ORDER BY a.data ASC, a.hora ASC
     `,
@@ -279,31 +295,70 @@ async function criar(empresaId, userId, dados) {
     titulo, cliente, tipo, data, hora, endereco, cep, rua, numero, complemento,
     bairro, cidade, estado, descricao, observacoes, duracao_minutos,
     equipe = [], itens = [], pessoa_obrigatoria_id = null,
+    status: statusInput,
+    cliente_telefone, cliente_email, cliente_novo,
+    novo_pedido,
   } = dados;
+  const statusCriacao = statusInput === "pre_agendado" ? "pre_agendado" : "agendado";
 
-  /* Resolve ou cria o cliente antes da transação principal */
-  const clienteId = await resolverCliente(empresaId, cliente);
+  /* Resolve ou cria o cliente */
+  const { id: clienteId, criado: clienteCriado } = await resolverCliente(
+    empresaId, cliente,
+    { telefone: cliente_telefone, email: cliente_email }
+  );
+
+  /* Se o cliente foi criado agora e há endereço, salva como endereço padrão */
+  if (clienteCriado && (rua || cidade)) {
+    db.query(
+      `INSERT INTO cliente_enderecos
+         (cliente_id, label, rua, numero, complemento, bairro, cidade, estado, cep, is_padrao)
+       VALUES ($1,'Principal',$2,$3,$4,$5,$6,$7,$8,TRUE)`,
+      [clienteId, rua||null, numero||null, complemento||null, bairro||null, cidade||null, estado||null, cep||null]
+    ).catch(() => {});
+  }
 
   const client = await db.connect();
   try {
     await client.query("BEGIN");
+
+    /* Cria pedido inline se solicitado */
+    let pedidoIdFinal = dados.pedido_id ? Number(dados.pedido_id) : null;
+    if (novo_pedido?.descricao?.trim()) {
+      const pedRes = await client.query(
+        `INSERT INTO pedidos (empresa_id, cliente_id, status, descricao, observacoes, criado_por)
+         VALUES ($1,$2,'pendente',$3,$4,$5) RETURNING id`,
+        [empresaId, clienteId,
+         novo_pedido.descricao.trim(), novo_pedido.observacoes?.trim() || null, userId]
+      );
+      pedidoIdFinal = pedRes.rows[0].id;
+
+      /* Salva endereço no pedido em background (requer migration pedidos_endereco.sql) */
+      if (rua || cidade || cep) {
+        const partesPed = [rua, numero, complemento, bairro, cidade, estado ? `- ${estado}` : ""].filter(Boolean);
+        const endPedido = partesPed.length ? partesPed.join(", ") + (cep ? ` — CEP ${cep}` : "") : null;
+        db.query(
+          `UPDATE pedidos SET cep=$1,rua=$2,numero=$3,complemento=$4,bairro=$5,cidade=$6,estado=$7,endereco=$8 WHERE id=$9`,
+          [cep||null, rua||null, numero||null, complemento||null, bairro||null, cidade||null, estado||null, endPedido, pedidoIdFinal]
+        ).catch(() => {});
+      }
+    }
 
     const result = await client.query(
       `
       INSERT INTO agendamentos
         (empresa_id, titulo, cliente, tipo, data, hora, endereco, cep, rua, numero, complemento,
          bairro, cidade, estado, descricao, observacoes, status, criado_por, duracao_minutos, pessoa_obrigatoria_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'agendado',$17,$18,$19)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19)
       RETURNING id
       `,
       [empresaId, titulo, cliente, tipo||"Instalação", data, hora,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
-       userId, duracao_minutos||null, pessoa_obrigatoria_id||null]
+       userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusCriacao]
     );
     const agId = result.rows[0].id;
-    /* Vincula cliente_id em background — silencia erro se migration ainda não foi aplicada */
     db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, agId]).catch(() => {});
+    db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [pedidoIdFinal, agId]).catch(() => {});
 
     await Promise.all([inserirEquipe(agId, equipe, client), inserirItens(agId, itens, client)]);
 
@@ -336,6 +391,7 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     titulo, cliente, tipo, data, hora, endereco, cep, rua, numero, complemento,
     bairro, cidade, estado, descricao, observacoes, duracao_minutos,
     equipe = [], itens = [], pessoa_obrigatoria_id = null,
+    status: statusInput,
   } = dados;
 
   const [existe, equipeAnt] = await Promise.all([
@@ -356,10 +412,13 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
   ]);
 
   if (existe.rows.length === 0) { const e = new Error("Agendamento não encontrado."); e.status = 404; throw e; }
-  if (["andamento","concluido","nao_concluido","cancelado"].includes(existe.rows[0].status)) {
+  const statusAtual = existe.rows[0].status;
+  if (["andamento","concluido","nao_concluido","cancelado"].includes(statusAtual)) {
     const e = new Error("Agendamentos em andamento, concluídos ou cancelados não podem ser editados.");
     e.status = 403; throw e;
   }
+  const STATUSES_EDICAO = ["agendado", "pre_agendado"];
+  const novoStatus = STATUSES_EDICAO.includes(statusInput) ? statusInput : statusAtual;
 
   // Detecta se o endereço mudou — qualquer mudança força nova geocodificação
   const ant = existe.rows[0];
@@ -372,7 +431,7 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     (cep    || null) !== (ant.cep    || null);
 
   /* Resolve ou cria o cliente antes da transação principal */
-  const clienteId = await resolverCliente(empresaId, cliente);
+  const { id: clienteId } = await resolverCliente(empresaId, cliente);
 
   const client = await db.connect();
   try {
@@ -385,17 +444,18 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
           endereco=$6, cep=$7, rua=$8, numero=$9, complemento=$10,
           bairro=$11, cidade=$12, estado=$13,
           descricao=$14, observacoes=$15, duracao_minutos=$16,
-          pessoa_obrigatoria_id=$17, atualizado_em=NOW()
+          pessoa_obrigatoria_id=$17, status=$18, atualizado_em=NOW()
           ${enderecoMudou ? ", lat=NULL, lng=NULL, geocod_falhou=FALSE" : ""}
-      WHERE id=$18 AND empresa_id=$19
+      WHERE id=$19 AND empresa_id=$20
       `,
       [titulo, cliente, tipo, data, hora,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
-       duracao_minutos||null, pessoa_obrigatoria_id||null, id, empresaId]
+       duracao_minutos||null, pessoa_obrigatoria_id||null, novoStatus, id, empresaId]
     );
-    /* Vincula cliente_id em background — silencia erro se migration ainda não foi aplicada */
+    /* Vincula cliente_id e pedido_id em background — silencia erro se migration ainda não foi aplicada */
     db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, id]).catch(() => {});
+    db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [dados.pedido_id || null, id]).catch(() => {});
 
     await Promise.all([
       client.query(`DELETE FROM agendamento_equipe WHERE agendamento_id=$1`, [id]),
@@ -473,7 +533,7 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
 }
 
 async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, status, motivo, files, nomes) {
-  const STATUS_VALIDOS = ["agendado","andamento","concluido","nao_concluido","cancelado","atrasado"];
+  const STATUS_VALIDOS = ["agendado","andamento","concluido","nao_concluido","cancelado","atrasado","pre_agendado"];
   if (!STATUS_VALIDOS.includes(status)) { const e = new Error("Status inválido."); e.status = 400; throw e; }
 
   const STATUS_INSTALADOR = ["andamento","concluido","nao_concluido"];

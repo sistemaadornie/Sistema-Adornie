@@ -346,7 +346,7 @@ export default function MapaAgendamentos() {
       setCrews(crewsData);
       setEquipe(eqRes.equipe || []);
       setVeiculos(vRes.veiculos || []);
-      const agsData = agRes.agendamentos || [];
+      const agsData = (agRes.agendamentos || []).filter((a) => a.status !== "pre_agendado");
       setAgendamentos(agsData);
       if (analiseRes?.tem_conflitos) {
         setAnaliseConflitos(analiseRes);

@@ -35,6 +35,16 @@ const clientesRoutes     = require("./src/routes/clientesRoutes");
 const veiculosRoutes     = require("./src/routes/veiculosRoutes");
 const relatoriosRoutes   = require("./src/routes/relatoriosRoutes");
 const crewRoutes         = require("./src/routes/crewRoutes");
+const pedidosRoutes      = require("./src/routes/pedidosRoutes");
+const crmRoutes          = require("./src/routes/crmRoutes");
+const produtosRoutes     = require("./src/routes/produtosRoutes");
+const fornecedoresRoutes    = require("./src/routes/fornecedoresRoutes");
+const etiquetaLogosRoutes   = require("./src/routes/etiquetaLogosRoutes");
+const pipelineRoutes     = require("./src/routes/pipelineRoutes");
+const arquitetosRoutes   = require("./src/routes/arquitetosRoutes");
+const categoriasRoutes   = require("./src/routes/categoriasRoutes");
+const ordemServicoRoutes = require("./src/routes/ordemServicoRoutes");
+const uploadRoutes       = require("./src/routes/uploadRoutes");
 
 const app = express();
 
@@ -58,9 +68,14 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 // Em produção sem ALLOWED_ORIGINS configurado: bloqueia todas as origens
 // (requisições sem Origin — ex: curl direto — ainda passam; apenas cross-origin é bloqueado)
+// Localhost com qualquer porta é sempre permitido (Flutter web, devtools, etc.)
+const isLocalhost = (origin) =>
+  origin && /^https?:\/\/localhost(:\d+)?$/.test(origin);
+
 const corsOrigin = allowedOrigins
   ? (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+      if (!origin || allowedOrigins.includes(origin) || isLocalhost(origin))
+        cb(null, true);
       else cb(new Error("CORS: origem não permitida"));
     }
   : process.env.NODE_ENV === "production"
@@ -127,6 +142,16 @@ app.use("/api/clientes",      clientesRoutes);
 app.use("/api/veiculos",      veiculosRoutes);
 app.use("/api/relatorios",    relatoriosRoutes);
 app.use("/api/crews",         crewRoutes);
+app.use("/api/pedidos",       pedidosRoutes);
+app.use("/api/crm",           crmRoutes);
+app.use("/api/produtos",      produtosRoutes);
+app.use("/api/fornecedores",   fornecedoresRoutes);
+app.use("/api/etiqueta-logos", etiquetaLogosRoutes);
+app.use("/api/pipeline",      pipelineRoutes);
+app.use("/api/arquitetos",    arquitetosRoutes);
+app.use("/api/categorias",   categoriasRoutes);
+app.use("/api/os",           ordemServicoRoutes);
+app.use("/api",              uploadRoutes);
 
 // Porta
 const PORT = process.env.PORT || 3001;

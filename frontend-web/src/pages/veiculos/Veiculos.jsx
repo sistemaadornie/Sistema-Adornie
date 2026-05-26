@@ -416,7 +416,7 @@ function ModalEnderecosPartida({ veiculo, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box"
         style={{ maxWidth: 500, maxHeight: "90vh", overflowY: "auto" }}
@@ -718,7 +718,7 @@ function VeiculoModal({ veiculo, salvando, onClose, onSalvar }) {
   const temFoto = !!fotoPreview;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box"
         style={{ maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}
@@ -916,7 +916,7 @@ function ModalAbastecimento({ veiculo, onClose, onSalvo }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box modal-lg" style={{ maxWidth: 560, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -1031,7 +1031,7 @@ function ModalKmManual({ veiculo, onClose, onSalvo }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box"
         style={{ maxWidth: 380 }}

@@ -8,15 +8,16 @@ import { faixaHora } from "../../utils/horario";
 
 /* ── CONSTANTES ── */
 const STATUS_META = {
-  agendado:      { label: "Agendado",      cor: "#3b82f6", classe: "agendado"      },
-  andamento:     { label: "Em andamento",  cor: "#eab308", classe: "andamento"     },
-  concluido:     { label: "Concluído",     cor: "#22c55e", classe: "concluido"     },
-  nao_concluido: { label: "Não concluído", cor: "#f97316", classe: "nao_concluido" },
-  cancelado:     { label: "Cancelado",     cor: "#ef4444", classe: "cancelado"     },
-  atrasado:      { label: "Atrasado",      cor: "#ef4444", classe: "atrasado"      },
+  pre_agendado:  { label: "Pré agendado",   cor: "#94a3b8", classe: "pre_agendado"  },
+  agendado:      { label: "Agendado",       cor: "#3b82f6", classe: "agendado"      },
+  andamento:     { label: "Em andamento",   cor: "#eab308", classe: "andamento"     },
+  concluido:     { label: "Concluído",      cor: "#22c55e", classe: "concluido"     },
+  nao_concluido: { label: "Não concluído",  cor: "#f97316", classe: "nao_concluido" },
+  cancelado:     { label: "Cancelado",      cor: "#ef4444", classe: "cancelado"     },
+  atrasado:      { label: "Atrasado",       cor: "#ef4444", classe: "atrasado"      },
 };
 
-const TIPOS = ["Instalação", "Manutenção", "Retorno/Finalização"];
+const TIPOS = ["Instalação", "Manutenção", "Retorno/Finalização", "Conferência"];
 const POR_PAGINA = 60;
 
 function isoParaDate(iso) {
@@ -25,7 +26,7 @@ function isoParaDate(iso) {
 }
 
 function detectarAtrasado(ag) {
-  if (ag.status !== "agendado") return ag;
+  if (ag.status !== "agendado") return ag; // pre_agendado, concluido, etc. não viram atrasado
   const [y, m, d] = ag.data.split("-").map(Number);
   const [h, mi]   = ag.hora.split(":").map(Number);
   if (new Date(y, m - 1, d, h, mi) < new Date()) return { ...ag, status: "atrasado" };
@@ -482,6 +483,12 @@ function TabelaAgendamentos({ items, mostrarParceiros, onDetalhe }) {
               </th>
               <th style={{ minWidth: 135 }}>
                 <span className="hist-th-audit">
+                  <span className="hist-th-dot" style={{ background: "#8b5cf6" }} />
+                  Última edição
+                </span>
+              </th>
+              <th style={{ minWidth: 135 }}>
+                <span className="hist-th-audit">
                   <span className="hist-th-dot" style={{ background: "#eab308" }} />
                   Iniciado por
                 </span>
@@ -508,18 +515,15 @@ function TabelaAgendamentos({ items, mostrarParceiros, onDetalhe }) {
                   className={`hist-row hist-row--${ag.status}`}
                   onClick={() => onDetalhe(ag)}
                 >
-                  {/* Agendamento — título + cliente empilhados */}
                   <td className="hist-td">
                     <span className="hist-cell-title">{ag.titulo}</span>
                     <span className="hist-cell-sub">{ag.cliente}</span>
                   </td>
 
-                  {/* Tipo */}
                   <td className="hist-td">
                     <span className="hist-tipo-badge">{ag.tipo}</span>
                   </td>
 
-                  {/* Data + faixa de horário empilhados */}
                   <td className="hist-td">
                     <span className="hist-cell-date">
                       {ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"}
@@ -527,23 +531,16 @@ function TabelaAgendamentos({ items, mostrarParceiros, onDetalhe }) {
                     <span className="hist-cell-time">{faixaHora(ag.hora, ag.duracao_minutos)}</span>
                   </td>
 
-                  {/* Status */}
                   <td className="hist-td">
                     <span className={`ag-badge ${meta.classe}`}>{meta.label}</span>
                   </td>
 
-                  {/* Equipe — chips individuais */}
                   <td className="hist-td">
                     {(ag.equipe_info || []).length === 0
                       ? <span className="hist-empty">—</span>
                       : <div className="hist-equipe-list">
                           {(ag.equipe_info || []).map((m, j) => (
-                            <span
-                              key={j}
-                              className="hist-equipe-chip"
-                              title={m.nome}
-                              style={m.inativo ? { opacity: 0.6 } : undefined}
-                            >
+                            <span key={j} className="hist-equipe-chip" title={m.nome} style={m.inativo ? { opacity: 0.6 } : undefined}>
                               <span className="hist-equipe-initial">
                                 {(m.nome || "?").trim()[0]?.toUpperCase() ?? "?"}
                               </span>
@@ -557,22 +554,22 @@ function TabelaAgendamentos({ items, mostrarParceiros, onDetalhe }) {
                     }
                   </td>
 
-                  {/* Endereço */}
                   <td className="hist-td hist-td--addr" title={ag.endereco || ""}>
                     {ag.endereco || <span className="hist-empty">—</span>}
                   </td>
 
-                  {/* Audit: Criado */}
                   <td className="hist-td">
                     <AuditCell nome={ag.criado_por_nome} ts={ag.criado_em} cor="#3b82f6" />
                   </td>
 
-                  {/* Audit: Iniciado */}
+                  <td className="hist-td">
+                    <AuditCell nome={ag.editado_por_nome} ts={ag.editado_em} cor="#8b5cf6" />
+                  </td>
+
                   <td className="hist-td">
                     <AuditCell nome={ag.iniciado_por_nome} ts={ag.iniciado_em} cor="#eab308" />
                   </td>
 
-                  {/* Audit: Finalizado / Não concluído */}
                   <td className="hist-td">
                     <AuditCell nome={ag.concluido_por_nome} ts={ag.concluido_em} cor={corFinal} />
                   </td>
@@ -630,7 +627,7 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
     ])
       .then(([resAg, resLogs]) => {
         setAg(resAg.agendamento);
-        setLogs((resLogs.logs || []).filter((l) => l.acao === "editado"));
+        setLogs(resLogs.logs || []);
       })
       .catch(() => {})
       .finally(() => setLoadingDetalhe(false));
@@ -646,7 +643,7 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
   const TIPO_LABEL = { foto_antes: "Antes", foto_depois: "Depois", video: "Vídeo", documento: "Doc" };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box modal-lg"
         style={{ maxWidth: 600, maxHeight: "92vh", overflowY: "auto" }}
@@ -897,13 +894,13 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
             </div>
           )}
 
-          {/* ── Histórico de edições ── */}
+          {/* ── Linha do tempo de eventos ── */}
           {logs.length > 0 && (
             <div className="ag-form-field">
-              <label>Histórico de edições</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label>Histórico de atividades</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {logs.map((log, i) => (
-                  <LogEdição key={i} log={log} />
+                  <LogEvento key={i} log={log} />
                 ))}
               </div>
             </div>
@@ -915,59 +912,84 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
   );
 }
 
-function LogEdição({ log }) {
-  const d = log.detalhes || {};
-  const campos = d.campos || [];
-  const origem = d.origem === "drag_resize" ? "Arrastar / redimensionar" : "Formulário";
+const ACAO_CFG = {
+  editado:   { icon: "✏", cor: "#8b5cf6", label: "Editou" },
+  cancelado: { icon: "■", cor: "#ef4444", label: "Cancelou" },
+  excluido:  { icon: "✗", cor: "#6b7280", label: "Excluiu" },
+};
 
-  /* drag_resize tem formato próprio — converte para lista de campos */
-  const itens = d.origem === "drag_resize"
-    ? [
-        d.data_anterior !== d.data_nova && { campo: "Data", de: fmtData(d.data_anterior), para: fmtData(d.data_nova) },
-        d.hora_anterior !== d.hora_nova && { campo: "Hora", de: faixaHora(d.hora_anterior, d.duracao_anterior), para: faixaHora(d.hora_nova, d.duracao_nova) },
-        d.duracao_anterior !== d.duracao_nova && d.hora_anterior === d.hora_nova &&
-          { campo: "Horário", de: faixaHora(d.hora_anterior, d.duracao_anterior), para: faixaHora(d.hora_nova, d.duracao_nova) },
-      ].filter(Boolean)
-    : campos;
+function LogEvento({ log }) {
+  const d    = log.detalhes || {};
+  const cfg  = ACAO_CFG[log.acao] || { icon: "•", cor: "#94a3b8", label: log.acao };
+
+  /* Itens de campo alterado (edição por formulário ou drag/resize) */
+  let itens = [];
+  if (log.acao === "editado") {
+    if (d.origem === "drag_resize") {
+      if (d.data_anterior !== d.data_nova)
+        itens.push({ campo: "Data", de: fmtData(d.data_anterior), para: fmtData(d.data_nova) });
+      if (d.hora_anterior !== d.hora_nova || d.duracao_anterior !== d.duracao_nova)
+        itens.push({ campo: "Horário", de: faixaHora(d.hora_anterior, d.duracao_anterior), para: faixaHora(d.hora_nova, d.duracao_nova) });
+    } else {
+      itens = d.campos || [];
+    }
+  }
+
+  const origem = d.origem === "drag_resize" ? "Arrastar / redimensionar" : log.acao === "editado" ? "Formulário" : null;
 
   return (
     <div style={{
       background: "var(--color-surface-soft)",
       border: "1px solid var(--color-border)",
+      borderLeft: `3px solid ${cfg.cor}`,
       borderRadius: "var(--radius-md)",
       padding: "10px 14px",
       display: "flex",
       flexDirection: "column",
-      gap: 8,
+      gap: 6,
     }}>
-      {/* Cabeçalho: quem + quando + origem */}
+      {/* Cabeçalho */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 4 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{
             width: 26, height: 26, borderRadius: "50%",
-            background: "color-mix(in srgb, #6B4EFF 18%, var(--color-surface))",
-            border: "1.5px solid #6B4EFF",
+            background: `color-mix(in srgb, ${cfg.cor} 18%, var(--color-surface))`,
+            border: `1.5px solid ${cfg.cor}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, flexShrink: 0, color: "#6B4EFF", fontWeight: 700,
-          }}>
-            {(log.usuario_nome || "?")[0]?.toUpperCase()}
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>{log.usuario_nome || "Usuário"}</span>
+            fontSize: 11, flexShrink: 0, color: cfg.cor, fontWeight: 700,
+          }}>{cfg.icon}</span>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+              {log.usuario_nome || "Sistema"}
+            </span>
+            <span style={{ fontSize: 12, color: "var(--color-text-muted)", marginLeft: 6 }}>
+              {cfg.label}
+            </span>
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{
-            fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px",
-            color: "var(--color-text-muted)",
-            background: "var(--color-surface)", border: "1px solid var(--color-border)",
-            borderRadius: 999, padding: "2px 8px",
-          }}>{origem}</span>
+          {origem && (
+            <span style={{
+              fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px",
+              color: "var(--color-text-muted)",
+              background: "var(--color-surface)", border: "1px solid var(--color-border)",
+              borderRadius: 999, padding: "2px 8px",
+            }}>{origem}</span>
+          )}
           <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>{fmtDatetime(log.criado_em)}</span>
         </div>
       </div>
 
-      {/* Campos alterados */}
+      {/* Motivo (cancelamento) */}
+      {log.acao === "cancelado" && d.motivo && (
+        <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginLeft: 32 }}>
+          Motivo: <em>{d.motivo}</em>
+        </div>
+      )}
+
+      {/* Campos alterados (edição) */}
       {itens.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 32 }}>
           {itens.map((item, j) => (
             <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12 }}>
               <span style={{ fontWeight: 600, color: "var(--color-text-secondary)", minWidth: 90, flexShrink: 0 }}>

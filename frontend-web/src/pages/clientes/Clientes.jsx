@@ -13,6 +13,23 @@ const CATEGORIAS = [
 
 const CAT_META = Object.fromEntries(CATEGORIAS.map((c) => [c.value, c]));
 
+function fmtCpf(v = "") {
+  const n = v.replace(/\D/g, "").slice(0, 11);
+  if (n.length <= 3) return n;
+  if (n.length <= 6) return `${n.slice(0,3)}.${n.slice(3)}`;
+  if (n.length <= 9) return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6)}`;
+  return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6,9)}-${n.slice(9)}`;
+}
+
+function fmtCnpj(v = "") {
+  const n = v.replace(/\D/g, "").slice(0, 14);
+  if (n.length <= 2)  return n;
+  if (n.length <= 5)  return `${n.slice(0,2)}.${n.slice(2)}`;
+  if (n.length <= 8)  return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5)}`;
+  if (n.length <= 12) return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5,8)}/${n.slice(8)}`;
+  return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5,8)}/${n.slice(8,12)}-${n.slice(12)}`;
+}
+
 function fmtTelefone(v = "") {
   const n = v.replace(/\D/g, "").slice(0, 11);
   if (n.length <= 2)  return n;
@@ -56,7 +73,9 @@ export default function Clientes() {
       (c) =>
         c.nome.toLowerCase().includes(b) ||
         (c.telefone || "").includes(b) ||
-        (c.email || "").toLowerCase().includes(b)
+        (c.email || "").toLowerCase().includes(b) ||
+        (c.cpf  || "").replace(/\D/g, "").includes(b.replace(/\D/g, "")) ||
+        (c.cnpj || "").replace(/\D/g, "").includes(b.replace(/\D/g, ""))
     );
   }, [clientes, busca]);
 
@@ -222,6 +241,9 @@ export default function Clientes() {
                 <div className="cl-card-avatar">{c.nome.trim()[0].toUpperCase()}</div>
                 <div className="cl-card-body">
                   <div className="cl-card-nome">{c.nome}</div>
+                  {(c.cpf || c.cnpj) && (
+                    <div className="cl-card-info" style={{ fontFamily: "monospace", fontSize: 12 }}>{c.cpf || c.cnpj}</div>
+                  )}
                   {c.telefone && (
                     <div className="cl-card-info">📱 {c.telefone}</div>
                   )}
@@ -345,6 +367,16 @@ function DetalheCliente({ cliente, onEditar, onAdicionarEndereco, onEditarEndere
         <div style={{ flex: 1 }}>
           <h2 className="cl-detalhe-nome">{cliente.nome}</h2>
           <div className="cl-detalhe-contatos">
+            {cliente.cpf && (
+              <span className="cl-contato-link" style={{ fontFamily: "monospace", cursor: "default" }}>
+                🪪 CPF: {cliente.cpf}
+              </span>
+            )}
+            {cliente.cnpj && (
+              <span className="cl-contato-link" style={{ fontFamily: "monospace", cursor: "default" }}>
+                🪪 CNPJ: {cliente.cnpj}
+              </span>
+            )}
             {cliente.telefone && (
               <a href={`https://wa.me/55${cliente.telefone.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" className="cl-contato-link">
                 📱 {cliente.telefone}
@@ -438,6 +470,8 @@ function DetalheCliente({ cliente, onEditar, onAdicionarEndereco, onEditarEndere
 function ClienteModal({ cliente, onClose, onSalvar, salvando }) {
   const [form, setForm] = useState({
     nome:     cliente?.nome     ?? "",
+    cpf:      cliente?.cpf      ?? "",
+    cnpj:     cliente?.cnpj     ?? "",
     telefone: cliente?.telefone ?? "",
     email:    cliente?.email    ?? "",
   });
@@ -445,9 +479,9 @@ function ClienteModal({ cliente, onClose, onSalvar, salvando }) {
 
   function set(k, v) { setForm((p) => ({ ...p, [k]: v })); if (erroForm) setErroForm(""); }
 
-  function handleTelefone(v) {
-    set("telefone", fmtTelefone(v));
-  }
+  function handleTelefone(v) { set("telefone", fmtTelefone(v)); }
+  function handleCpf(v)  { set("cpf",  fmtCpf(v));  }
+  function handleCnpj(v) { set("cnpj", fmtCnpj(v)); }
 
   function salvar() {
     if (!form.nome.trim()) { setErroForm("Nome é obrigatório."); return; }
@@ -455,7 +489,7 @@ function ClienteModal({ cliente, onClose, onSalvar, salvando }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -477,6 +511,30 @@ function ClienteModal({ cliente, onClose, onSalvar, salvando }) {
             {erroForm && (
               <span style={{ fontSize: 12, color: "#ef4444", marginTop: 2 }}>{erroForm}</span>
             )}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="ag-form-field">
+              <label>CPF</label>
+              <input
+                placeholder="000.000.000-00"
+                value={form.cpf}
+                onChange={(e) => handleCpf(e.target.value)}
+                maxLength={14}
+                disabled={!!form.cnpj}
+                style={{ fontFamily: "monospace", opacity: form.cnpj ? 0.45 : 1 }}
+              />
+            </div>
+            <div className="ag-form-field">
+              <label>CNPJ</label>
+              <input
+                placeholder="00.000.000/0000-00"
+                value={form.cnpj}
+                onChange={(e) => handleCnpj(e.target.value)}
+                maxLength={18}
+                disabled={!!form.cpf}
+                style={{ fontFamily: "monospace", opacity: form.cpf ? 0.45 : 1 }}
+              />
+            </div>
           </div>
           <div className="ag-form-field">
             <label>Telefone / WhatsApp</label>
@@ -586,7 +644,7 @@ function EnderecoModal({ endereco, onClose, onSalvar, salvando }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-box modal-lg"
         style={{ maxWidth: 600, maxHeight: "90vh", overflowY: "auto" }}

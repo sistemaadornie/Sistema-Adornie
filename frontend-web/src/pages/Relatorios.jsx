@@ -12,6 +12,7 @@ const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov"
 const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
 const STATUS_COR = {
+  pre_agendado:  "#94a3b8",
   agendado:      "#3b82f6",
   andamento:     "#eab308",
   concluido:     "#22c55e",
@@ -21,6 +22,7 @@ const STATUS_COR = {
   retorno:       "#a07cff",
 };
 const STATUS_LABEL = {
+  pre_agendado:  "Pré agendado",
   agendado:      "Agendado",
   andamento:     "Em andamento",
   concluido:     "Concluído",
