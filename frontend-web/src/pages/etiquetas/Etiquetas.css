@@ -1,0 +1,962 @@
+/* ============================================================
+   ETIQUETAS — Gerador de etiquetas / placas / identificação
+   Prefix: etq-*
+   ============================================================ */
+
+/* ── Layout da página ─────────────────────────────── */
+
+.etq-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-3);
+  gap: 20px;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+.etq-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.etq-title {
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+
+.etq-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 5px 0 0;
+}
+
+/* ── Body ────────────────────────────────────────── */
+
+.etq-body {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Config sidebar ──────────────────────────────── */
+
+.etq-config {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.etq-config::-webkit-scrollbar { width: 4px; }
+.etq-config::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 4px; }
+
+.etq-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.etq-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+/* ── Abas de template ────────────────────────────── */
+
+.etq-type-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.etq-tab {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.etq-tab:hover {
+  background: var(--color-surface-strong);
+  border-color: var(--color-border-strong);
+}
+
+.etq-tab.active {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.etq-tab-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.etq-tab.active .etq-tab-label {
+  color: var(--color-primary);
+}
+
+.etq-tab-dim {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* ── Checkboxes de campos ────────────────────────── */
+
+.etq-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px 14px;
+  margin-bottom: 2px;
+}
+
+.etq-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.etq-check-row input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.etq-ignore-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.etq-num-input {
+  width: 52px;
+  padding: 4px 6px;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: center;
+  font-family: var(--font-body);
+}
+
+.etq-num-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* ── Header actions ──────────────────────────────── */
+
+.etq-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Seletor de logo ─────────────────────────────── */
+
+.etq-logo-vazio {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.etq-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.etq-logo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.etq-logo-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--color-surface-strong);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 64px;
+  max-width: 90px;
+}
+
+.etq-logo-opt:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.etq-logo-opt.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.etq-logo-opt-none {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 8px 0;
+}
+
+.etq-logo-opt.active .etq-logo-opt-none {
+  color: var(--color-primary);
+}
+
+.etq-logo-opt-img {
+  width: 52px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: var(--radius-xs);
+}
+
+.etq-logo-opt-nome {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 74px;
+}
+
+.etq-logo-opt.active .etq-logo-opt-nome {
+  color: var(--color-primary);
+}
+
+/* ── Lista de itens ──────────────────────────────── */
+
+.etq-items-section {
+  flex: 1;
+}
+
+.etq-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.etq-item-card {
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.etq-field {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  font-family: var(--font-body);
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+
+.etq-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.etq-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.etq-field-row {
+  display: flex;
+  gap: 6px;
+}
+
+.etq-field-row .etq-field {
+  flex: 1;
+  width: auto;
+}
+
+.etq-field-qty {
+  max-width: 68px !important;
+  flex: 0 0 auto !important;
+  text-align: center;
+}
+
+.etq-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: var(--radius-xs);
+  opacity: 0.45;
+  transition: opacity var(--transition-fast);
+  line-height: 1;
+}
+
+.etq-remove-btn:hover {
+  opacity: 1;
+  background: var(--color-danger-soft);
+}
+
+.etq-add-btn {
+  width: 100%;
+  justify-content: center !important;
+}
+
+/* ── Painel de prévia ────────────────────────────── */
+
+.etq-preview-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.etq-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.etq-count-badge {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.etq-model-info {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.etq-ignore-badge {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.etq-preview-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.etq-preview-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.etq-preview-scroll::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 4px; }
+
+/* ── Simulação do papel ──────────────────────────── */
+
+.etq-paper {
+  background: #fff;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.20),
+    0 8px 32px rgba(0,0,0,0.30),
+    0 0 0 1px rgba(0,0,0,0.06);
+  border-radius: 2px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.etq-paper-grid {
+  display: grid;
+  align-content: start;
+}
+
+/* ── Slot ignorado ───────────────────────────────── */
+
+.etq-skip-slot {
+  border: 1px dashed #e0e0e0;
+  border-radius: 1px;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────
+   Labels de PRÉVIA
+───────────────────────────────────────────────── */
+
+.etq-label {
+  background: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Etiqueta produto */
+.etq-l-produto {
+  border: 0.5px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  padding: 5% 5% 4%;
+}
+
+.etq-lp-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 3%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.etq-lp-nome {
+  font-weight: 700;
+  color: #111;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.etq-lp-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 3%;
+  gap: 2%;
+}
+
+.etq-lp-preco {
+  font-weight: 900;
+  color: #111;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Placa ID */
+.etq-l-placa {
+  border: 1px solid #888;
+  display: flex;
+  flex-direction: column;
+  padding: 4% 5%;
+}
+
+.etq-placa-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 0.5px solid #ccc;
+}
+
+.etq-placa-titulo {
+  font-weight: 900;
+  color: #111;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.etq-placa-sub {
+  color: #333;
+  font-weight: 500;
+}
+
+.etq-placa-refs {
+  display: flex;
+  gap: 6%;
+  color: #555;
+  margin-bottom: auto;
+}
+
+
+/* Etiqueta cortina */
+.etq-l-cortina {
+  border: 0.5px solid #bbb;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.etq-cor-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4%;
+  padding: 3% 4%;
+  border-bottom: 0.5px solid #ddd;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.etq-cor-titulo {
+  font-weight: 900;
+  color: #111;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.etq-cor-logo {
+  object-fit: contain;
+  display: block;
+}
+
+.etq-cor-img-center {
+  flex-shrink: 0;
+  border-bottom: 0.5px solid #ddd;
+  overflow: hidden;
+}
+
+.etq-cor-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.etq-cor-fields {
+  flex: 1;
+  padding: 3.5% 4%;
+  display: flex;
+  flex-direction: column;
+  gap: 4%;
+  overflow: hidden;
+}
+
+.etq-cor-side-img {
+  width: 30%;
+  flex-shrink: 0;
+  border-left: 0.5px solid #ddd;
+  overflow: hidden;
+}
+
+.etq-cor-side-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.etq-cor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 1%;
+}
+
+.etq-cor-field-grow {
+  flex: 1;
+  overflow: hidden;
+}
+
+.etq-cor-img-center {
+  flex-shrink: 0;
+  border-bottom: 0.5px solid #ddd;
+  overflow: hidden;
+}
+
+.etq-cor-key {
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.etq-cor-val {
+  font-weight: 800;
+  color: #111;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etq-cor-itens {
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+.etq-cor-footer {
+  padding: 3% 4%;
+  border-top: 0.5px solid #ddd;
+  background: #f5f5f5;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6%;
+}
+
+.etq-cor-opcoes {
+  display: flex;
+  gap: 8%;
+}
+
+.etq-cor-opcao {
+  display: flex;
+  align-items: center;
+  gap: 8%;
+  font-weight: 700;
+  color: #222;
+}
+
+.etq-cor-box {
+  border: 1px solid #444;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+/* textarea de itens */
+.etq-field-textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+/* Etiqueta tecido */
+.etq-l-tecido {
+  border: 0.5px solid #bbb;
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.etq-tec-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 5% 4% 4%;
+  overflow: hidden;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.etq-tec-top {
+  display: flex;
+  align-items: center;
+  gap: 3%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.etq-tec-nome {
+  font-weight: 900;
+  color: #111;
+  line-height: 1.15;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etq-tec-divider {
+  border-top: 0.5px solid #ccc;
+  margin: 3% 0 2%;
+  flex-shrink: 0;
+}
+
+.etq-tec-info {
+  display: flex;
+  gap: 4%;
+  color: #333;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.etq-tec-side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-left: 0.5px solid #ddd;
+  background: #fafafa;
+  padding: 4%;
+  width: 26%; /* ~72mm of 277mm */
+}
+
+.etq-tec-metragem {
+  font-weight: 900;
+  color: #111;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.etq-tec-cor {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #444;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 4%;
+}
+
+.etq-tec-cor-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #888;
+  flex-shrink: 0;
+}
+
+/* Formulário metragem */
+.etq-field-metragem {
+  align-items: center;
+}
+
+.etq-metragem-sep {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+/* ── Modal de impressão ──────────────────────────── */
+
+.etqprint-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 8500;
+  animation: etqprint-fade 0.15s ease;
+}
+
+@keyframes etqprint-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.etqprint-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-large);
+  animation: etqprint-slide 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes etqprint-slide {
+  from { transform: scale(0.94) translateY(10px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+.etqprint-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.etqprint-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.etqprint-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.etqprint-close:hover {
+  color: var(--color-text);
+  background: var(--color-surface-strong);
+}
+
+.etqprint-body {
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.etqprint-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  align-self: flex-start;
+}
+
+.etqprint-info {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.etqprint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.etqprint-row + .etqprint-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.etqprint-key {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.etqprint-val {
+  font-size: 13px;
+  color: var(--color-text);
+  font-weight: 500;
+  text-align: right;
+}
+
+.etqprint-val strong {
+  color: var(--color-primary);
+}
+
+.etqprint-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.etqprint-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─────────────────────────────────────────────────
+   Impressão
+───────────────────────────────────────────────── */
+
+.etq-print-only {
+  display: none;
+}
+
+@media print {
+  /* Oculta tudo — sidebar, navbar, app inteiro */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Mostra apenas a área de etiquetas */
+  .etq-print-only,
+  .etq-print-only * {
+    visibility: visible !important;
+  }
+
+  .etq-print-only {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+  }
+
+  /* Orientação e margens controladas dinamicamente pelo componente via <style> inline */
+  @page {
+    margin: 0;
+  }
+}

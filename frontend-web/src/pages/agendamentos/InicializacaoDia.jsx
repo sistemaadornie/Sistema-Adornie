@@ -182,7 +182,7 @@ export default function InicializacaoDia({
   const semEquipe = agendamentos.filter((a) => !todosDistribuidos.has(a.id));
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 740, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
         {/* ── Header ── */}

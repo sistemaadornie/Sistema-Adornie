@@ -42,7 +42,7 @@ export default function ConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="confirm-overlay" onClick={onCancel}>
+    <div className="confirm-overlay">
       <div
         className={`confirm-box confirm-${variante}`}
         onClick={(e) => e.stopPropagation()}

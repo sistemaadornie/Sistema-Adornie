@@ -582,7 +582,7 @@ export default function Usuarios() {
 
       {/* ── MODAL: EDITAR USUÁRIO ── */}
       {modalAberto && (
-        <div className="modal-overlay" onClick={fecharModal}>
+        <div className="modal-overlay">
           <div
             className="modal-box modal-lg"
             style={{ maxWidth: 860 }}
