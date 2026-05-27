@@ -18,6 +18,7 @@ import {
   FaTruck,
   FaTags,
   FaDraftingCompass,
+  FaFileAlt,
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
 
@@ -38,6 +39,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const podeVerHome          = true;
   const podeVerClientes      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerPedidos       = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
+  const podeVerOrcamentos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER");
   const podeVerCatalogo      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerFornecedores  = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerArquitetos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
@@ -179,6 +181,13 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           <NavLink to="/pedidos" className={navItemClass} title="Pedidos">
             <FaClipboardList className="sidebar-icon" />
             {!collapsed && <span className="sidebar-label">Pedidos</span>}
+          </NavLink>
+        )}
+
+        {podeVerOrcamentos && (
+          <NavLink to="/orcamentos" className={navItemClass} title="Orçamentos">
+            <FaFileAlt className="sidebar-icon" />
+            {!collapsed && <span className="sidebar-label">Orçamentos</span>}
           </NavLink>
         )}
 

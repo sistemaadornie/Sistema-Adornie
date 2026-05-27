@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
-  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar
+  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar, FaFileAlt
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
 import "./Home.css";
@@ -12,8 +12,9 @@ export default function Home() {
   const nome = user?.nome_completo?.split(" ")[0] || "Usuário";
 
   const temPerm = (...perms) => perms.some((p) => user?.permissoes?.includes(p));
-  const podeVerClientes   = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
-  const podeVerVeiculos   = temPerm("INSTALADOR", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
+  const podeVerClientes    = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
+  const podeVerOrcamentos  = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER");
+  const podeVerVeiculos    = temPerm("INSTALADOR", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
   const podeVerUsuarios   = temPerm("GESTOR_USUARIOS", "ADMIN_MASTER");
   const podeVerRelatorios = temPerm("OPERADOR_AGENDA", "ADMIN_MASTER");
 
@@ -35,6 +36,15 @@ export default function Home() {
           titulo: "Clientes",
           desc: "Cadastro completo com endereços e histórico de atendimentos.",
           rota: "/clientes",
+        }]
+      : []),
+    ...(podeVerOrcamentos
+      ? [{
+          icon: <FaFileAlt />,
+          cor: "#8b5cf6",
+          titulo: "Orçamentos",
+          desc: "Crie e aprove orçamentos de cortinas e persianas por ambiente.",
+          rota: "/orcamentos",
         }]
       : []),
     ...(podeVerVeiculos
