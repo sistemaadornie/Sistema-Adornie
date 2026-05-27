@@ -1,0 +1,106 @@
+<h2>Como deve funcionar o formulário de orçamento?</h2>
+<p class="subtitle">Escolha o padrão de navegação que melhor se encaixa no fluxo de trabalho da equipe</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="wizard" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+          <div style="padding:4px 10px;background:#7c3aed;border-radius:12px;font-size:10px;color:#fff">① Cliente</div>
+          <div style="height:1px;flex:1;background:#374151"></div>
+          <div style="padding:4px 10px;background:#1f2937;border-radius:12px;font-size:10px;color:#6b7280">② Itens</div>
+          <div style="height:1px;flex:1;background:#374151"></div>
+          <div style="padding:4px 10px;background:#1f2937;border-radius:12px;font-size:10px;color:#6b7280">③ Revisão</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px">
+          <div style="color:#9ca3af;font-size:10px;margin-bottom:4px">CLIENTE</div>
+          <div style="background:#374151;border-radius:3px;padding:4px 6px;margin-bottom:4px;color:#e2e8f0">🔍 Buscar cliente...</div>
+          <div style="color:#9ca3af;font-size:10px;margin-bottom:4px;margin-top:6px">CONSULTORA</div>
+          <div style="background:#374151;border-radius:3px;padding:4px 6px;color:#e2e8f0">Maria Silva</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+          <div style="padding:4px 14px;background:#7c3aed;border-radius:4px;font-size:10px;color:#fff">Próximo →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Wizard por etapas</h3>
+      <p>3 passos: Cliente → Itens por ambiente → Revisão. Uma coisa por vez, barra de progresso no topo.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Guia o usuário</li><li>Menos overwhelm</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Mais cliques para chegar nos itens</li><li>Mais código de estado</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pagina" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="background:#1f2937;border-radius:4px;padding:6px;margin-bottom:6px">
+          <div style="color:#9ca3af;font-size:9px">DADOS GERAIS</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <div style="flex:2;background:#374151;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:9px">🔍 Cliente</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:9px">Arquiteto</div>
+          </div>
+        </div>
+        <div style="background:#1f2937;border-radius:4px;padding:6px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="color:#9ca3af;font-size:9px">ITENS (Sala)</div>
+            <div style="background:#7c3aed;border-radius:3px;padding:2px 6px;font-size:9px;color:#fff">+ Item</div>
+          </div>
+          <div style="background:#374151;border-radius:3px;padding:4px;margin-top:4px;font-size:9px;color:#e2e8f0">
+            Persiana rolô · 1,80×2,20 · Branco
+          </div>
+        </div>
+        <div style="background:#1f2937;border-radius:4px;padding:6px">
+          <div style="color:#9ca3af;font-size:9px">TOTAL: R$ 1.800,00</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:4px">
+            <div style="padding:3px 10px;background:#059669;border-radius:3px;font-size:9px;color:#fff">Salvar orçamento</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Página única com seções</h3>
+      <p>Tudo em uma página. Dados gerais no topo, itens abaixo, total fixo no rodapé. Scroll natural.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Visão completa</li><li>Mais rápido para usuário experiente</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Pode ser longa com muitos itens</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="modal" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="display:flex;gap:6px;height:90px">
+          <div style="flex:1;background:#111827;border-radius:4px;padding:6px;overflow:hidden">
+            <div style="color:#6b7280;font-size:9px;margin-bottom:4px">Lista de orçamentos</div>
+            <div style="background:#1f2937;border-radius:3px;padding:3px;margin-bottom:2px;font-size:8px;color:#d1d5db">ORC-0001 · Roberto M. · R$580</div>
+            <div style="background:#7c3aed22;border:1px solid #7c3aed44;border-radius:3px;padding:3px;margin-bottom:2px;font-size:8px;color:#a78bfa">ORC-0002 · Ana S. · Rascunho ←</div>
+            <div style="background:#1f2937;border-radius:3px;padding:3px;font-size:8px;color:#d1d5db">ORC-0003 · Carlos E.</div>
+          </div>
+          <div style="flex:1.4;background:#1f2937;border-radius:4px;padding:6px">
+            <div style="color:#9ca3af;font-size:9px;margin-bottom:4px">ORC-0002 · Ana Silveira</div>
+            <div style="background:#374151;border-radius:3px;padding:3px 5px;margin-bottom:3px;font-size:8px;color:#e2e8f0">Sala · Persiana · 1,80×2,20</div>
+            <div style="background:#374151;border-radius:3px;padding:3px 5px;margin-bottom:4px;font-size:8px;color:#e2e8f0">Quarto · Cortina · 2,40×2,80</div>
+            <div style="display:flex;gap:3px">
+              <div style="padding:2px 6px;background:#059669;border-radius:3px;font-size:8px;color:#fff">Aprovar</div>
+              <div style="padding:2px 6px;background:#374151;border-radius:3px;font-size:8px;color:#e2e8f0">Editar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Lista + painel lateral (split view)</h3>
+      <p>Lado esquerdo: lista de orçamentos. Lado direito: detalhe/edição do selecionado. Estilo de e-mail.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Contexto sempre visível</li><li>Troca rápida entre orçamentos</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Formulário de criação fica comprimido</li><li>Ruim em tela pequena</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

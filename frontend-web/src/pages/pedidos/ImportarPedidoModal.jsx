@@ -35,6 +35,24 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
   const [pagamentos,    setPagamentos]    = useState([]);
   const [fonteImport,   setFonteImport]   = useState("");
 
+  async function preencherViaCep(cepRaw) {
+    const cep = (cepRaw || "").replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.erro) return;
+      setForm(prev => ({
+        ...prev,
+        rua:    prev.rua    || data.logradouro || "",
+        bairro: prev.bairro || data.bairro     || "",
+        cidade: prev.cidade || data.localidade || "",
+        estado: prev.estado || data.uf         || "",
+      }));
+    } catch (_) {}
+  }
+
   function aplicarExtraido(ext, fonte) {
     const hoje = new Date().toISOString().slice(0, 10);
     setFonteImport(fonte);
@@ -51,12 +69,17 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       consultor_nome:      ext.consultor_nome      || "",
       arquiteto_id:        ext.arquiteto_id        || "",
       arquiteto_nome:      ext.arquiteto_nome      || "",
-      cliente_id:          "",
+      cliente_id:          ext.cliente_id          || "",
       descricao:           "",
       observacoes:         ext.observacoes         || "",
       observacoes_entrega: ext.observacoes_entrega || "",
       cep:                 ext.cep                 || "",
-      rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "",
+      rua:                 ext.rua                 || "",
+      numero:              ext.numero              || "",
+      complemento:         ext.complemento         || "",
+      bairro:              ext.bairro              || "",
+      cidade:              ext.cidade              || "",
+      estado:              ext.estado              || "",
       subtotal:            ext.subtotal            ?? "",
       desconto:            ext.desconto            ?? "",
       total:               ext.total               ?? "",
@@ -67,6 +90,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       ? ext.pagamentos.map(pg => ({ ...pagVazio(), ...pg, vencimento: pg.vencimento || "" }))
       : [pagVazio()]);
     setEtapa("revisao");
+    // Completa endereço via ViaCEP quando campos ficaram vazios após extração
+    if (ext.cep && (!ext.rua || !ext.cidade)) preencherViaCep(ext.cep);
   }
 
   async function handleTexto() {
@@ -265,10 +290,16 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                 />
               </div>
 
-              {/* Cliente — auto-criado se não existir */}
-              <div style={{ padding: "10px 14px", background: "rgba(16,185,129,0.08)", borderRadius: "var(--radius-md)", fontSize: 12, color: "var(--color-text-secondary)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                Se o cliente não existir no sistema, será criado automaticamente com os dados abaixo.
-              </div>
+              {/* Cliente — indicador se já existe ou será criado */}
+              {form.cliente_id ? (
+                <div style={{ padding: "10px 14px", background: "rgba(59,130,246,0.08)", borderRadius: "var(--radius-md)", fontSize: 12, color: "var(--color-text-secondary)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                  Cliente já cadastrado no sistema — dados serão atualizados se houver diferença.
+                </div>
+              ) : (
+                <div style={{ padding: "10px 14px", background: "rgba(16,185,129,0.08)", borderRadius: "var(--radius-md)", fontSize: 12, color: "var(--color-text-secondary)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                  Cliente não encontrado — será criado automaticamente com os dados abaixo.
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div className="ag-form-field">
                   <label>Nome do Cliente *</label>
@@ -277,6 +308,11 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                     onChange={(e) => set("nome_cliente", e.target.value)}
                     placeholder="Nome completo do cliente"
                   />
+                  {form.cliente_id && (
+                    <span style={{ fontSize: 11, color: "var(--color-success, #22c55e)" }}>
+                      Encontrado no sistema ✓ (ID #{form.cliente_id})
+                    </span>
+                  )}
                 </div>
                 <div className="ag-form-field">
                   <label>Telefone</label>
@@ -346,14 +382,55 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                 </div>
               </div>
 
-              {/* Endereço extraído (somente leitura, para referência) */}
-              {form._endereco_completo && (
-                <div className="ag-form-field">
-                  <label>Endereço extraído do PDF</label>
-                  <input readOnly value={form._endereco_completo} style={{ color: "var(--color-text-muted)" }} />
-                  <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-                    CEP detectado: {form.cep || "não detectado"}
-                  </span>
+              {/* Endereço de Entrega */}
+              {(form._endereco_completo || form.cep || form.rua) && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--color-text-muted)", marginBottom: 8 }}>
+                    Endereço de Entrega
+                  </div>
+                  {form._endereco_completo && (
+                    <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 10, padding: "6px 10px", background: "var(--color-surface-soft)", borderRadius: "var(--radius-sm)", fontFamily: "monospace" }}>
+                      {form._endereco_completo}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 120px", gap: 10, marginBottom: 10 }}>
+                    <div className="ag-form-field">
+                      <label>CEP</label>
+                      <input
+                        value={form.cep}
+                        onChange={(e) => set("cep", e.target.value)}
+                        onBlur={(e) => preencherViaCep(e.target.value)}
+                        placeholder="00000-000"
+                        style={{ fontFamily: "monospace" }}
+                      />
+                    </div>
+                    <div className="ag-form-field">
+                      <label>Rua / Logradouro</label>
+                      <input value={form.rua} onChange={(e) => set("rua", e.target.value)} placeholder="Av. Exemplo" />
+                    </div>
+                    <div className="ag-form-field">
+                      <label>Número</label>
+                      <input value={form.numero} onChange={(e) => set("numero", e.target.value)} placeholder="123" />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 10 }}>
+                    <div className="ag-form-field">
+                      <label>Complemento</label>
+                      <input value={form.complemento} onChange={(e) => set("complemento", e.target.value)} placeholder="apto 201" />
+                    </div>
+                    <div className="ag-form-field">
+                      <label>Bairro</label>
+                      <input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} placeholder="Centro" />
+                    </div>
+                    <div className="ag-form-field">
+                      <label>Cidade</label>
+                      <input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} placeholder="Curitiba" />
+                    </div>
+                    <div className="ag-form-field">
+                      <label>UF</label>
+                      <input value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} placeholder="PR" maxLength={2} style={{ textTransform: "uppercase" }} />
+                    </div>
+                  </div>
                 </div>
               )}
 

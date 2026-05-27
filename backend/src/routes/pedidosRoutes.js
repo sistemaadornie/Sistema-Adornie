@@ -359,6 +359,49 @@ function extrairItensTabelaRawText(texto) {
   return itens.length > 0 ? itens : null;
 }
 
+// ─── Parser de endereço "Logradouro, Num - Complemento - Bairro, Cidade - UF" ─
+
+function parsearEndereco(endStr) {
+  if (!endStr) return {};
+  let str = endStr.trim();
+
+  // UF: últimos 2 chars maiúsculos após " - "
+  const mUF = str.match(/,?\s*[-–]\s*([A-Z]{2})\s*$/);
+  const estado = mUF ? mUF[1] : null;
+  if (estado) str = str.slice(0, str.length - mUF[0].length).trim();
+
+  // Cidade: última parte após ", "
+  const lastComma = str.lastIndexOf(', ');
+  let cidade = null;
+  if (lastComma !== -1) {
+    cidade = str.slice(lastComma + 2).trim() || null;
+    str = str.slice(0, lastComma).trim();
+  }
+
+  // Restante: "Logradouro, Num - Complemento - Bairro"
+  const partes = str.split(/\s*[-–]\s*/);
+
+  // Último segmento = bairro
+  const bairro = partes.length > 1 ? partes.pop().trim() || null : null;
+
+  // Penúltimo com letra e sem vírgula = complemento
+  let complemento = null;
+  if (partes.length > 1) {
+    const cand = partes[partes.length - 1].trim();
+    if (/[a-zA-ZÀ-ú]/.test(cand) && !cand.includes(',') && cand.length < 40) {
+      complemento = partes.pop().trim() || null;
+    }
+  }
+
+  const logradouro = partes.join(' - ').trim();
+  // "Rua Exemplo, 123" → rua + numero
+  const mNum = logradouro.match(/^(.+),\s*(\d[\w/-]*)\s*$/);
+  const rua    = mNum ? mNum[1].trim() || null : logradouro || null;
+  const numero = mNum ? mNum[2].trim() || null : null;
+
+  return { rua, numero, complemento, bairro, cidade, estado };
+}
+
 // ─── Parser de campos simples via regex (número, cliente, totais, pagamentos) ─
 
 function parsearCamposSimples(texto) {
@@ -394,9 +437,26 @@ function parsearCamposSimples(texto) {
   const mTel = texto.match(/(?:Fone|Tel|Telefone|Celular)[:\s]*([\(\d\s)\-+]{8,20})/i);
   const telefone_cliente = mTel ? mTel[1].trim().replace(/\s+/g, " ") : null;
 
-  const mCep = texto.match(/(\d{5}-\d{3})\s*[-–]\s*(.+)/);
-  const cep               = mCep ? mCep[1] : null;
-  const endereco_completo = mCep ? mCep[2].trim() : null;
+  // Endereço de Entrega — captura multi-linha buscando pelo label primeiro
+  let cep = null, endereco_completo = null;
+  const endEntregaIdx = linhas.findIndex(l => /^Endere[çc]o\s+de\s+Entrega$/i.test(l));
+  if (endEntregaIdx !== -1) {
+    const endLines = [];
+    for (let ei = endEntregaIdx + 1; ei < linhas.length && ei <= endEntregaIdx + 4; ei++) {
+      const lv = linhas[ei];
+      if (!lv || /^(Consultor|Cliente|Arquiteto|Forma\s+de\s+Pag|Pedido|SubTotal|Total|Observa)/i.test(lv)) break;
+      endLines.push(lv);
+    }
+    const endText = endLines.join(' ');
+    const mC = endText.match(/(\d{5}-\d{3})\s*[-–]\s*(.+)/);
+    if (mC) { cep = mC[1]; endereco_completo = mC[2].trim(); }
+  }
+  // Fallback: primeira ocorrência de CEP no texto
+  if (!cep) {
+    const mCep = texto.match(/(\d{5}-\d{3})\s*[-–]\s*(.+)/);
+    if (mCep) { cep = mCep[1]; endereco_completo = mCep[2].trim(); }
+  }
+  const endParsed = parsearEndereco(endereco_completo);
 
   const mSubtotal = texto.match(/SubTotal:\s*R\$\s*([\d.,]+)/i);
   const mDesconto = texto.match(/Desconto:\s*R\$\s*([\d.,]+)/i);
@@ -473,6 +533,12 @@ function parsearCamposSimples(texto) {
   return {
     numero_origem, data_pedido, nome_cliente, telefone_cliente,
     cpf, cnpj, email_cliente, cep, endereco_completo,
+    rua:         endParsed.rua         || null,
+    numero:      endParsed.numero      || null,
+    complemento: endParsed.complemento || null,
+    bairro:      endParsed.bairro      || null,
+    cidade:      endParsed.cidade      || null,
+    estado:      endParsed.estado      || null,
     subtotal, desconto, total, observacoes_entrega, observacoes, pagamentos,
     consultor_nome, arquiteto_nome,
   };
@@ -598,6 +664,33 @@ function parsearItensTabDelimitada(texto) {
   return itens;
 }
 
+// ─── Lookup de cliente por CPF, CNPJ ou nome (sem criar) ────────────────────
+
+async function buscarClienteId(empresaId, campos) {
+  if (campos.cpf) {
+    const r = await db.query(
+      `SELECT id FROM clientes WHERE empresa_id=$1 AND cpf=$2 AND deleted_at IS NULL LIMIT 1`,
+      [empresaId, campos.cpf]
+    );
+    if (r.rows.length > 0) return r.rows[0].id;
+  }
+  if (campos.cnpj) {
+    const r = await db.query(
+      `SELECT id FROM clientes WHERE empresa_id=$1 AND cnpj=$2 AND deleted_at IS NULL LIMIT 1`,
+      [empresaId, campos.cnpj]
+    );
+    if (r.rows.length > 0) return r.rows[0].id;
+  }
+  if (campos.nome_cliente) {
+    const r = await db.query(
+      `SELECT id FROM clientes WHERE empresa_id=$1 AND LOWER(TRIM(nome))=LOWER($2) AND deleted_at IS NULL LIMIT 1`,
+      [empresaId, campos.nome_cliente.trim()]
+    );
+    if (r.rows.length > 0) return r.rows[0].id;
+  }
+  return null;
+}
+
 // ─── rotas ──────────────────────────────────────────────────────────────────
 
 router.get("/", authMiddleware, async (req, res) => {
@@ -703,7 +796,11 @@ router.post("/importar-pdf", authMiddleware, upload.single("arquivo"), async (re
       } catch (_) {}
     }
 
-    const extraido = { ...campos, itens: itens || [], consultor_id, arquiteto_id };
+    // Busca cliente existente pelo CPF, CNPJ ou nome
+    let cliente_id = null;
+    try { cliente_id = await buscarClienteId(req.user.empresa_id, campos); } catch (_) {}
+
+    const extraido = { ...campos, itens: itens || [], consultor_id, arquiteto_id, cliente_id };
 
     // DEBUG — remover após confirmar extração correta
     return res.json({
@@ -752,7 +849,10 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
       } catch (_) {}
     }
 
-    return res.json({ extraido: { ...campos, itens, consultor_id, arquiteto_id } });
+    let cliente_id = null;
+    try { cliente_id = await buscarClienteId(req.user.empresa_id, campos); } catch (_) {}
+
+    return res.json({ extraido: { ...campos, itens, consultor_id, arquiteto_id, cliente_id } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Erro ao processar texto.", erro: err.message });

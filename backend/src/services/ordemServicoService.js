@@ -42,4 +42,89 @@ async function atualizarStatus(id, status) {
   return rows[0];
 }
 
-module.exports = { criar, listarPorPedido, atualizarStatus };
+async function buscar(id) {
+  const { rows } = await db.query(
+    `SELECT os.id, os.status, os.aberta_em, os.encerrada_em, os.tipo, os.dados_tecnicos,
+            os.preenchido_em, os.preenchido_por,
+            os.pedido_item_id,
+            pi.pedido_id,
+            pi.ambiente AS item_ambiente,
+            pi.descricao AS item_descricao,
+            pi.quantidade AS item_quantidade,
+            pi.unidade AS item_unidade,
+            pi.referencia AS item_referencia,
+            pi.cor AS item_cor,
+            pi.medidas AS item_medidas,
+            p.numero_origem AS pedido_numero_origem,
+            p.numero_sequencial AS pedido_numero_sequencial,
+            c.nome AS cliente_nome,
+            c.telefone AS cliente_telefone,
+            c.email AS cliente_email,
+            u.nome_completo AS consultor_nome,
+            a.nome AS arquiteto_nome
+     FROM ordem_servico os
+     JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
+     LEFT JOIN clientes c ON c.id = p.cliente_id
+     LEFT JOIN usuarios u ON u.id = p.consultor_id
+     LEFT JOIN arquitetos a ON a.id = p.arquiteto_id
+     WHERE os.id = $1`,
+    [id]
+  );
+  if (rows.length === 0) return null;
+  
+  const os = rows[0];
+  return {
+    ...os,
+    pedido_numero: os.pedido_numero_origem || `SIS-${String(os.pedido_numero_sequencial || os.pedido_id).padStart(8, '0')}`
+  };
+}
+
+async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
+  // Validações estritas dos dados reais (dados verdadeiros)
+  const {
+    largura, altura_esq, altura_meio, altura_dir,
+    responsavel_conferencia, data_conferencia,
+    assinatura_tecnico
+  } = dadosTecnicos || {};
+
+  if (!largura || parseFloat(String(largura).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error("Medida de largura técnica é obrigatória e deve ser maior que zero."), { status: 400 });
+  }
+  if (!altura_esq || parseFloat(String(altura_esq).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error("Altura esquerda técnica é obrigatória e deve ser maior que zero."), { status: 400 });
+  }
+  if (!altura_meio || parseFloat(String(altura_meio).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error("Altura do meio técnica é obrigatória e deve ser maior que zero."), { status: 400 });
+  }
+  if (!altura_dir || parseFloat(String(altura_dir).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error("Altura direita técnica é obrigatória e deve ser maior que zero."), { status: 400 });
+  }
+  if (!responsavel_conferencia?.trim()) {
+    throw Object.assign(new Error("Nome do responsável pela conferência é obrigatório."), { status: 400 });
+  }
+  if (!data_conferencia) {
+    throw Object.assign(new Error("Data de conferência é obrigatória."), { status: 400 });
+  }
+  if (!assinatura_tecnico?.trim()) {
+    throw Object.assign(new Error("Assinatura do técnico é obrigatória."), { status: 400 });
+  }
+
+  // Se passou nas validações, salva no JSONB e marca como preenchido e atualiza o status para 'em_andamento'
+  const { rows } = await db.query(
+    `UPDATE ordem_servico
+     SET dados_tecnicos = $1,
+         preenchido_em = NOW(),
+         preenchido_por = $2,
+         status = CASE WHEN status = 'aberta' THEN 'em_andamento' ELSE status END,
+         updated_at = NOW()
+     WHERE id = $3
+     RETURNING *`,
+    [JSON.stringify(dadosTecnicos), userId, id]
+  );
+
+  if (!rows[0]) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
+  return rows[0];
+}
+
+module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosTecnicos };

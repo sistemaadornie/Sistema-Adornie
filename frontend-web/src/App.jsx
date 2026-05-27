@@ -26,13 +26,10 @@ const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
 const OrdemServicoPage       = lazy(() => import("./pages/pedidos/OrdemServicoPage"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
-const Crm                    = lazy(() => import("./pages/crm/Crm"));
 const Produtos               = lazy(() => import("./pages/catalogo/Produtos"));
 const Fornecedores           = lazy(() => import("./pages/fornecedores/Fornecedores"));
 const Arquitetos             = lazy(() => import("./pages/arquitetos/Arquitetos"));
 const Etiquetas              = lazy(() => import("./pages/etiquetas/Etiquetas"));
-const Kanban                = lazy(() => import("./pages/kanban/Kanban"));
-const KanbanConfig          = lazy(() => import("./pages/kanban/KanbanConfig"));
 const Orcamentos            = lazy(() => import("./pages/orcamentos/Orcamentos"));
 const OrcamentoWizard       = lazy(() => import("./pages/orcamentos/OrcamentoWizard"));
 
@@ -100,7 +97,6 @@ export default function App() {
                 <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/pedidos" element={<Pedidos />} />
                   <Route path="/pedidos/os/:osId" element={<OrdemServicoPage />} />
-                  <Route path="/crm" element={<Crm />} />
                   <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
                   <Route path="/arquitetos"  element={<Arquitetos />} />
@@ -124,14 +120,6 @@ export default function App() {
 
                 <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/etiquetas" element={<Etiquetas />} />
-                </Route>
-
-                <Route element={<PermissionRoute perms={["KANBAN_VIEW","KANBAN_ADMIN","KANBAN_COMPRAS","KANBAN_CONFECCAO","KANBAN_CONFIG","ADMIN_MASTER"]} />}>
-                  <Route path="/kanban" element={<Kanban />} />
-                </Route>
-
-                <Route element={<PermissionRoute perms={["KANBAN_CONFIG","ADMIN_MASTER"]} />}>
-                  <Route path="/kanban/config" element={<KanbanConfig />} />
                 </Route>
 
                 <Route element={<PermissionRoute perms={["ADMIN_MASTER"]} />}>

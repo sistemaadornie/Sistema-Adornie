@@ -42,4 +42,27 @@ router.get('/pedidos/:pedidoId/os', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'id inválido' });
+    const os = await svc.buscar(id);
+    if (!os) return res.status(404).json({ message: 'Ordem de serviço não encontrada.' });
+    res.json(os);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'id inválido' });
+    const os = await svc.salvarDadosTecnicos(id, req.user.id, req.body);
+    res.json(os);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

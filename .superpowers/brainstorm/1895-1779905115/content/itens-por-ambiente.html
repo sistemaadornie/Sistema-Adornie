@@ -1,0 +1,124 @@
+<h2>Etapa 2 — Como organizar os itens por ambiente?</h2>
+<p class="subtitle">Cada ambiente (Sala, Quarto 1, etc.) tem seus próprios produtos com medidas e cor</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="abas" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="display:flex;gap:4px;margin-bottom:8px;border-bottom:1px solid #374151;padding-bottom:6px">
+          <div style="padding:3px 10px;background:#7c3aed;border-radius:4px 4px 0 0;font-size:10px;color:#fff">Sala</div>
+          <div style="padding:3px 10px;background:#1f2937;border-radius:4px 4px 0 0;font-size:10px;color:#6b7280">Quarto 1</div>
+          <div style="padding:3px 10px;background:#1f2937;border-radius:4px 4px 0 0;font-size:10px;color:#6b7280">Quarto 2</div>
+          <div style="padding:3px 10px;background:#1f2937;border-radius:4px 4px 0 0;font-size:10px;color:#6b7280;border:1px dashed #374151">+ Ambiente</div>
+        </div>
+        <div style="background:#1f2937;border-radius:4px;padding:6px">
+          <div style="display:flex;gap:4px;margin-bottom:4px">
+            <div style="flex:2;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">Persiana rolô duplex</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">1,80</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">2,20</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">Branco</div>
+          </div>
+          <div style="display:flex;gap:4px;margin-bottom:6px">
+            <div style="flex:2;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">Cortina blackout</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">2,40</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">2,80</div>
+            <div style="flex:1;background:#374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">Cinza</div>
+          </div>
+          <div style="color:#7c3aed;font-size:9px;cursor:pointer">+ Adicionar item na Sala</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Abas por ambiente</h3>
+      <p>Cada ambiente é uma aba. Dentro de cada aba, uma tabela de itens. Botão "+ Ambiente" cria nova aba.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Organização clara</li><li>Não mistura ambientes</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Muitos ambientes = abas apertadas</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="acordeon" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="margin-bottom:4px">
+          <div style="background:#1f2937;border-radius:4px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#e2e8f0;font-size:10px;font-weight:600">▼ Sala <span style="color:#6b7280;font-size:9px">(2 itens · R$ 1.300)</span></span>
+            <span style="color:#ef4444;font-size:9px">🗑</span>
+          </div>
+          <div style="background:#111827;border:1px solid #374151;border-top:none;border-radius:0 0 4px 4px;padding:6px">
+            <div style="display:flex;gap:4px;margin-bottom:3px">
+              <div style="flex:2;background:#374151;border-radius:3px;padding:2px 5px;font-size:9px;color:#e2e8f0">Persiana rolô</div>
+              <div style="flex:1;background:#374151;border-radius:3px;padding:2px 4px;font-size:9px;color:#e2e8f0">1,80×2,20</div>
+              <div style="flex:1;background:#374151;border-radius:3px;padding:2px 4px;font-size:9px;color:#e2e8f0">Branco</div>
+            </div>
+            <div style="color:#7c3aed;font-size:9px;cursor:pointer;margin-top:4px">+ item</div>
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="background:#1f2937;border-radius:4px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#e2e8f0;font-size:10px;font-weight:600">▶ Quarto 1 <span style="color:#6b7280;font-size:9px">(1 item · R$ 720)</span></span>
+            <span style="color:#ef4444;font-size:9px">🗑</span>
+          </div>
+        </div>
+        <div style="background:#1f2937;border-radius:4px;padding:5px 8px;border:1px dashed #374151">
+          <span style="color:#7c3aed;font-size:9px">+ Novo ambiente</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Acordeão por ambiente</h3>
+      <p>Lista vertical de ambientes expansíveis. Abrir um ambiente mostra seus itens. Recolher economiza espaço.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Escala bem com muitos ambientes</li><li>Visão geral + detalhe no mesmo lugar</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Um passo a mais para expandir</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="lista_unica" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:11px;padding:8px;background:#0d1117;border-radius:6px;color:#e2e8f0">
+        <div style="display:flex;gap:4px;margin-bottom:4px;background:#1f2937;padding:4px 6px;border-radius:3px">
+          <div style="flex:2;color:#6b7280;font-size:9px">PRODUTO</div>
+          <div style="flex:1;color:#6b7280;font-size:9px">AMBIENTE</div>
+          <div style="flex:1;color:#6b7280;font-size:9px">MED</div>
+          <div style="flex:1;color:#6b7280;font-size:9px">COR</div>
+          <div style="flex:1;color:#6b7280;font-size:9px">VALOR</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:3px;padding:3px 6px">
+          <div style="flex:2;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Persiana rolô</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Sala</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">1,80×2,20</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Branco</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">580</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:3px;padding:3px 6px">
+          <div style="flex:2;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Cortina blackout</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Quarto 1</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">2,40×2,80</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Cinza</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">720</div>
+        </div>
+        <div style="display:flex;gap:4px;padding:3px 6px">
+          <div style="flex:2;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Cortina sheer</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Sala</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">3,00×2,50</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">Areia</div>
+          <div style="flex:1;background:#374151;border-radius:2px;padding:2px 4px;font-size:9px;color:#e2e8f0">940</div>
+        </div>
+        <div style="margin-top:6px;text-align:right;color:#7c3aed;font-size:9px">+ Adicionar item</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Tabela única com coluna ambiente</h3>
+      <p>Todos os itens numa só tabela. A coluna "Ambiente" é um campo de texto livre (ou select). Filtro por ambiente no topo.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Entrada mais rápida</li><li>Visão total de todos os itens</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Menos estruturado</li><li>Mais difícil de revisar por cômodo</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import usePedidos from "./hooks/usePedidos";
 import ConfirmModal from "../../components/ConfirmModal";
 import PedidoPrint from "./PedidoPrint";
@@ -46,6 +47,11 @@ function itemVazio() {
 function pagVazio() {
   return { forma: "PIX / DEPÓSITO", parcela: "1/1", vencimento: "", valor: "" };
 }
+function ehCortina(descricao = "", referencia = "") {
+  const d = String(descricao || "").toLowerCase();
+  const r = String(referencia || "").toLowerCase();
+  return d.includes("cortina") || r.includes("cortina");
+}
 
 export default function Pedidos() {
   const { pedidos, loading, erro, carregar, criar, atualizar, excluir, importar } = usePedidos();
@@ -62,6 +68,7 @@ export default function Pedidos() {
   const [confirmId,     setConfirmId]     = useState(null);
   const [printPedido,   setPrintPedido]   = useState(null);
   const [importarAberto, setImportarAberto] = useState(false);
+  const navigate = useNavigate();
 
   function mostrarToast(texto, tipo = "success") {
     setToast({ texto, tipo });
@@ -148,6 +155,15 @@ export default function Pedidos() {
       mostrarToast(e.message || "Erro ao importar.", "error");
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleGerarOS(itemId) {
+    try {
+      const res = await api.post("/os", { pedido_item_id: itemId });
+      navigate(`/pedidos/os/${res.id}`);
+    } catch (e) {
+      mostrarToast(e.response?.data?.message || e.message || "Erro ao gerar OS.", "error");
     }
   }
 
@@ -261,6 +277,8 @@ export default function Pedidos() {
               onEditar={() => setModalPedido(pedidoFull || pedidoDetalheAtual)}
               onExcluir={() => setConfirmId(pedidoDetalheAtual.id)}
               onImprimir={() => setPrintPedido(pedidoFull || pedidoDetalheAtual)}
+              onGerarOS={handleGerarOS}
+              onAbrirOS={(id) => navigate(`/pedidos/os/${id}`)}
             />
           )}
         </div>
@@ -309,12 +327,13 @@ export default function Pedidos() {
           salvando={salvando}
         />
       )}
+
     </div>
   );
 }
 
 /* ── DETALHE DO PEDIDO ── */
-function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir }) {
+function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onAbrirOS }) {
   return (
     <div className="pd-detalhe-inner">
       <div className="pd-detalhe-header">
@@ -403,6 +422,7 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir }) {
                     <th>Un</th>
                     <th>Preço</th>
                     <th>Total</th>
+                    <th>Ficha OS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -418,6 +438,36 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir }) {
                       <td>{it.unidade || "—"}</td>
                       <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
                       <td style={{ fontWeight: 600 }}>{it.valor != null ? `R$ ${fmtMoeda(it.valor)}` : "—"}</td>
+                      <td>
+                        {ehCortina(it.descricao, it.referencia) ? (
+                          it.os_id ? (
+                            <button
+                              onClick={() => onAbrirOS(it.os_id)}
+                              className="ek-btn"
+                              style={{
+                                fontSize: 11,
+                                padding: "4px 8px",
+                                background: it.os_status === "aberta" ? "#fef3c7" : "#d1fae5",
+                                color: it.os_status === "aberta" ? "#d97706" : "#065f46",
+                                border: `1px solid ${it.os_status === "aberta" ? "#fcd34d" : "#6ee7b7"}`,
+                                fontWeight: 600
+                              }}
+                            >
+                              {it.os_status === "aberta" ? "📋 OS: Aberta" : "✅ OS: Preenchida"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onGerarOS(it.id)}
+                              className="ek-btn ek-btn-secondary"
+                              style={{ fontSize: 11, padding: "4px 8px" }}
+                            >
+                              📋 Gerar OS
+                            </button>
+                          )
+                        ) : (
+                          <span style={{ color: "var(--color-text-muted)", fontSize: 11 }}>—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

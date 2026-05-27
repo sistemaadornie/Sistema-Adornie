@@ -14,11 +14,9 @@ import {
   FaSun,
   FaMoon,
   FaClipboardList,
-  FaHandshake,
   FaBoxOpen,
   FaTruck,
   FaTags,
-  FaColumns,
   FaDraftingCompass,
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
@@ -40,7 +38,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const podeVerHome          = true;
   const podeVerClientes      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerPedidos       = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
-  const podeVerCrm           = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerCatalogo      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerFornecedores  = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerArquitetos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
@@ -50,7 +47,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const podeVerMapa          = true;
   const podeVerUsuarios      = temPerm(user, "GESTOR_USUARIOS","ADMIN_MASTER");
   const podeVerEtiquetas     = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
-  const podeVerKanban        = temPerm(user, "KANBAN_VIEW","KANBAN_ADMIN","KANBAN_COMPRAS","KANBAN_CONFECCAO","KANBAN_CONFIG","ADMIN_MASTER");
   const podeVerRelatorios    = temPerm(user, "OPERADOR_AGENDA", "ADMIN_MASTER");
   const podeVerConfiguracoes = temPerm(user, "ADMIN_MASTER");
 
@@ -148,13 +144,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           </NavLink>
         )}
 
-        {podeVerCrm && (
-          <NavLink to="/crm" className={navItemClass} title="CRM & Gestão">
-            <FaHandshake className="sidebar-icon" />
-            {!collapsed && <span className="sidebar-label">CRM & Gestão</span>}
-          </NavLink>
-        )}
-
         {podeVerCatalogo && (
           <NavLink to="/catalogo/produtos" className={navItemClass} title="Produtos / Serviços">
             <FaBoxOpen className="sidebar-icon" />
@@ -197,13 +186,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           <NavLink to="/etiquetas" className={navItemClass} title="Etiquetas">
             <FaTags className="sidebar-icon" />
             {!collapsed && <span className="sidebar-label">Etiquetas</span>}
-          </NavLink>
-        )}
-
-        {podeVerKanban && (
-          <NavLink to="/kanban" className={navItemClass} title="Fluxo de Vendas">
-            <FaColumns className="sidebar-icon" />
-            {!collapsed && <span className="sidebar-label">Fluxo de Vendas</span>}
           </NavLink>
         )}
 

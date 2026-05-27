@@ -34,7 +34,11 @@ async function montarPedido(id, empresaId) {
   const p = res.rows[0];
 
   const itensRes = await db.query(
-    `SELECT * FROM pedido_itens WHERE pedido_id=$1 ORDER BY ordem, id`,
+    `SELECT pi.*, os.id AS os_id, os.status AS os_status
+     FROM pedido_itens pi
+     LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
+     WHERE pi.pedido_id=$1
+     ORDER BY pi.ordem, pi.id`,
     [id]
   );
 
@@ -100,28 +104,69 @@ async function buscar(id, empresaId) {
 }
 
 async function _salvarItens(client, pedidoId, itens = []) {
-  await client.query(`DELETE FROM pedido_itens WHERE pedido_id=$1`, [pedidoId]);
+  // 1. Obtém todos os itens existentes no banco de dados para este pedido
+  const existingRes = await client.query(`SELECT id FROM pedido_itens WHERE pedido_id = $1`, [pedidoId]);
+  const existingIds = existingRes.rows.map(r => r.id);
+
+  const incomingIds = itens.map(it => Number(it.id)).filter(id => Number.isFinite(id) && id > 0);
+
+  // 2. Determina quais itens devem ser excluídos
+  const idsParaDeletar = existingIds.filter(id => !incomingIds.includes(id));
+  if (idsParaDeletar.length > 0) {
+    // Remove as ordens de serviço associadas antes de excluir os itens
+    await client.query(`DELETE FROM ordem_servico WHERE pedido_item_id = ANY($1)`, [idsParaDeletar]);
+    await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
+  }
+
+  // 3. Atualiza os itens existentes ou insere os novos
   for (let i = 0; i < itens.length; i++) {
     const it = itens[i];
-    await client.query(
-      `INSERT INTO pedido_itens
-         (pedido_id, ambiente, referencia, cor, descricao, medidas,
-          quantidade, unidade, preco_unitario, valor, ordem)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [
-        pedidoId,
-        it.ambiente?.trim() || null,
-        it.referencia?.trim() || null,
-        it.cor?.trim() || null,
-        it.descricao?.trim() || "",
-        it.medidas?.trim() || null,
-        parseFloat(it.quantidade) || 1,
-        it.unidade?.trim() || null,
-        toDecimal(it.preco_unitario),
-        toDecimal(it.valor),
-        i,
-      ]
-    );
+    const itemId = Number(it.id);
+
+    if (Number.isFinite(itemId) && itemId > 0 && existingIds.includes(itemId)) {
+      // UPDATE item existente
+      await client.query(
+        `UPDATE pedido_itens
+         SET ambiente = $1, referencia = $2, cor = $3, descricao = $4, medidas = $5,
+             quantidade = $6, unidade = $7, preco_unitario = $8, valor = $9, ordem = $10
+         WHERE id = $11 AND pedido_id = $12`,
+        [
+          it.ambiente?.trim() || null,
+          it.referencia?.trim() || null,
+          it.cor?.trim() || null,
+          it.descricao?.trim() || "",
+          it.medidas?.trim() || null,
+          parseFloat(it.quantidade) || 1,
+          it.unidade?.trim() || null,
+          toDecimal(it.preco_unitario),
+          toDecimal(it.valor),
+          i,
+          itemId,
+          pedidoId
+        ]
+      );
+    } else {
+      // INSERT novo item
+      await client.query(
+        `INSERT INTO pedido_itens
+           (pedido_id, ambiente, referencia, cor, descricao, medidas,
+            quantidade, unidade, preco_unitario, valor, ordem)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [
+          pedidoId,
+          it.ambiente?.trim() || null,
+          it.referencia?.trim() || null,
+          it.cor?.trim() || null,
+          it.descricao?.trim() || "",
+          it.medidas?.trim() || null,
+          parseFloat(it.quantidade) || 1,
+          it.unidade?.trim() || null,
+          toDecimal(it.preco_unitario),
+          toDecimal(it.valor),
+          i,
+        ]
+      );
+    }
   }
 }
 
@@ -291,24 +336,59 @@ async function importar(empresaId, userId, dados) {
   let clienteId = dados.cliente_id || null;
 
   if (!clienteId && dados.nome_cliente?.trim()) {
-    const { id, criado } = await cliSvc.resolverCliente(empresaId, dados.nome_cliente, {
+    const { id } = await cliSvc.resolverCliente(empresaId, dados.nome_cliente, {
       telefone: dados.telefone_cliente,
       email:    dados.email_cliente,
       cpf:      dados.cpf,
       cnpj:     dados.cnpj,
     });
     clienteId = id;
+  }
 
-    if (criado && dados.cep) {
-      try {
+  // Salva endereço no cliente sempre que há dados — evita duplicata pelo CEP
+  if (clienteId && (dados.cep || dados.rua)) {
+    try {
+      let jaTemEndereco = false;
+      if (dados.cep) {
+        const endExiste = await db.query(
+          `SELECT id FROM cliente_enderecos WHERE cliente_id=$1 AND cep=$2 AND deleted_at IS NULL LIMIT 1`,
+          [clienteId, dados.cep]
+        );
+        jaTemEndereco = endExiste.rows.length > 0;
+      }
+      if (!jaTemEndereco) {
         await cliSvc.adicionarEndereco(clienteId, empresaId, {
-          label:     "Entrega",
-          categoria: "comercial",
-          cep:       dados.cep,
-          is_padrao: true,
+          label:       "Entrega",
+          categoria:   "residencial",
+          cep:         dados.cep         || null,
+          rua:         dados.rua         || null,
+          numero:      dados.numero      || null,
+          complemento: dados.complemento || null,
+          bairro:      dados.bairro      || null,
+          cidade:      dados.cidade      || null,
+          estado:      dados.estado      || null,
+          is_padrao:   true,
         });
-      } catch (_) {}
-    }
+      } else {
+        // Endereço com mesmo CEP já existe — atualiza detalhes (sem apagar dados existentes)
+        await db.query(
+          `UPDATE cliente_enderecos
+           SET rua         = COALESCE($1, rua),
+               numero      = COALESCE($2, numero),
+               complemento = COALESCE($3, complemento),
+               bairro      = COALESCE($4, bairro),
+               cidade      = COALESCE($5, cidade),
+               estado      = COALESCE($6, estado),
+               updated_at  = NOW()
+           WHERE cliente_id=$7 AND cep=$8 AND deleted_at IS NULL`,
+          [
+            dados.rua    || null, dados.numero || null, dados.complemento || null,
+            dados.bairro || null, dados.cidade || null, dados.estado      || null,
+            clienteId, dados.cep,
+          ]
+        );
+      }
+    } catch (_) {}
   }
 
   // Resolve arquiteto: usa o id já conhecido, busca por nome ou cria se não existir

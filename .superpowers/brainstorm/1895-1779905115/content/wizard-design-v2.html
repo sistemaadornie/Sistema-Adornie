@@ -1,0 +1,178 @@
+<h2>Wizard v2 — Quantidade nos itens + endereço opcional</h2>
+<p class="subtitle">Ajustes: campo QTD nos itens; endereço preenchido no rascunho é aproveitado na aprovação</p>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+
+  <!-- ETAPA 1 -->
+  <div class="mockup">
+    <div class="mockup-header">Etapa 1 — Cliente, dados gerais e endereço (opcional)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:11px;color:#e2e8f0">
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <div style="padding:4px 14px;background:#7c3aed;border-radius:12px;font-size:10px;color:#fff;font-weight:600">① Cliente</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#1f2937;border-radius:12px;font-size:10px;color:#6b7280">② Itens</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#1f2937;border-radius:12px;font-size:10px;color:#6b7280">③ Revisão</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="color:#9ca3af;font-size:9px;margin-bottom:3px">CLIENTE *</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:4px;padding:6px;color:#a78bfa">🔍 Ana Silveira  ✕</div>
+        </div>
+        <div>
+          <div style="color:#9ca3af;font-size:9px;margin-bottom:3px">CONSULTORA</div>
+          <div style="background:#111827;border:1px solid #374151;border-radius:4px;padding:6px;color:#6b7280">Maria Silva (você)</div>
+        </div>
+        <div>
+          <div style="color:#9ca3af;font-size:9px;margin-bottom:3px">ARQUITETO (opcional)</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:4px;padding:6px;color:#6b7280">🔍 Buscar arquiteto...</div>
+        </div>
+        <div>
+          <div style="color:#9ca3af;font-size:9px;margin-bottom:3px">OBSERVAÇÕES</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:4px;padding:6px;color:#6b7280">Observações gerais...</div>
+        </div>
+      </div>
+      <!-- Endereço de entrega opcional -->
+      <div style="border:1px dashed #374151;border-radius:6px;padding:8px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="color:#9ca3af;font-size:9px">ENDEREÇO DE ENTREGA <span style="color:#6b7280">(opcional — pode preencher agora ou depois)</span></div>
+          <div style="color:#7c3aed;font-size:9px;cursor:pointer">Usar endereço do cliente ↙</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:4px">
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">Rua / Logradouro</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">Número</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">Complemento</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px">
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">Bairro</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">Cidade</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#6b7280">CEP</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="padding:5px 16px;background:#7c3aed;border-radius:5px;font-size:10px;color:#fff">Próximo: Itens →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETAPA 2 -->
+  <div class="mockup">
+    <div class="mockup-header">Etapa 2 — Itens por ambiente (com campo QTD)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:11px;color:#e2e8f0">
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <div style="padding:4px 14px;background:#059669;border-radius:12px;font-size:10px;color:#fff">① Cliente ✓</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#7c3aed;border-radius:12px;font-size:10px;color:#fff;font-weight:600">② Itens</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#1f2937;border-radius:12px;font-size:10px;color:#6b7280">③ Revisão</div>
+      </div>
+      <div style="margin-bottom:6px;border:1px solid #374151;border-radius:6px;overflow:hidden">
+        <div style="background:#1f2937;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:600">▼  Sala <span style="color:#6b7280;font-size:9px">(2 itens · R$ 1.300,00)</span></span>
+          <span style="color:#ef4444;font-size:9px;cursor:pointer">🗑 remover</span>
+        </div>
+        <div style="padding:8px;background:#111827">
+          <!-- Header da tabela com QTD -->
+          <div style="display:grid;grid-template-columns:2fr 0.6fr 0.8fr 0.8fr 1fr 1fr 0.4fr;gap:4px;margin-bottom:4px">
+            <div style="color:#6b7280;font-size:8px">PRODUTO</div>
+            <div style="color:#6b7280;font-size:8px">QTD</div>
+            <div style="color:#6b7280;font-size:8px">LARG (m)</div>
+            <div style="color:#6b7280;font-size:8px">ALT (m)</div>
+            <div style="color:#6b7280;font-size:8px">COR</div>
+            <div style="color:#6b7280;font-size:8px">R$ UNIT</div>
+            <div style="color:#6b7280;font-size:8px"></div>
+          </div>
+          <!-- Item 1 -->
+          <div style="display:grid;grid-template-columns:2fr 0.6fr 0.8fr 0.8fr 1fr 1fr 0.4fr;gap:4px;margin-bottom:4px">
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#a78bfa">Persiana rolô duplex</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px;text-align:center">2</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">1,80</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">2,20</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">Branco</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">580,00</div>
+            <div style="color:#ef4444;font-size:10px;cursor:pointer;text-align:center">✕</div>
+          </div>
+          <!-- Item 2 -->
+          <div style="display:grid;grid-template-columns:2fr 0.6fr 0.8fr 0.8fr 1fr 1fr 0.4fr;gap:4px;margin-bottom:6px">
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px;color:#e2e8f0">Cortina sheer voil</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px;text-align:center">1</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">3,00</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">2,50</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">Areia</div>
+            <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:3px 5px;font-size:9px">720,00</div>
+            <div style="color:#ef4444;font-size:10px;cursor:pointer;text-align:center">✕</div>
+          </div>
+          <div style="color:#7c3aed;font-size:9px;cursor:pointer">+ Adicionar item na Sala</div>
+        </div>
+      </div>
+      <div style="margin-bottom:6px;border:1px solid #374151;border-radius:6px;overflow:hidden">
+        <div style="background:#1f2937;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+          <span>▶  Quarto 1 <span style="color:#6b7280;font-size:9px">(1 item · R$ 720,00)</span></span>
+          <span style="color:#ef4444;font-size:9px;cursor:pointer">🗑 remover</span>
+        </div>
+      </div>
+      <div style="border:1px dashed #374151;border-radius:6px;padding:8px;text-align:center;color:#7c3aed;font-size:9px;cursor:pointer;margin-bottom:10px">+ Novo ambiente</div>
+      <div style="display:flex;justify-content:space-between">
+        <div style="padding:5px 14px;background:#1f2937;border-radius:5px;font-size:10px;color:#e2e8f0">← Voltar</div>
+        <div style="padding:5px 16px;background:#7c3aed;border-radius:5px;font-size:10px;color:#fff">Próximo: Revisão →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETAPA 3 + MODAL -->
+  <div class="mockup">
+    <div class="mockup-header">Etapa 3 — Revisão e modal de aprovação (endereço pré-preenchido)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:11px;color:#e2e8f0">
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <div style="padding:4px 14px;background:#059669;border-radius:12px;font-size:10px;color:#fff">① ✓</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#059669;border-radius:12px;font-size:10px;color:#fff">② ✓</div>
+        <div style="height:1px;flex:1;background:#374151"></div>
+        <div style="padding:4px 14px;background:#7c3aed;border-radius:12px;font-size:10px;color:#fff;font-weight:600">③ Revisão</div>
+      </div>
+      <!-- Resumo -->
+      <div style="background:#1f2937;border-radius:5px;padding:8px;margin-bottom:8px">
+        <div style="color:#9ca3af;font-size:9px;margin-bottom:6px">RESUMO</div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px"><span>Sala — 2 itens</span><span>R$ 1.300,00</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:6px"><span>Quarto 1 — 1 item</span><span>R$ 720,00</span></div>
+        <div style="border-top:1px solid #374151;padding-top:5px;display:flex;justify-content:space-between;font-weight:600">
+          <span>Total</span><span style="color:#a78bfa">R$ 2.020,00</span>
+        </div>
+      </div>
+      <!-- Endereço salvo no rascunho -->
+      <div style="background:#1f2937;border-radius:5px;padding:8px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="color:#9ca3af;font-size:9px">ENDEREÇO DE ENTREGA</div>
+          <div style="color:#7c3aed;font-size:9px;cursor:pointer">✏ editar</div>
+        </div>
+        <div style="font-size:10px;color:#e2e8f0">Rua das Flores, 123 — Jardim Europa, São Paulo / SP</div>
+        <div style="font-size:9px;color:#6b7280;margin-top:2px">CEP 01234-567</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="padding:5px 14px;background:#1f2937;border-radius:5px;font-size:10px;color:#e2e8f0">← Voltar</div>
+        <div style="display:flex;gap:6px">
+          <div style="padding:5px 14px;background:#1f2937;border:1px solid #374151;border-radius:5px;font-size:10px;color:#e2e8f0">💾 Salvar rascunho</div>
+          <div style="padding:5px 14px;background:#059669;border-radius:5px;font-size:10px;color:#fff">✓ Aprovar orçamento</div>
+        </div>
+      </div>
+      <!-- Modal aprovação com endereço pré-preenchido -->
+      <div style="margin-top:10px;border:1px solid #059669;border-radius:6px;padding:10px;background:#03110133">
+        <div style="color:#34d399;font-size:10px;font-weight:600;margin-bottom:2px">Modal: Confirmar aprovação</div>
+        <div style="color:#6b7280;font-size:9px;margin-bottom:8px">Revise o endereço antes de confirmar. Edite se necessário.</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:4px;margin-bottom:4px">
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#e2e8f0">Rua das Flores, 123</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#e2e8f0">Jardim Europa</div>
+          <div style="background:#1f2937;border:1px solid #374151;border-radius:3px;padding:4px 6px;font-size:9px;color:#e2e8f0">São Paulo / SP</div>
+        </div>
+        <div style="background:#1f2937;border:1px solid #059669;border-radius:3px;padding:4px 6px;font-size:9px;color:#34d399;margin-bottom:6px">
+          ✓ Endereço salvo no rascunho — editável acima
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:6px">
+          <div style="padding:4px 12px;background:#1f2937;border-radius:4px;font-size:9px;color:#e2e8f0">Cancelar</div>
+          <div style="padding:4px 12px;background:#059669;border-radius:4px;font-size:9px;color:#fff">Confirmar → criar pedido</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
