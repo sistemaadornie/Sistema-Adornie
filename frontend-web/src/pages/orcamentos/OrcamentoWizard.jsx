@@ -258,6 +258,8 @@ function Etapa2({ ambientes, setAmbientes, onBack, onNext }) {
     return m;
   });
   const [erro, setErro] = useState("");
+  const [editandoNome, setEditandoNome] = useState(null);
+  const [nomeTemp, setNomeTemp] = useState("");
 
   function buscarProdutos(q) {
     return api.get(`/produtos/busca?q=${encodeURIComponent(q)}`).then(r => r.produtos);
@@ -301,6 +303,22 @@ function Etapa2({ ambientes, setAmbientes, onBack, onNext }) {
     }));
   }
 
+  function renomearAmbiente(key, novoNome) {
+    if (!novoNome.trim()) return;
+    setAmbientes(prev => prev.map(a => a._key !== key ? a : { ...a, nome: novoNome.trim() }));
+  }
+
+  function iniciarEdicaoNome(key, nome, e) {
+    e.stopPropagation();
+    setEditandoNome(key);
+    setNomeTemp(nome);
+  }
+
+  function confirmarNome(key) {
+    renomearAmbiente(key, nomeTemp);
+    setEditandoNome(null);
+  }
+
   function avancar() {
     const temItem = ambientes.some(a => a.itens.some(it => it.produto_nome || it.produto_id));
     if (!temItem) { setErro("Adicione pelo menos um item com produto preenchido."); return; }
@@ -317,16 +335,39 @@ function Etapa2({ ambientes, setAmbientes, onBack, onNext }) {
         const expandido = expandidos[amb._key] !== false;
         return (
           <div key={amb._key} style={{ border:"1px solid var(--color-border)", borderRadius:6, marginBottom:8, overflow:"hidden" }}>
-            <div onClick={() => toggleExpand(amb._key)}
-              style={{ background:"var(--color-card)", padding:"10px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
-              <span style={{ fontWeight:600, fontSize:13 }}>
-                {expandido ? "▼" : "▶"} {amb.nome}
-                <span style={{ color:"var(--color-text-muted)", fontWeight:400, fontSize:11, marginLeft:8 }}>
+            <div onClick={() => editandoNome !== amb._key && toggleExpand(amb._key)}
+              style={{ background:"var(--color-card)", padding:"10px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor: editandoNome === amb._key ? "default" : "pointer" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, flex:1, minWidth:0 }}>
+                <span style={{ color:"var(--color-text-muted)", fontSize:12, flexShrink:0 }}>{expandido ? "▼" : "▶"}</span>
+                {editandoNome === amb._key ? (
+                  <input
+                    autoFocus
+                    value={nomeTemp}
+                    onChange={e => setNomeTemp(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { e.preventDefault(); confirmarNome(amb._key); }
+                      if (e.key === "Escape") setEditandoNome(null);
+                    }}
+                    onBlur={() => confirmarNome(amb._key)}
+                    onClick={e => e.stopPropagation()}
+                    style={{ fontWeight:600, fontSize:13, background:"var(--color-bg)", border:"1px solid var(--color-primary)", borderRadius:4, padding:"2px 6px", color:"var(--color-text)", width:180 }}
+                  />
+                ) : (
+                  <>
+                    <span style={{ fontWeight:600, fontSize:13 }}>{amb.nome}</span>
+                    <button type="button" onClick={e => iniciarEdicaoNome(amb._key, amb.nome, e)}
+                      title="Renomear ambiente"
+                      style={{ background:"none", border:"none", color:"var(--color-text-muted)", fontSize:11, cursor:"pointer", padding:"0 2px", lineHeight:1 }}>
+                      ✏
+                    </button>
+                  </>
+                )}
+                <span style={{ color:"var(--color-text-muted)", fontWeight:400, fontSize:11, flexShrink:0 }}>
                   ({amb.itens.length} {amb.itens.length === 1 ? "item" : "itens"} · R$ {fmtMoeda(subtotal)})
                 </span>
-              </span>
+              </div>
               <button type="button" onClick={e => { e.stopPropagation(); removerAmbiente(amb._key); }}
-                style={{ background:"none", border:"none", color:"#ef4444", fontSize:12, cursor:"pointer" }}>
+                style={{ background:"none", border:"none", color:"#ef4444", fontSize:12, cursor:"pointer", flexShrink:0 }}>
                 🗑 remover
               </button>
             </div>
