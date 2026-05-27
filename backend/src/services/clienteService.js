@@ -250,15 +250,27 @@ async function busca(empresaId, q) {
     whereQ = ` AND (c.nome ILIKE $2 OR c.telefone ILIKE $2 OR c.cpf ILIKE $2 OR c.cnpj ILIKE $2)`;
   }
   const res = await db.query(
-    `SELECT c.id, c.nome, c.telefone, c.email,
-            e.rua, e.numero, e.complemento, e.bairro, e.cidade, e.estado, e.cep
+    `SELECT c.id, c.nome, c.telefone, c.email
      FROM clientes c
-     LEFT JOIN cliente_enderecos e ON e.cliente_id = c.id AND e.is_padrao = true AND e.deleted_at IS NULL
      WHERE c.empresa_id = $1 AND c.deleted_at IS NULL${whereQ}
      ORDER BY c.nome ASC LIMIT 10`,
     params
   );
-  return res.rows;
+  if (res.rows.length === 0) return [];
+  const ids = res.rows.map(r => r.id);
+  const endRes = await db.query(
+    `SELECT id, cliente_id, label, rua, numero, complemento, bairro, cidade, estado, cep, is_padrao
+     FROM cliente_enderecos
+     WHERE cliente_id = ANY($1) AND deleted_at IS NULL
+     ORDER BY is_padrao DESC, created_at ASC`,
+    [ids]
+  );
+  const endPorId = {};
+  endRes.rows.forEach(e => {
+    if (!endPorId[e.cliente_id]) endPorId[e.cliente_id] = [];
+    endPorId[e.cliente_id].push(e);
+  });
+  return res.rows.map(c => ({ ...c, enderecos: endPorId[c.id] || [] }));
 }
 
 module.exports = {

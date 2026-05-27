@@ -103,6 +103,7 @@ function BarraProgresso({ etapa }) {
 function Etapa1({ dados, onChange, onNext }) {
   const [erroCliente, setErroCliente] = useState("");
   const [endAberto, setEndAberto] = useState(!!dados.endereco_entrega?.rua);
+  const [mostrarEnderecos, setMostrarEnderecos] = useState(false);
 
   function buscarClientes(q) {
     return api.get(`/clientes/busca?q=${encodeURIComponent(q)}`).then(r => r.clientes);
@@ -111,14 +112,13 @@ function Etapa1({ dados, onChange, onNext }) {
     return api.get(`/arquitetos?q=${encodeURIComponent(q)}`).then(r => r.arquitetos);
   }
 
-  function usarEnderecoCliente() {
-    if (!dados.cliente) return;
-    const end = dados.cliente;
+  function usarEndereco(end) {
     onChange("endereco_entrega", {
       rua: end.rua || "", numero: end.numero || "", complemento: end.complemento || "",
       bairro: end.bairro || "", cidade: end.cidade || "", estado: end.estado || "", cep: end.cep || "",
     });
     setEndAberto(true);
+    setMostrarEnderecos(false);
   }
 
   function avancar() {
@@ -129,6 +129,7 @@ function Etapa1({ dados, onChange, onNext }) {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const endEnt = dados.endereco_entrega || {};
+  const enderecos = dados.cliente?.enderecos || [];
 
   return (
     <div>
@@ -138,8 +139,8 @@ function Etapa1({ dados, onChange, onNext }) {
           <Autocomplete
             placeholder="Buscar cliente..."
             value={dados.cliente}
-            onSelect={c => { onChange("cliente_id", c.id); onChange("cliente", c); }}
-            onClear={() => { onChange("cliente_id", null); onChange("cliente", null); }}
+            onSelect={c => { onChange("cliente_id", c.id); onChange("cliente", c); setMostrarEnderecos(false); }}
+            onClear={() => { onChange("cliente_id", null); onChange("cliente", null); setMostrarEnderecos(false); }}
             fetchFn={buscarClientes}
             renderOption={c => `${c.nome} — ${c.telefone || ""}`}
             renderValue={c => `${c.nome}${c.telefone ? " — " + c.telefone : ""}`}
@@ -178,15 +179,49 @@ function Etapa1({ dados, onChange, onNext }) {
 
       {/* Endereço opcional */}
       <div style={{ border:"1px dashed var(--color-border)", borderRadius:6, padding:12, marginBottom:20 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: endAberto ? 10 : 0 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:(endAberto || mostrarEnderecos) ? 10 : 0 }}>
           <span style={{ fontSize:11, color:"var(--color-text-muted)" }}>
             ENDEREÇO DE ENTREGA <span style={{ color:"#6b7280" }}>(opcional)</span>
           </span>
-          <div style={{ display:"flex", gap:8 }}>
-            {dados.cliente && <button type="button" onClick={usarEnderecoCliente} style={{ background:"none",border:"none",color:"var(--color-primary)",fontSize:11,cursor:"pointer" }}>Usar endereço do cliente ↙</button>}
-            <button type="button" onClick={() => setEndAberto(v => !v)} style={{ background:"none",border:"none",color:"#6b7280",fontSize:11,cursor:"pointer" }}>{endAberto ? "▲ Recolher" : "▼ Preencher"}</button>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            {dados.cliente && enderecos.length === 1 && (
+              <button type="button" onClick={() => usarEndereco(enderecos[0])} style={{ background:"none",border:"none",color:"var(--color-primary)",fontSize:11,cursor:"pointer" }}>
+                Usar endereço do cliente ↙
+              </button>
+            )}
+            {dados.cliente && enderecos.length > 1 && (
+              <button type="button" onClick={() => setMostrarEnderecos(v => !v)} style={{ background:"none",border:"none",color:"var(--color-primary)",fontSize:11,cursor:"pointer" }}>
+                {mostrarEnderecos ? "▲" : "▼"} Endereços do cliente ({enderecos.length})
+              </button>
+            )}
+            <button type="button" onClick={() => setEndAberto(v => !v)} style={{ background:"none",border:"none",color:"#6b7280",fontSize:11,cursor:"pointer" }}>
+              {endAberto ? "▲ Recolher" : "▼ Preencher manualmente"}
+            </button>
           </div>
         </div>
+
+        {mostrarEnderecos && enderecos.length > 1 && (
+          <div style={{ marginBottom:10, display:"flex", flexDirection:"column", gap:4 }}>
+            {enderecos.map((end, i) => {
+              const resumo = [end.rua, end.numero, end.bairro, end.cidade, end.estado].filter(Boolean).join(", ");
+              return (
+                <div key={end.id || i} onClick={() => usarEndereco(end)}
+                  style={{ padding:"7px 10px", borderRadius:4, border:"1px solid var(--color-border)", cursor:"pointer", fontSize:12, display:"flex", gap:8, alignItems:"flex-start", background:"transparent" }}
+                  onMouseEnter={e => e.currentTarget.style.background="var(--color-card)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
+                  {end.is_padrao && <span style={{ color:"#f59e0b", fontSize:11, flexShrink:0 }}>★</span>}
+                  <span>
+                    <strong>{end.label}</strong>
+                    {resumo ? ` — ${resumo}` : ""}
+                    {end.cep ? ` · CEP ${end.cep}` : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {endAberto && (
           <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:8 }}>
             {[["rua","Rua / Logradouro"],["numero","Número"],["complemento","Complemento"],["bairro","Bairro"],["cidade","Cidade"],["estado","Estado"],["cep","CEP"]].map(([campo, label]) => (
@@ -532,14 +567,21 @@ export default function OrcamentoWizard() {
     if (!id) return;
     api.get(`/orcamentos/${id}`).then(res => {
       const o = res.orcamento;
+      const clienteBase = o.cliente_id ? { id: o.cliente_id, nome: o.cliente_nome, telefone: o.cliente_telefone, enderecos: [] } : null;
       setDados({
         cliente_id: o.cliente_id,
-        cliente: o.cliente_id ? { id: o.cliente_id, nome: o.cliente_nome, telefone: o.cliente_telefone } : null,
+        cliente: clienteBase,
         arquiteto_id: o.arquiteto_id,
         arquiteto: o.arquiteto_id ? { id: o.arquiteto_id, nome: o.arquiteto_nome } : null,
         observacoes: o.observacoes || "",
         endereco_entrega: o.endereco_entrega || null,
       });
+      if (o.cliente_id) {
+        api.get(`/clientes/${o.cliente_id}`).then(cr => {
+          const enderecos = cr.cliente?.enderecos || [];
+          setDados(prev => prev.cliente ? { ...prev, cliente: { ...prev.cliente, enderecos } } : prev);
+        }).catch(() => {});
+      }
       if (o.ambientes?.length > 0) {
         setAmbientes(o.ambientes.map(a => ({
           _key: Math.random(),
