@@ -14,6 +14,16 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/busca", authMiddleware, async (req, res) => {
+  try {
+    const clientes = await svc.busca(req.user.empresa_id, req.query.q);
+    return res.json({ clientes });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar clientes." });
+  }
+});
+
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const cli = await svc.buscar(req.params.id, req.user.empresa_id);

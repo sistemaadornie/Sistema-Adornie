@@ -242,8 +242,27 @@ async function resolverCliente(empresaId, nomeRaw, extras = {}) {
   return { id: novo.rows[0].id, criado: true };
 }
 
+async function busca(empresaId, q) {
+  const params = [empresaId];
+  let whereQ = "";
+  if (q) {
+    params.push(`%${q}%`);
+    whereQ = ` AND (c.nome ILIKE $2 OR c.telefone ILIKE $2 OR c.cpf ILIKE $2 OR c.cnpj ILIKE $2)`;
+  }
+  const res = await db.query(
+    `SELECT c.id, c.nome, c.telefone, c.email,
+            e.rua, e.numero, e.complemento, e.bairro, e.cidade, e.estado, e.cep
+     FROM clientes c
+     LEFT JOIN cliente_enderecos e ON e.cliente_id = c.id AND e.is_padrao = true AND e.deleted_at IS NULL
+     WHERE c.empresa_id = $1 AND c.deleted_at IS NULL${whereQ}
+     ORDER BY c.nome ASC LIMIT 10`,
+    params
+  );
+  return res.rows;
+}
+
 module.exports = {
   listar, buscar, criar, atualizar, excluir,
   adicionarEndereco, atualizarEndereco, definirPadrao, removerEndereco,
-  resolverCliente,
+  resolverCliente, busca,
 };
