@@ -1,0 +1,22 @@
+.orc-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.orc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.orc-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.orc-filtros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+.orc-filtros input,
+.orc-filtros select { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 6px; padding: 6px 10px; color: var(--color-text); font-size: 13px; }
+.orc-filtros input { min-width: 200px; }
+.orc-toggle-meu { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-muted); cursor: pointer; }
+.orc-table-wrap { overflow-x: auto; }
+.orc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.orc-table th { text-align: left; padding: 10px 12px; color: var(--color-text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--color-border); }
+.orc-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text); vertical-align: middle; }
+.orc-table tr:hover td { background: var(--color-card-hover, #ffffff08); }
+.orc-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.orc-badge.novo      { background: #3b82f622; color: #60a5fa; border: 1px solid #3b82f644; }
+.orc-badge.aprovado  { background: #22c55e22; color: #4ade80; border: 1px solid #22c55e44; }
+.orc-badge.cancelado { background: #ef444422; color: #f87171; border: 1px solid #ef444444; }
+.orc-actions { display: flex; gap: 6px; }
+.orc-actions button { padding: 4px 10px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--color-card); color: var(--color-text); font-size: 11px; cursor: pointer; white-space: nowrap; }
+.orc-actions button:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.orc-actions button.danger:hover { background: #ef4444; border-color: #ef4444; }
+.orc-empty { text-align: center; padding: 48px 0; color: var(--color-text-muted); }
