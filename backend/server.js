@@ -44,6 +44,7 @@ const pipelineRoutes     = require("./src/routes/pipelineRoutes");
 const arquitetosRoutes   = require("./src/routes/arquitetosRoutes");
 const categoriasRoutes   = require("./src/routes/categoriasRoutes");
 const ordemServicoRoutes = require("./src/routes/ordemServicoRoutes");
+const orcamentosRoutes   = require("./src/routes/orcamentosRoutes");
 const uploadRoutes       = require("./src/routes/uploadRoutes");
 
 const app = express();
@@ -151,6 +152,7 @@ app.use("/api/pipeline",      pipelineRoutes);
 app.use("/api/arquitetos",    arquitetosRoutes);
 app.use("/api/categorias",   categoriasRoutes);
 app.use("/api/os",           ordemServicoRoutes);
+app.use("/api/orcamentos",   orcamentosRoutes);
 app.use("/api",              uploadRoutes);
 
 // Porta
