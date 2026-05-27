@@ -23,6 +23,7 @@ const AgendamentosMapa       = lazy(() => import("./pages/agendamentos/MapaAgend
 const Veiculos               = lazy(() => import("./pages/veiculos/Veiculos"));
 const VeiculosHistorico      = lazy(() => import("./pages/veiculos/VeiculosHistorico"));
 const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
+const OrdemServicoPage       = lazy(() => import("./pages/pedidos/OrdemServicoPage"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
 const Crm                    = lazy(() => import("./pages/crm/Crm"));
@@ -32,6 +33,8 @@ const Arquitetos             = lazy(() => import("./pages/arquitetos/Arquitetos"
 const Etiquetas              = lazy(() => import("./pages/etiquetas/Etiquetas"));
 const Kanban                = lazy(() => import("./pages/kanban/Kanban"));
 const KanbanConfig          = lazy(() => import("./pages/kanban/KanbanConfig"));
+const Orcamentos            = lazy(() => import("./pages/orcamentos/Orcamentos"));
+const OrcamentoWizard       = lazy(() => import("./pages/orcamentos/OrcamentoWizard"));
 
 import "./styles/theme.css";
 import "./styles/globals.css";
@@ -96,10 +99,14 @@ export default function App() {
 
                 <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/pedidos" element={<Pedidos />} />
+                  <Route path="/pedidos/os/:osId" element={<OrdemServicoPage />} />
                   <Route path="/crm" element={<Crm />} />
                   <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
                   <Route path="/arquitetos"  element={<Arquitetos />} />
+                  <Route path="/orcamentos"              element={<Orcamentos />} />
+                  <Route path="/orcamentos/novo"         element={<OrcamentoWizard />} />
+                  <Route path="/orcamentos/:id/editar"   element={<OrcamentoWizard />} />
                 </Route>
 
                 <Route element={<PermissionRoute perms={["INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>

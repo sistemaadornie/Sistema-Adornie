@@ -376,4 +376,241 @@ function Etapa2({ ambientes, setAmbientes, onBack, onNext }) {
   );
 }
 
+// ── Etapa 3 ─────────────────────────────────────────────────────────────────
+function Etapa3({ dados, ambientes, orcamentoId, onBack, onSalvar, salvando }) {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const podeAprovar = (user.permissoes || []).some(p => ["OPERADOR_AGENDA","ADMIN_MASTER"].includes(p));
+
+  const [modalAberto, setModalAberto] = useState(false);
+  const [endModal, setEndModal] = useState(dados.endereco_entrega || {});
+  const [aprovando, setAprovando] = useState(false);
+  const [erroAprov, setErroAprov] = useState("");
+
+  const totalGeral = ambientes.reduce((s, a) => s + calcSubtotal(a.itens), 0);
+
+  async function confirmarAprovacao() {
+    setAprovando(true);
+    setErroAprov("");
+    try {
+      await api.post(`/orcamentos/${orcamentoId}/aprovar`, { endereco_entrega: endModal });
+      navigate("/pedidos");
+    } catch (err) {
+      setErroAprov(err.message || "Erro ao aprovar.");
+    } finally {
+      setAprovando(false);
+    }
+  }
+
+  const endEnt = dados.endereco_entrega || {};
+  const endResumo = [endEnt.rua, endEnt.numero, endEnt.bairro, endEnt.cidade, endEnt.estado].filter(Boolean).join(", ");
+  const inputStyle = { background:"var(--color-card)", border:"1px solid var(--color-border)", borderRadius:4, padding:"5px 8px", color:"var(--color-text)", fontSize:12, width:"100%" };
+
+  return (
+    <div>
+      {/* Resumo cliente */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:16 }}>
+        <div style={{ background:"var(--color-card)", borderRadius:6, padding:12 }}>
+          <div style={{ fontSize:10, color:"var(--color-text-muted)", marginBottom:4 }}>CLIENTE</div>
+          <div style={{ fontWeight:600 }}>{dados.cliente?.nome || "—"}</div>
+          {dados.cliente?.telefone && <div style={{ fontSize:12, color:"var(--color-text-muted)" }}>{dados.cliente.telefone}</div>}
+        </div>
+        <div style={{ background:"var(--color-card)", borderRadius:6, padding:12 }}>
+          <div style={{ fontSize:10, color:"var(--color-text-muted)", marginBottom:4 }}>CONSULTORA</div>
+          <div style={{ fontWeight:600 }}>{user.nome_completo || "—"}</div>
+          {dados.arquiteto && <div style={{ fontSize:12, color:"var(--color-text-muted)" }}>Arq: {dados.arquiteto.nome}</div>}
+        </div>
+      </div>
+
+      {/* Resumo por ambiente */}
+      <div style={{ background:"var(--color-card)", borderRadius:6, padding:14, marginBottom:12 }}>
+        <div style={{ fontSize:10, color:"var(--color-text-muted)", marginBottom:10, fontWeight:600 }}>RESUMO POR AMBIENTE</div>
+        {ambientes.map(amb => {
+          const sub = calcSubtotal(amb.itens);
+          return (
+            <div key={amb._key} style={{ marginBottom:8 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:600, marginBottom:4 }}>
+                <span>{amb.nome} ({amb.itens.length} {amb.itens.length === 1 ? "item" : "itens"})</span>
+                <span>R$ {fmtMoeda(sub)}</span>
+              </div>
+              {amb.itens.map(it => it.produto_nome && (
+                <div key={it._key} style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--color-text-muted)", paddingLeft:8, marginBottom:2 }}>
+                  <span>{it.produto_nome}{it.cor ? ` — ${it.cor}` : ""}{it.largura && it.altura ? ` (${it.largura}×${it.altura})` : ""}{it.quantidade > 1 ? ` ×${it.quantidade}` : ""}</span>
+                  <span>{it.preco_unitario ? `R$ ${fmtMoeda(parseFloat(String(it.preco_unitario).replace(",",".")) * (parseFloat(it.quantidade)||1))}` : "—"}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        <div style={{ borderTop:"1px solid var(--color-border)", paddingTop:10, display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:14 }}>
+          <span>Total</span>
+          <span style={{ color:"var(--color-primary)" }}>R$ {fmtMoeda(totalGeral)}</span>
+        </div>
+      </div>
+
+      {/* Endereço de entrega */}
+      <div style={{ background:"var(--color-card)", borderRadius:6, padding:12, marginBottom:20 }}>
+        <div style={{ fontSize:10, color:"var(--color-text-muted)", fontWeight:600, marginBottom:6 }}>ENDEREÇO DE ENTREGA</div>
+        {endResumo ? (
+          <div style={{ fontSize:13 }}>{endResumo}{endEnt.cep ? ` — CEP ${endEnt.cep}` : ""}</div>
+        ) : (
+          <div style={{ fontSize:12, color:"var(--color-text-muted)" }}>Endereço não informado</div>
+        )}
+      </div>
+
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <button type="button" onClick={onBack}
+          style={{ padding:"8px 16px", background:"var(--color-card)", color:"var(--color-text)", border:"1px solid var(--color-border)", borderRadius:6, cursor:"pointer" }}>
+          ← Voltar
+        </button>
+        <div style={{ display:"flex", gap:10 }}>
+          <button type="button" onClick={onSalvar} disabled={salvando}
+            style={{ padding:"8px 16px", background:"var(--color-card)", color:"var(--color-text)", border:"1px solid var(--color-border)", borderRadius:6, cursor:"pointer" }}>
+            {salvando ? "Salvando..." : "💾 Salvar rascunho"}
+          </button>
+          {podeAprovar && orcamentoId && (
+            <button type="button" onClick={() => { setEndModal(dados.endereco_entrega || {}); setModalAberto(true); }}
+              style={{ padding:"8px 18px", background:"#059669", color:"#fff", border:"none", borderRadius:6, cursor:"pointer", fontWeight:600 }}>
+              ✓ Aprovar orçamento
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Modal de aprovação */}
+      {modalAberto && (
+        <div style={{ position:"fixed", inset:0, background:"#00000088", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ background:"var(--color-card)", borderRadius:8, padding:24, width:"100%", maxWidth:480, border:"1px solid #059669" }}>
+            <h3 style={{ margin:"0 0 4px", fontSize:16 }}>Confirmar aprovação</h3>
+            <p style={{ fontSize:12, color:"var(--color-text-muted)", marginBottom:16 }}>
+              Revise o endereço de entrega. Após confirmar, um Pedido será criado automaticamente.
+            </p>
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:8, marginBottom:12 }}>
+              {[["rua","Rua / Logradouro"],["numero","Número"],["complemento","Complemento"],["bairro","Bairro"],["cidade","Cidade"],["estado","Estado (UF)"],["cep","CEP"]].map(([campo, label]) => (
+                <div key={campo}>
+                  <input placeholder={label} value={endModal[campo] || ""}
+                    onChange={e => setEndModal(v => ({ ...v, [campo]: e.target.value }))}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+            </div>
+            {erroAprov && <div style={{ color:"#ef4444", fontSize:12, marginBottom:8 }}>{erroAprov}</div>}
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
+              <button type="button" onClick={() => setModalAberto(false)} disabled={aprovando}
+                style={{ padding:"8px 16px", background:"var(--color-bg)", color:"var(--color-text)", border:"1px solid var(--color-border)", borderRadius:6, cursor:"pointer" }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={confirmarAprovacao} disabled={aprovando}
+                style={{ padding:"8px 20px", background:"#059669", color:"#fff", border:"none", borderRadius:6, cursor:"pointer", fontWeight:600 }}>
+                {aprovando ? "Aprovando..." : "Confirmar → criar pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente principal ─────────────────────────────────────────────────────
+export default function OrcamentoWizard() {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const [etapa, setEtapa] = useState(0);
+  const [dados, setDados] = useState({ cliente_id: null, cliente: null, arquiteto_id: null, arquiteto: null, observacoes: "", endereco_entrega: null });
+  const [ambientes, setAmbientes] = useState([ambienteVazio("Sala")]);
+  const [salvando, setSalvando] = useState(false);
+  const [orcamentoId, setOrcamentoId] = useState(id ? Number(id) : null);
+  const [toast, setToast] = useState("");
+
+  const mostrarToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3500); };
+
+  useEffect(() => {
+    if (!id) return;
+    api.get(`/orcamentos/${id}`).then(res => {
+      const o = res.orcamento;
+      setDados({
+        cliente_id: o.cliente_id,
+        cliente: o.cliente_id ? { id: o.cliente_id, nome: o.cliente_nome, telefone: o.cliente_telefone } : null,
+        arquiteto_id: o.arquiteto_id,
+        arquiteto: o.arquiteto_id ? { id: o.arquiteto_id, nome: o.arquiteto_nome } : null,
+        observacoes: o.observacoes || "",
+        endereco_entrega: o.endereco_entrega || null,
+      });
+      if (o.ambientes?.length > 0) {
+        setAmbientes(o.ambientes.map(a => ({
+          _key: Math.random(),
+          nome: a.nome,
+          itens: a.itens.map(it => ({ ...it, _key: Math.random() })),
+        })));
+      }
+      if (searchParams.get("aprovar") === "1") setEtapa(2);
+    }).catch(() => mostrarToast("Erro ao carregar orçamento."));
+  }, [id]);
+
+  function onChange(campo, valor) {
+    setDados(prev => ({ ...prev, [campo]: valor }));
+  }
+
+  function montarPayload() {
+    const itens = ambientes.flatMap(a => a.itens.filter(it => it.produto_nome || it.produto_id).map(it => ({ ...it, ambiente: a.nome })));
+    return { ...dados, itens };
+  }
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      const payload = montarPayload();
+      if (orcamentoId) {
+        await api.put(`/orcamentos/${orcamentoId}`, payload);
+        mostrarToast("Rascunho salvo!");
+      } else {
+        const res = await api.post("/orcamentos", payload);
+        setOrcamentoId(res.orcamento.id);
+        navigate(`/orcamentos/${res.orcamento.id}/editar`, { replace: true });
+        mostrarToast(`${res.orcamento.numero} salvo!`);
+      }
+    } catch (err) {
+      mostrarToast(err.message || "Erro ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div style={{ padding:24, maxWidth:900, margin:"0 auto" }}>
+      {toast && (
+        <div style={{ position:"fixed", top:16, right:16, background:"#1f2937", color:"#fff", padding:"10px 18px", borderRadius:8, zIndex:9999 }}>
+          {toast}
+        </div>
+      )}
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
+        <button onClick={() => navigate("/orcamentos")}
+          style={{ background:"none", border:"none", color:"var(--color-primary)", cursor:"pointer", fontSize:13 }}>
+          ← Orçamentos
+        </button>
+        <h2 style={{ margin:0, fontSize:20, fontWeight:700 }}>
+          {orcamentoId ? "Editar orçamento" : "Novo orçamento"}
+        </h2>
+      </div>
+      <BarraProgresso etapa={etapa} />
+      {etapa === 0 && <Etapa1 dados={dados} onChange={onChange} onNext={() => setEtapa(1)} />}
+      {etapa === 1 && <Etapa2 ambientes={ambientes} setAmbientes={setAmbientes} onBack={() => setEtapa(0)} onNext={() => setEtapa(2)} />}
+      {etapa === 2 && (
+        <Etapa3
+          dados={dados}
+          ambientes={ambientes}
+          orcamentoId={orcamentoId}
+          onBack={() => setEtapa(1)}
+          onSalvar={salvar}
+          salvando={salvando}
+        />
+      )}
+    </div>
+  );
+}
+
 export { Etapa1, Etapa2, BarraProgresso, Autocomplete, itemVazio, ambienteVazio, calcSubtotal, fmtMoeda };
