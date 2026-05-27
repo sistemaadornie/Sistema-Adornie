@@ -549,7 +549,7 @@ export default function OrcamentoWizard() {
       }
       if (searchParams.get("aprovar") === "1") setEtapa(2);
     }).catch(() => mostrarToast("Erro ao carregar orçamento."));
-  }, [id]);
+  }, [id, searchParams]);
 
   function onChange(campo, valor) {
     setDados(prev => ({ ...prev, [campo]: valor }));
