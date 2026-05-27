@@ -236,4 +236,21 @@ async function importarDePedidos(empresaId, userId, itens) {
   return { importados, erros };
 }
 
-module.exports = { listar, listarMarcas, listarCategorias, buscar, criar, atualizar, excluir, candidatosDePedidos, importarDePedidos };
+async function busca(empresaId, q) {
+  const params = [empresaId];
+  let whereQ = "";
+  if (q) {
+    params.push(`%${q}%`);
+    whereQ = ` AND (p.nome ILIKE $2 OR p.referencia ILIKE $2 OR p.codigo ILIKE $2)`;
+  }
+  const res = await db.query(
+    `SELECT p.id, p.nome, p.referencia, p.codigo, p.unidade, p.preco_venda, p.status
+     FROM produtos p
+     WHERE p.empresa_id = $1 AND p.deleted_at IS NULL${whereQ}
+     ORDER BY p.nome ASC LIMIT 8`,
+    params
+  );
+  return res.rows;
+}
+
+module.exports = { listar, listarMarcas, listarCategorias, buscar, criar, atualizar, excluir, candidatosDePedidos, importarDePedidos, busca };

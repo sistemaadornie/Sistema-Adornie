@@ -44,6 +44,16 @@ router.get("/candidatos-de-pedidos", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/busca", authMiddleware, async (req, res) => {
+  try {
+    const produtos = await svc.busca(req.user.empresa_id, req.query.q);
+    return res.json({ produtos });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar produtos." });
+  }
+});
+
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const produto = await svc.buscar(req.params.id, req.user.empresa_id);
