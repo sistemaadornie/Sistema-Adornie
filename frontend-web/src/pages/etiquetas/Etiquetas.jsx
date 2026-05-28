@@ -820,7 +820,7 @@ export default function Etiquetas() {
       <PrintModal
         open={printAberto}
         onClose={() => setPrintAberto(false)}
-        onPrint={() => { setPrintAberto(false); setTimeout(() => window.print(), 120); }}
+        onPrint={() => { setPrintAberto(false); requestAnimationFrame(() => requestAnimationFrame(() => window.print())); }}
         modelo={modelo}
         quantidade={labelsParaImprimir.length}
         ignorar={ignorar}

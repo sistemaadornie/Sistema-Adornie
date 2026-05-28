@@ -44,7 +44,7 @@ router.post("/", authMiddleware, permissionMiddleware(PODE_GERENCIAR), async (re
 
 router.put("/:id", authMiddleware, permissionMiddleware(PODE_GERENCIAR), async (req, res) => {
   try {
-    const orc = await svc.atualizar(Number(req.params.id), req.user.empresa_id, req.body);
+    const orc = await svc.atualizar(Number(req.params.id), req.user.empresa_id, req.user.id, req.body);
     return res.json({ message: "Orçamento atualizado!", orcamento: orc });
   } catch (err) {
     console.error(err);

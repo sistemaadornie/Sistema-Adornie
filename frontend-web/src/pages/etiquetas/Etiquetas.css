@@ -930,8 +930,10 @@
    Impressão
 ───────────────────────────────────────────────── */
 
-.etq-print-only {
-  display: none;
+@media screen {
+  .etq-print-only {
+    display: none;
+  }
 }
 
 @media print {
@@ -947,7 +949,6 @@
   }
 
   .etq-print-only {
-    display: block !important;
     position: fixed;
     top: 0;
     left: 0;
