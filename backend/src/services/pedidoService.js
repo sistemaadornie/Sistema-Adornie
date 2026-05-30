@@ -104,67 +104,88 @@ async function buscar(id, empresaId) {
 }
 
 async function _salvarItens(client, pedidoId, itens = []) {
-  // 1. Obtém todos os itens existentes no banco de dados para este pedido
-  const existingRes = await client.query(`SELECT id FROM pedido_itens WHERE pedido_id = $1`, [pedidoId]);
-  const existingIds = existingRes.rows.map(r => r.id);
+  const existingRes = await client.query(
+    `SELECT id FROM pedido_itens WHERE pedido_id = $1`,
+    [pedidoId]
+  );
+  const existingIds = existingRes.rows.map((r) => r.id);
+  const incomingIds = itens.map((it) => Number(it.id)).filter((id) => Number.isFinite(id) && id > 0);
 
-  const incomingIds = itens.map(it => Number(it.id)).filter(id => Number.isFinite(id) && id > 0);
-
-  // 2. Determina quais itens devem ser excluídos
-  const idsParaDeletar = existingIds.filter(id => !incomingIds.includes(id));
+  const idsParaDeletar = existingIds.filter((id) => !incomingIds.includes(id));
   if (idsParaDeletar.length > 0) {
-    // Remove as ordens de serviço associadas antes de excluir os itens
     await client.query(`DELETE FROM ordem_servico WHERE pedido_item_id = ANY($1)`, [idsParaDeletar]);
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
   }
 
-  // 3. Atualiza os itens existentes ou insere os novos
+  const insertedIds = []; // IDs na mesma ordem do array itens
+
   for (let i = 0; i < itens.length; i++) {
-    const it = itens[i];
+    const it     = itens[i];
     const itemId = Number(it.id);
 
     if (Number.isFinite(itemId) && itemId > 0 && existingIds.includes(itemId)) {
       // UPDATE item existente
       await client.query(
         `UPDATE pedido_itens
-         SET ambiente = $1, referencia = $2, cor = $3, descricao = $4, medidas = $5,
-             quantidade = $6, unidade = $7, preco_unitario = $8, valor = $9, ordem = $10
-         WHERE id = $11 AND pedido_id = $12`,
+         SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
+             quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
+             modelo=$11, especificacoes=$12, item_vinculado_id=$13
+         WHERE id=$14 AND pedido_id=$15`,
         [
-          it.ambiente?.trim() || null,
-          it.referencia?.trim() || null,
-          it.cor?.trim() || null,
-          it.descricao?.trim() || "",
-          it.medidas?.trim() || null,
+          it.ambiente?.trim()    || null,
+          it.referencia?.trim()  || null,
+          it.cor?.trim()         || null,
+          it.descricao?.trim()   || "",
+          it.medidas?.trim()     || null,
           parseFloat(it.quantidade) || 1,
-          it.unidade?.trim() || null,
+          it.unidade?.trim()     || null,
           toDecimal(it.preco_unitario),
           toDecimal(it.valor),
           i,
+          it.modelo?.trim()      || null,
+          it.especificacoes      || null,
+          it.item_vinculado_id   || null,
           itemId,
-          pedidoId
+          pedidoId,
         ]
       );
+      insertedIds.push(itemId);
     } else {
-      // INSERT novo item
-      await client.query(
+      // INSERT novo item (sem item_vinculado_id ainda — resolvido depois)
+      const ins = await client.query(
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
-            quantidade, unidade, preco_unitario, valor, ordem)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+            quantidade, unidade, preco_unitario, valor, ordem,
+            modelo, especificacoes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+         RETURNING id`,
         [
           pedidoId,
-          it.ambiente?.trim() || null,
-          it.referencia?.trim() || null,
-          it.cor?.trim() || null,
-          it.descricao?.trim() || "",
-          it.medidas?.trim() || null,
+          it.ambiente?.trim()    || null,
+          it.referencia?.trim()  || null,
+          it.cor?.trim()         || null,
+          it.descricao?.trim()   || "",
+          it.medidas?.trim()     || null,
           parseFloat(it.quantidade) || 1,
-          it.unidade?.trim() || null,
+          it.unidade?.trim()     || null,
           toDecimal(it.preco_unitario),
           toDecimal(it.valor),
           i,
+          it.modelo?.trim()      || null,
+          it.especificacoes      || null,
         ]
+      );
+      insertedIds.push(ins.rows[0].id);
+    }
+  }
+
+  // Resolve item_vinculado_ordem → item_vinculado_id para novos itens
+  for (let i = 0; i < itens.length; i++) {
+    const ordem = itens[i].item_vinculado_ordem;
+    if (ordem != null && Number.isFinite(Number(ordem)) && insertedIds[Number(ordem)] != null) {
+      await client.query(
+        `UPDATE pedido_itens SET item_vinculado_id = $1 WHERE id = $2`,
+        [insertedIds[Number(ordem)], insertedIds[i]]
       );
     }
   }
