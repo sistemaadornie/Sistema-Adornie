@@ -47,6 +47,7 @@ function CloseBtn({ onClose }) {
   return (
     <button
       onClick={onClose}
+      aria-label="Fechar"
       style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--color-text-muted)", lineHeight: 1 }}
     >
       ×
@@ -57,8 +58,8 @@ function CloseBtn({ onClose }) {
 function SimpleSelectorPanel({ titulo, config, valor, onChange, onClose }) {
   return (
     <>
-      <div style={backdropStyle} onClick={onClose} />
-      <div style={panelStyle}>
+      <div style={backdropStyle} onClick={onClose} role="presentation" />
+      <div style={panelStyle} role="dialog" aria-modal="true">
         <div style={headerStyle}>
           <span>{titulo}</span>
           <CloseBtn onClose={onClose} />
@@ -120,8 +121,8 @@ function PersianaSelectorPanel({ config, valor, onChange, onClose }) {
 
   return (
     <>
-      <div style={backdropStyle} onClick={onClose} />
-      <div style={panelStyle}>
+      <div style={backdropStyle} onClick={onClose} role="presentation" />
+      <div style={panelStyle} role="dialog" aria-modal="true">
         <div style={headerStyle}>
           <span>Especificações da persiana</span>
           <CloseBtn onClose={onClose} />
