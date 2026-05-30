@@ -114,6 +114,10 @@ async function _salvarItens(client, pedidoId, itens = []) {
   const idsParaDeletar = existingIds.filter((id) => !incomingIds.includes(id));
   if (idsParaDeletar.length > 0) {
     await client.query(`DELETE FROM ordem_servico WHERE pedido_item_id = ANY($1)`, [idsParaDeletar]);
+    await client.query(
+      `UPDATE pedido_itens SET item_vinculado_id = NULL WHERE item_vinculado_id = ANY($1)`,
+      [idsParaDeletar]
+    );
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
   }
 
