@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { api } from "../../services/api";
+import { detectarTipo } from "./importKeywordConfig";
+import ModeloSelectorPanel from "./ModeloSelectorPanel";
 
 const FORMAS_PAGAMENTO = ["PIX / DEPÓSITO", "CONTRA ENTREGA", "CARTÃO DE CRÉDITO", "BOLETO", "DINHEIRO", "CHEQUE"];
 const UNIDADES = ["M2", "ML", "UN", "PÇ"];
@@ -34,6 +36,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
   const [itens,         setItens]         = useState([]);
   const [pagamentos,    setPagamentos]    = useState([]);
   const [fonteImport,   setFonteImport]   = useState("");
+  const [selecoes,     setSelecoes]     = useState({}); // { [itemIdx]: { modelo, especificacoes, item_vinculado_idx } }
+  const [panelAberto,  setPanelAberto]  = useState(null); // índice do item com painel aberto, ou null
 
   async function preencherViaCep(cepRaw) {
     const cep = (cepRaw || "").replace(/\D/g, "");
@@ -90,6 +94,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       ? ext.pagamentos.map(pg => ({ ...pagVazio(), ...pg, vencimento: pg.vencimento || "" }))
       : [pagVazio()]);
     setEtapa("revisao");
+    setSelecoes({});
+    setPanelAberto(null);
     // Completa endereço via ViaCEP quando campos ficaram vazios após extração
     if (ext.cep && (!ext.rua || !ext.cidade)) preencherViaCep(ext.cep);
   }
@@ -140,7 +146,27 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
     });
   }
   function addItem()      { setItens((p) => [...p, itemVazio()]); }
-  function removeItem(i)  { setItens((p) => p.filter((_, idx) => idx !== i)); }
+  function removeItem(i) {
+    setItens((p) => p.filter((_, idx) => idx !== i));
+    setSelecoes((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([idxStr, sel]) => {
+        const idx = Number(idxStr);
+        if (idx === i) return;
+        const newIdx = idx > i ? idx - 1 : idx;
+        let newSel = { ...sel };
+        if (sel.item_vinculado_idx === i) {
+          newSel.item_vinculado_idx = null;
+        } else if (sel.item_vinculado_idx != null && sel.item_vinculado_idx > i) {
+          newSel.item_vinculado_idx = sel.item_vinculado_idx - 1;
+        }
+        next[newIdx] = newSel;
+      });
+      return next;
+    });
+    if (panelAberto === i) setPanelAberto(null);
+    else if (panelAberto != null && panelAberto > i) setPanelAberto(panelAberto - 1);
+  }
 
   function setPag(i, k, v) {
     setPagamentos((prev) => {
@@ -153,11 +179,35 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
   function removePag(i)  { setPagamentos((p) => p.filter((_, idx) => idx !== i)); }
 
   function confirmar() {
+    // Filtra itens não-vazios mantendo o índice original para resolver seleções
+    const filteredWithOrigIdx = itens
+      .map((it, origIdx) => ({ it, origIdx }))
+      .filter(({ it }) => it.descricao?.trim());
+
+    // Mapeia origIdx → newIdx para resolver item_vinculado_idx
+    const origToNew = {};
+    filteredWithOrigIdx.forEach(({ origIdx }, newIdx) => {
+      origToNew[origIdx] = newIdx;
+    });
+
+    const itensFinais = filteredWithOrigIdx.map(({ it, origIdx }) => {
+      const sel = selecoes[origIdx] || {};
+      const vinculadoOrigIdx = sel.item_vinculado_idx ?? null;
+      return {
+        ...it,
+        modelo:               sel.modelo              || null,
+        especificacoes:       sel.especificacoes      || null,
+        item_vinculado_ordem: vinculadoOrigIdx != null
+          ? (origToNew[vinculadoOrigIdx] ?? null)
+          : null,
+      };
+    });
+
     const dados = {
       ...form,
       cliente_id:   form.cliente_id   ? Number(form.cliente_id)   : null,
       consultor_id: form.consultor_id ? Number(form.consultor_id) : null,
-      itens:        itens.filter((it) => it.descricao?.trim()),
+      itens:        itensFinais,
       pagamentos:   pagamentos.filter((pg) => pg.forma?.trim()),
     };
     delete dados._endereco_completo;
@@ -439,38 +489,163 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--color-text-muted)", marginBottom: 8 }}>
                   Itens ({itens.length})
                 </div>
-                <div className="pd-itens-editor">
-                  <div className="pd-itens-editor-header">
-                    <span>#</span>
-                    <span>Ambiente</span>
-                    <span>Referência</span>
-                    <span>Cor</span>
-                    <span>Produto</span>
-                    <span>Medidas</span>
-                    <span>Qtde</span>
-                    <span>Un</span>
-                    <span>Preço Unit.</span>
-                    <span>Total</span>
-                    <span></span>
-                  </div>
-                  {itens.map((it, i) => (
-                    <div key={i} className="pd-itens-editor-row">
-                      <span className="pd-item-num">{i + 1}</span>
-                      <input placeholder="Sala" value={it.ambiente || ""} onChange={(e) => setItem(i, "ambiente", e.target.value)} />
-                      <input placeholder="ADO500" value={it.referencia || ""} onChange={(e) => setItem(i, "referencia", e.target.value)} />
-                      <input placeholder="Cor" value={it.cor || ""} onChange={(e) => setItem(i, "cor", e.target.value)} />
-                      <input placeholder="Produto" value={it.descricao || ""} onChange={(e) => setItem(i, "descricao", e.target.value)} className="pd-item-desc" />
-                      <input placeholder="2,00x3,00" value={it.medidas || ""} onChange={(e) => setItem(i, "medidas", e.target.value)} />
-                      <input type="number" min="0" step="0.01" value={it.quantidade || 1} onChange={(e) => setItem(i, "quantidade", e.target.value)} />
-                      <select value={it.unidade || "UN"} onChange={(e) => setItem(i, "unidade", e.target.value)}>
-                        {UNIDADES.map((u) => <option key={u}>{u}</option>)}
-                      </select>
-                      <input type="number" min="0" step="0.01" value={it.preco_unitario || ""} onChange={(e) => setItem(i, "preco_unitario", e.target.value)} />
-                      <input readOnly value={it.valor ? fmtMoeda(it.valor) : ""} className="pd-item-total" />
-                      <button className="pd-item-del" onClick={() => removeItem(i)}>×</button>
-                    </div>
-                  ))}
-                </div>
+                {(() => {
+                  const hasTrilho = itens.some(
+                    (it) => detectarTipo(it.descricao)?.tipo === "trilho"
+                  );
+
+                  const opcoesVinculo = itens
+                    .map((it, idx) => {
+                      const t = detectarTipo(it.descricao)?.tipo;
+                      if (t !== "cortina" && t !== "forro") return null;
+                      const modelo = selecoes[idx]?.modelo || it.descricao;
+                      return { idx, label: `#${idx + 1} · ${it.ambiente || "—"} · ${modelo}` };
+                    })
+                    .filter(Boolean);
+
+                  return (
+                    <>
+                      <div className="pd-itens-editor">
+                        <div className="pd-itens-editor-header">
+                          <span>#</span>
+                          <span>Ambiente</span>
+                          <span>Referência</span>
+                          <span>Cor</span>
+                          <span>Produto</span>
+                          <span>Modelo</span>
+                          {hasTrilho && <span>Vinculado a</span>}
+                          <span>Medidas</span>
+                          <span>Qtde</span>
+                          <span>Un</span>
+                          <span>Preço Unit.</span>
+                          <span>Total</span>
+                          <span></span>
+                        </div>
+
+                        {itens.map((it, i) => {
+                          const cfg    = detectarTipo(it.descricao);
+                          const tipo   = cfg?.tipo ?? null;
+                          const sel    = selecoes[i] || {};
+                          const temSel = !!sel.modelo;
+
+                          return (
+                            <div key={i} className="pd-itens-editor-row">
+                              <span className="pd-item-num">{i + 1}</span>
+                              <input placeholder="Sala"   value={it.ambiente   || ""} onChange={(e) => setItem(i, "ambiente",   e.target.value)} />
+                              <input placeholder="ADO500" value={it.referencia || ""} onChange={(e) => setItem(i, "referencia", e.target.value)} />
+                              <input placeholder="Cor"    value={it.cor        || ""} onChange={(e) => setItem(i, "cor",        e.target.value)} />
+                              <input placeholder="Produto" value={it.descricao || ""} onChange={(e) => setItem(i, "descricao", e.target.value)} className="pd-item-desc" />
+
+                              {/* Coluna Modelo */}
+                              <div style={{ display: "flex", alignItems: "center" }}>
+                                {tipo && tipo !== "trilho" ? (
+                                  temSel ? (
+                                    <button
+                                      onClick={() => setPanelAberto(i)}
+                                      style={{
+                                        padding: "3px 8px",
+                                        borderRadius: 4,
+                                        border: "1px solid var(--color-success, #22c55e)",
+                                        background: "rgba(34,197,94,0.1)",
+                                        color: "var(--color-success, #22c55e)",
+                                        fontSize: 12,
+                                        cursor: "pointer",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {sel.modelo} ✓
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => setPanelAberto(i)}
+                                      style={{
+                                        padding: "3px 8px",
+                                        borderRadius: 4,
+                                        border: "1px dashed var(--color-primary)",
+                                        background: "transparent",
+                                        color: "var(--color-primary)",
+                                        fontSize: 12,
+                                        cursor: "pointer",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      + Selecionar
+                                    </button>
+                                  )
+                                ) : (
+                                  <span />
+                                )}
+                              </div>
+
+                              {/* Coluna Vinculado a (só renderiza se hasTrilho) */}
+                              {hasTrilho && (
+                                <div>
+                                  {tipo === "trilho" ? (
+                                    <select
+                                      value={sel.item_vinculado_idx ?? ""}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        setSelecoes((prev) => ({
+                                          ...prev,
+                                          [i]: {
+                                            ...prev[i],
+                                            item_vinculado_idx: v === "" ? null : Number(v),
+                                          },
+                                        }));
+                                      }}
+                                      style={{
+                                        padding: "3px 6px",
+                                        border: "1px solid var(--color-border)",
+                                        borderRadius: 4,
+                                        background: "var(--color-surface)",
+                                        color: "var(--color-text)",
+                                        fontSize: 12,
+                                        maxWidth: 160,
+                                      }}
+                                    >
+                                      <option value="">— Não vincular —</option>
+                                      {opcoesVinculo.map(({ idx, label }) => (
+                                        <option key={idx} value={idx}>{label}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span />
+                                  )}
+                                </div>
+                              )}
+
+                              <input placeholder="2,00x3,00" value={it.medidas   || ""} onChange={(e) => setItem(i, "medidas",       e.target.value)} />
+                              <input type="number" min="0" step="0.01" value={it.quantidade || 1} onChange={(e) => setItem(i, "quantidade",    e.target.value)} />
+                              <select value={it.unidade || "UN"} onChange={(e) => setItem(i, "unidade", e.target.value)}>
+                                {UNIDADES.map((u) => <option key={u}>{u}</option>)}
+                              </select>
+                              <input type="number" min="0" step="0.01" value={it.preco_unitario || ""} onChange={(e) => setItem(i, "preco_unitario", e.target.value)} />
+                              <input readOnly value={it.valor ? fmtMoeda(it.valor) : ""} className="pd-item-total" />
+                              <button className="pd-item-del" onClick={() => removeItem(i)}>×</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Painel de seleção de modelo */}
+                      {panelAberto != null && (() => {
+                        const cfg = detectarTipo(itens[panelAberto]?.descricao);
+                        if (!cfg || cfg.tipo === "trilho") return null;
+                        return (
+                          <ModeloSelectorPanel
+                            tipo={cfg.tipo}
+                            config={cfg}
+                            valor={selecoes[panelAberto] || null}
+                            onChange={(novoValor) =>
+                              setSelecoes((prev) => ({ ...prev, [panelAberto]: { ...(prev[panelAberto] || {}), ...novoValor } }))
+                            }
+                            onClose={() => setPanelAberto(null)}
+                          />
+                        );
+                      })()}
+                    </>
+                  );
+                })()}
                 <button className="pd-add-linha" onClick={addItem}>+ Adicionar item</button>
 
                 {/* Totais */}
