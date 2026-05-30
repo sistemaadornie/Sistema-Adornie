@@ -129,7 +129,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `UPDATE pedido_itens
          SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
              quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
-             modelo=$11, especificacoes=$12, item_vinculado_id=$13
+             modelo=$11, especificacoes=$12, item_vinculado_id = COALESCE($13, item_vinculado_id)
          WHERE id=$14 AND pedido_id=$15`,
         [
           it.ambiente?.trim()    || null,
@@ -143,7 +143,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           toDecimal(it.valor),
           i,
           it.modelo?.trim()      || null,
-          it.especificacoes      || null,
+          (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
           it.item_vinculado_id   || null,
           itemId,
           pedidoId,
@@ -172,7 +172,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           toDecimal(it.valor),
           i,
           it.modelo?.trim()      || null,
-          it.especificacoes      || null,
+          (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
         ]
       );
       insertedIds.push(ins.rows[0].id);
@@ -182,7 +182,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
   // Resolve item_vinculado_ordem → item_vinculado_id para novos itens
   for (let i = 0; i < itens.length; i++) {
     const ordem = itens[i].item_vinculado_ordem;
-    if (ordem != null && Number.isFinite(Number(ordem)) && insertedIds[Number(ordem)] != null) {
+    if (ordem != null && Number.isFinite(Number(ordem)) && Number(ordem) !== i && insertedIds[Number(ordem)] != null) {
       await client.query(
         `UPDATE pedido_itens SET item_vinculado_id = $1 WHERE id = $2`,
         [insertedIds[Number(ordem)], insertedIds[i]]
