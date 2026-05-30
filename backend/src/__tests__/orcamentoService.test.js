@@ -121,7 +121,8 @@ describe('buscar', () => {
         { id: 1, ambiente: 'Sala',    produto_nome: 'Persiana' },
         { id: 2, ambiente: 'Sala',    produto_nome: 'Cortina'  },
         { id: 3, ambiente: 'Quarto',  produto_nome: 'Persiana' },
-      ]});
+      ]})
+      .mockResolvedValueOnce({ rows: [] });
 
     const result = await svc.buscar(1, 10);
 
