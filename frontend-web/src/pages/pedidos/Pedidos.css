@@ -15,6 +15,7 @@
 @keyframes pd-spin { to { transform: rotate(360deg); } }
 
 /* ── LAYOUT ── */
+/* 260px = ek-page padding (64) + ek-head (~80) + gap (28) + ek-toolbar (~60) + gap+marginBottom (48) + bottom padding (32) — ajuste se a toolbar mudar */
 .pd-layout {
   display: grid;
   grid-template-columns: 340px 1fr;

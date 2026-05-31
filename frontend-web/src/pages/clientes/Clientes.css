@@ -51,6 +51,7 @@
 
 
 /* ── LAYOUT ── */
+/* 260px = ek-page padding (64) + ek-head (~80) + gap (28) + ek-toolbar (~60) + gap+marginBottom (48) + bottom padding (32) — ajuste se a toolbar mudar */
 .cl-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
