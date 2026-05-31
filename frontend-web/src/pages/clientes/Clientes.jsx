@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import useClientes from "./hooks/useClientes";
 import ConfirmModal from "../../components/ConfirmModal";
 import "./Clientes.css";
@@ -61,6 +61,8 @@ export default function Clientes() {
   const [confirmCliente, setConfirmCliente] = useState(null); // id a excluir
   const [confirmEndereco, setConfirmEndereco] = useState(null); // { clienteId, endId }
 
+  const detalheRef = useRef(null);
+
   function mostrarToast(texto, tipo = "success") {
     setToast({ texto, tipo });
     setTimeout(() => setToast({ texto: "", tipo: "" }), 3500);
@@ -84,6 +86,12 @@ export default function Clientes() {
     if (!clienteDetalhe) return null;
     return clientes.find((c) => c.id === clienteDetalhe.id) || null;
   }, [clientes, clienteDetalhe]);
+
+  useEffect(() => {
+    if (clienteDetalheAtual?.id && window.innerWidth < 900) {
+      detalheRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [clienteDetalheAtual?.id]);
 
   async function handleSalvarCliente(dados) {
     setSalvando(true);
@@ -275,7 +283,7 @@ export default function Clientes() {
         </div>
 
         {/* PAINEL DE DETALHE */}
-        <div className="cl-detalhe">
+        <div className="cl-detalhe" ref={detalheRef}>
           {!clienteDetalheAtual ? (
             <div className="ek-empty" style={{ padding: 60 }}>
               <div className="ek-empty-icon">👈</div>

@@ -55,13 +55,15 @@
   display: grid;
   grid-template-columns: 360px 1fr;
   gap: 20px;
-  align-items: start;
-  min-height: calc(100vh - 220px);
+  height: calc(100vh - var(--header-height) - 260px);
+  overflow: hidden;
 }
 
 @media (max-width: 900px) {
   .cl-layout {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 }
 
@@ -70,6 +72,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 2px;
+}
+@media (max-width: 900px) {
+  .cl-lista {
+    height: auto;
+    overflow-y: visible;
+  }
 }
 
 .cl-card {
@@ -194,9 +205,15 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  min-height: 400px;
-  position: sticky;
-  top: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+@media (max-width: 900px) {
+  .cl-detalhe {
+    height: auto;
+    overflow-y: visible;
+    min-height: 200px;
+  }
 }
 
 .cl-detalhe-inner {
