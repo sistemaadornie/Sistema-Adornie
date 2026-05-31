@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import usePedidos from "./hooks/usePedidos";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -69,6 +69,7 @@ export default function Pedidos() {
   const [printPedido,   setPrintPedido]   = useState(null);
   const [importarAberto, setImportarAberto] = useState(false);
   const navigate = useNavigate();
+  const detalheRef = useRef(null);
 
   function mostrarToast(texto, tipo = "success") {
     setToast({ texto, tipo });
@@ -94,6 +95,12 @@ export default function Pedidos() {
     () => pedidos.find((p) => p.id === pedidoDetalhe?.id) || null,
     [pedidos, pedidoDetalhe]
   );
+
+  useEffect(() => {
+    if (pedidoDetalheAtual && window.innerWidth < 900) {
+      detalheRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [pedidoDetalheAtual]);
 
   async function selecionarPedido(p) {
     setPedidoDetalhe(p);
@@ -177,7 +184,7 @@ export default function Pedidos() {
         </div>
         <div className="ek-head-actions">
           <button className="ek-btn ek-btn-secondary" onClick={() => setImportarAberto(true)}>
-            ↑ Importar PDF
+            ↑ Importar pedidos
           </button>
           <button className="ek-btn ek-btn-primary" onClick={() => setModalPedido("novo")}>
             + Novo pedido
@@ -261,7 +268,7 @@ export default function Pedidos() {
           })}
         </div>
 
-        <div className="pd-detalhe">
+        <div className="pd-detalhe" ref={detalheRef}>
           {!pedidoDetalheAtual ? (
             <div className="ek-empty" style={{ padding: 60 }}>
               <div className="ek-empty-icon">👈</div>

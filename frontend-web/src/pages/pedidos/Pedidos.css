@@ -19,11 +19,15 @@
   display: grid;
   grid-template-columns: 340px 1fr;
   gap: 20px;
-  align-items: start;
-  min-height: calc(100vh - 220px);
+  height: calc(100vh - var(--header-height) - 260px);
+  overflow: hidden;
 }
 @media (max-width: 900px) {
-  .pd-layout { grid-template-columns: 1fr; }
+  .pd-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
 }
 
 /* ── LISTA ── */
@@ -31,6 +35,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 2px;
+}
+@media (max-width: 900px) {
+  .pd-lista {
+    height: auto;
+    overflow-y: visible;
+  }
 }
 
 /* ── CARD ── */
@@ -118,11 +131,15 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  min-height: 400px;
-  position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 120px);
+  height: 100%;
   overflow-y: auto;
+}
+@media (max-width: 900px) {
+  .pd-detalhe {
+    height: auto;
+    overflow-y: visible;
+    min-height: 200px;
+  }
 }
 .pd-detalhe-inner { display: flex; flex-direction: column; }
 .pd-detalhe-header {
@@ -272,14 +289,22 @@
   padding: 2px 0;
 }
 
+/* ── OVERLAY DO MODAL DE IMPORTAÇÃO — começa após a sidebar ── */
+.app-layout:has(.app-sidebar.collapsed) .pd-modal-overlay {
+  left: var(--sidebar-collapsed);
+}
+.app-layout:has(.app-sidebar:not(.collapsed)) .pd-modal-overlay {
+  left: var(--sidebar-width);
+}
+
 /* ── MODAL GRANDE (pedido completo) ── */
 .pd-modal-grande {
-  max-width: 960px !important;
-  width: 96vw !important;
+  max-width: 1400px !important;
+  width: min(100%, 1400px) !important;
 }
 .pd-modal-body-scroll {
   overflow-y: auto;
-  max-height: 60vh;
+  max-height: 75vh;
 }
 
 /* ── ABAS DO MODAL ── */
@@ -318,10 +343,17 @@
 .pd-itens-editor-header,
 .pd-itens-editor-row {
   display: grid;
-  grid-template-columns: 30px 90px 90px 80px 1fr 90px 60px 55px 90px 80px 28px;
+  /* # | Ambiente | Referência | Cor | Produto | Modelo | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
+  grid-template-columns: 28px 110px 100px 90px 1fr 130px 75px 75px 58px 68px 100px 90px 28px;
   gap: 4px;
   align-items: center;
   padding: 6px 10px;
+}
+/* Com coluna "Vinculado a" (quando há trilho) */
+.pd-itens-com-trilho .pd-itens-editor-header,
+.pd-itens-com-trilho .pd-itens-editor-row {
+  /* # | Ambiente | Referência | Cor | Produto | Modelo | Vinculado a | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
+  grid-template-columns: 28px 110px 100px 90px 1fr 130px 150px 75px 75px 58px 68px 100px 90px 28px;
 }
 .pd-itens-editor-header {
   background: var(--color-surface-soft);
