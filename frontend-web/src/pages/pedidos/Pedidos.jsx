@@ -97,10 +97,10 @@ export default function Pedidos() {
   );
 
   useEffect(() => {
-    if (pedidoDetalheAtual && window.innerWidth < 900) {
+    if (pedidoDetalheAtual?.id && window.innerWidth < 900) {
       detalheRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [pedidoDetalheAtual]);
+  }, [pedidoDetalheAtual?.id]);
 
   async function selecionarPedido(p) {
     setPedidoDetalhe(p);
