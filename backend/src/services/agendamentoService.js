@@ -1009,9 +1009,96 @@ async function geocodificarTodos(empresaId) {
   return geocodificarLote(db, empresaId);
 }
 
+/* ── notifica admins/operadores sobre solicitação de urgência (global) ── */
+async function notificarAdminsAprovacao(empresaId, agId, titulo, cliente) {
+  await db.query(
+    `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
+     VALUES ($1, NULL, 'aprovacao_urgencia', $2, $3, $4, 'alerta', $5)`,
+    [empresaId,
+     `Aprovação de urgência: ${titulo || `#${agId}`}`,
+     `${cliente ? cliente + " — " : ""}Solicitação de instalação antes do prazo mínimo aguardando aprovação.`,
+     `/agendamentos?aprovacoes=1`,
+     agId]
+  ).catch((e) => console.warn("Erro ao notificar admins (aprovação):", e.message));
+}
+
+/* ── lista solicitações de urgência pendentes (para a aba do ADMIN_MASTER) ── */
+async function listarPendentesAprovacao(empresaId) {
+  const result = await db.query(
+    `SELECT a.id, a.titulo, a.cliente, a.tipo,
+            TO_CHAR(a.data,'YYYY-MM-DD') AS data, TO_CHAR(a.hora,'HH24:MI') AS hora,
+            a.motivo_urgencia, a.aprovacao_solicitada_em,
+            TO_CHAR(a.aprovacao_data_minima,'YYYY-MM-DD') AS aprovacao_data_minima,
+            a.aprovacao_dias_faltantes,
+            a.criado_por, u.nome_completo AS criado_por_nome,
+            CASE WHEN ped.id IS NOT NULL
+              THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
+              ELSE NULL END AS pedido_numero
+     FROM agendamentos a
+     LEFT JOIN usuarios u   ON u.id = a.criado_por
+     LEFT JOIN pedidos   ped ON ped.id = a.pedido_id AND ped.deleted_at IS NULL
+     WHERE a.empresa_id = $1 AND a.status = 'pendente_aprovacao'
+     ORDER BY a.aprovacao_solicitada_em ASC NULLS LAST, a.id ASC`,
+    [empresaId]
+  );
+  return result.rows;
+}
+
+/* ── aprova ou rejeita uma solicitação de urgência (ADMIN_MASTER) ── */
+async function decidirAprovacao(id, empresaId, adminUser, { aprovado, motivo }) {
+  const existe = await db.query(
+    `SELECT id, titulo, cliente, criado_por, status_pretendido
+     FROM agendamentos
+     WHERE id=$1 AND empresa_id=$2 AND status='pendente_aprovacao' LIMIT 1`,
+    [id, empresaId]
+  );
+  if (existe.rows.length === 0) {
+    const e = new Error("Solicitação de urgência não encontrada ou já decidida."); e.status = 404; throw e;
+  }
+  const ag = existe.rows[0];
+
+  if (aprovado) {
+    const statusFinal = ag.status_pretendido || "agendado";
+    await db.query(
+      `UPDATE agendamentos
+       SET status=$1, aprovado_por=$2, aprovacao_em=NOW(), motivo_rejeicao=NULL, atualizado_em=NOW()
+       WHERE id=$3 AND empresa_id=$4`,
+      [statusFinal, adminUser.id, id, empresaId]
+    );
+    await gravarLog(id, empresaId, adminUser.id, adminUser.nome_completo, "urgencia_aprovada", { status_novo: statusFinal });
+  } else {
+    if (!motivo || !String(motivo).trim()) {
+      const e = new Error("Motivo da rejeição é obrigatório."); e.status = 400; throw e;
+    }
+    await db.query(
+      `UPDATE agendamentos
+       SET status='rejeitado', aprovado_por=$1, aprovacao_em=NOW(), motivo_rejeicao=$2, atualizado_em=NOW()
+       WHERE id=$3 AND empresa_id=$4`,
+      [adminUser.id, String(motivo).trim(), id, empresaId]
+    );
+    await gravarLog(id, empresaId, adminUser.id, adminUser.nome_completo, "urgencia_rejeitada", { motivo: String(motivo).trim() });
+  }
+
+  if (ag.criado_por) {
+    const titulo  = ag.titulo || `Agendamento #${id}`;
+    const tituloN = aprovado ? `Urgência aprovada: ${titulo}` : `Urgência rejeitada: ${titulo}`;
+    const msgN    = aprovado
+      ? `Sua solicitação de instalação urgente foi aprovada.`
+      : `Sua solicitação de instalação urgente foi rejeitada. Motivo: ${String(motivo).trim()}`;
+    await db.query(
+      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
+       VALUES ($1,$2,'aprovacao_urgencia',$3,$4,$5,$6,$7)`,
+      [empresaId, ag.criado_por, tituloN, msgN, `/agendamentos?id=${id}&detalhe=1`, aprovado ? "sucesso" : "erro", id]
+    ).catch((e) => console.warn("Erro ao notificar solicitante:", e.message));
+  }
+
+  return montarAgendamento(id, empresaId);
+}
+
 module.exports = {
   getEquipe, listar, buscar, criar, atualizar, reagendar,
   alterarStatus, adicionarAnexos, excluir,
   getLogs, criarSugestao, listarSugestoes, responderSugestao,
   geocodificarTodos,
+  decidirAprovacao, listarPendentesAprovacao, notificarAdminsAprovacao,
 };
