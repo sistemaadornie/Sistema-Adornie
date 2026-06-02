@@ -244,6 +244,37 @@ function AgendamentosOperador() {
   const [agEditar,            setAgEditar]            = useState(null);
   const [salvando,            setSalvando]            = useState(false);
   const [toastMsg,            setToastMsg]            = useState({ texto: "", tipo: "" });
+  const [abaAprovacoes,       setAbaAprovacoes]       = useState(false);
+  const [pendentes,           setPendentes]           = useState([]);
+  const isAdminMaster = (user?.permissoes || []).includes("ADMIN_MASTER");
+
+  async function carregarPendentes() {
+    if (!isAdminMaster) return;
+    try {
+      const res = await api.get("/agendamentos/pendentes-aprovacao");
+      setPendentes(res.pendentes || []);
+    } catch { /* silencioso */ }
+  }
+
+  useEffect(() => { carregarPendentes(); }, [isAdminMaster]); // eslint-disable-line
+
+  useEffect(() => {
+    if (searchParams.get("aprovacoes") === "1" && isAdminMaster) setAbaAprovacoes(true);
+  }, [searchParams, isAdminMaster]);
+
+  async function decidirAprovacao(id, aprovado, motivo) {
+    setSalvando(true);
+    try {
+      await api.patch(`/agendamentos/${id}/aprovacao`, { aprovado, motivo });
+      mostrarToast(aprovado ? "Urgência aprovada!" : "Solicitação rejeitada.");
+      await carregarPendentes();
+      await carregar();
+    } catch (e) {
+      mostrarToast(e.message || "Erro ao decidir aprovação.", "error");
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   useEffect(() => {
     const pre = location.state?.novoInstalacao;
@@ -810,6 +841,11 @@ function AgendamentosOperador() {
           <p>{isInstaladorPuro(user) ? "Visualize os agendamentos e atualize o status dos seus serviços" : "Gerencie suas instalações"}</p>
         </div>
         <div className="ek-head-actions">
+          {isAdminMaster && (
+            <button className="ek-btn ek-btn-secondary" onClick={() => { setAbaAprovacoes(true); carregarPendentes(); }}>
+              Pendentes de aprovação{pendentes.length ? ` (${pendentes.length})` : ""}
+            </button>
+          )}
           {podeCriar && (
             <button className="ek-btn ek-btn-primary" onClick={() => setModalNovo(true)}>
               + Novo agendamento
@@ -1036,10 +1072,62 @@ function AgendamentosOperador() {
         />
       )}
 
+      {/* ── PAINEL: PENDENTES DE APROVAÇÃO (ADMIN_MASTER) ── */}
+      {abaAprovacoes && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setAbaAprovacoes(false)}>
+          <div className="modal-box" style={{ maxWidth: 680, maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-header">
+              <h2 className="modal-title">Pendentes de aprovação</h2>
+              <button className="modal-close" onClick={() => setAbaAprovacoes(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {pendentes.length === 0 ? (
+                <p style={{ color: "var(--color-text-muted)" }}>Nenhuma solicitação pendente.</p>
+              ) : pendentes.map((p) => (
+                <CartaoAprovacao key={p.id} p={p} onDecidir={decidirAprovacao} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
 
+
+/* ── CARTÃO DE APROVAÇÃO DE URGÊNCIA ─────────────── */
+function CartaoAprovacao({ p, onDecidir }) {
+  const [rejeitando, setRejeitando] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  return (
+    <div style={{ border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: 12 }}>
+      <div style={{ fontWeight: 600 }}>{p.titulo} {p.pedido_numero ? <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>· {p.pedido_numero}</span> : null}</div>
+      <div style={{ fontSize: 13, marginTop: 2 }}>{p.cliente}</div>
+      <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 4 }}>
+        Solicitada: {p.data ? p.data.split("-").reverse().join("/") : "—"}
+        {p.aprovacao_data_minima ? ` · mínima: ${p.aprovacao_data_minima.split("-").reverse().join("/")}` : ""}
+        {typeof p.aprovacao_dias_faltantes === "number" ? ` · faltam ${p.aprovacao_dias_faltantes} dias úteis` : ""}
+      </div>
+      <div style={{ fontSize: 12, marginTop: 6 }}><strong>Motivo:</strong> {p.motivo_urgencia || "—"}</div>
+      <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>Solicitante: {p.criado_por_nome || "—"}</div>
+      {!rejeitando ? (
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button className="ek-btn ek-btn-primary" onClick={() => onDecidir(p.id, true)}>✅ Aprovar</button>
+          <button className="ek-btn ek-btn-secondary" onClick={() => setRejeitando(true)}>❌ Rejeitar</button>
+        </div>
+      ) : (
+        <div style={{ marginTop: 10 }}>
+          <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} placeholder="Motivo da rejeição (obrigatório)" style={{ width: "100%" }} />
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <button className="ek-btn ek-btn-primary" disabled={!motivo.trim()} onClick={() => onDecidir(p.id, false, motivo.trim())}>Confirmar rejeição</button>
+            <button className="ek-btn ek-btn-secondary" onClick={() => { setRejeitando(false); setMotivo(""); }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ============================================================
    COMPONENTES INTERNOS
