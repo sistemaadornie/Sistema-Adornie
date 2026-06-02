@@ -4,6 +4,7 @@ import usePedidos from "./hooks/usePedidos";
 import ConfirmModal from "../../components/ConfirmModal";
 import PedidoPrint from "./PedidoPrint";
 import ImportarPedidoModal from "./ImportarPedidoModal";
+import ModalSelecionarItensInstalacao from "./ModalSelecionarItensInstalacao";
 import { api } from "../../services/api";
 import MidiasGaleria from "../../components/MidiasGaleria";
 import "./Pedidos.css";
@@ -68,6 +69,7 @@ export default function Pedidos() {
   const [confirmId,     setConfirmId]     = useState(null);
   const [printPedido,   setPrintPedido]   = useState(null);
   const [importarAberto, setImportarAberto] = useState(false);
+  const [instalacaoPedido, setInstalacaoPedido] = useState(null);
   const navigate = useNavigate();
   const detalheRef = useRef(null);
 
@@ -286,6 +288,7 @@ export default function Pedidos() {
               onImprimir={() => setPrintPedido(pedidoFull || pedidoDetalheAtual)}
               onGerarOS={handleGerarOS}
               onAbrirOS={(id) => navigate(`/pedidos/os/${id}`)}
+              onAgendarInstalacao={() => setInstalacaoPedido(pedidoFull || pedidoDetalheAtual)}
             />
           )}
         </div>
@@ -335,12 +338,40 @@ export default function Pedidos() {
         />
       )}
 
+      {instalacaoPedido && (
+        <ModalSelecionarItensInstalacao
+          pedido={instalacaoPedido}
+          onClose={() => setInstalacaoPedido(null)}
+          onContinuar={(itensSelecionados) => {
+            const p = instalacaoPedido;
+            setInstalacaoPedido(null);
+            navigate("/agendamentos", {
+              state: {
+                novoInstalacao: {
+                  pedido_id: p.id,
+                  pedido_numero: p.numero,
+                  cliente: p.cliente_nome || "",
+                  cep: p.cep,
+                  rua: p.rua,
+                  numero: p.numero_rua,
+                  complemento: p.complemento,
+                  bairro: p.bairro,
+                  cidade: p.cidade,
+                  estado: p.estado,
+                  itens: itensSelecionados,
+                },
+              },
+            });
+          }}
+        />
+      )}
+
     </div>
   );
 }
 
 /* ── DETALHE DO PEDIDO ── */
-function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onAbrirOS }) {
+function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onAbrirOS, onAgendarInstalacao }) {
   return (
     <div className="pd-detalhe-inner">
       <div className="pd-detalhe-header">
@@ -361,6 +392,9 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
           </button>
           <button className="ek-btn ek-btn-secondary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={onEditar}>
             ✏ Editar
+          </button>
+          <button className="ek-btn ek-btn-secondary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={onAgendarInstalacao}>
+            📅 Agendar Instalação
           </button>
           <button className="ek-btn" style={{ fontSize: 12, padding: "6px 12px", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }} onClick={onExcluir}>
             🗑
