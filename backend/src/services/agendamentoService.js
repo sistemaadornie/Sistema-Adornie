@@ -476,6 +476,8 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
   }
   const STATUSES_EDICAO = ["agendado", "pre_agendado"];
   const novoStatus = STATUSES_EDICAO.includes(statusInput) ? statusInput : statusAtual;
+  const aprovacao = dados.aprovacao || null;
+  const statusFinal = aprovacao ? "pendente_aprovacao" : novoStatus;
 
   // Detecta se o endereço mudou — qualquer mudança força nova geocodificação
   const ant = existe.rows[0];
@@ -508,11 +510,31 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
       [titulo, cliente, tipo, data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
-       duracao_minutos||null, pessoa_obrigatoria_id||null, novoStatus, id, empresaId]
+       duracao_minutos||null, pessoa_obrigatoria_id||null, statusFinal, id, empresaId]
     );
     /* Vincula cliente_id e pedido_id em background — silencia erro se migration ainda não foi aplicada */
     db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, id]).catch(() => {});
     db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [dados.pedido_id || null, id]).catch(() => {});
+
+    if (aprovacao) {
+      await client.query(
+        `UPDATE agendamentos
+         SET status_pretendido=$1, motivo_urgencia=$2, aprovacao_solicitada_em=NOW(),
+             aprovacao_data_minima=$3, aprovacao_dias_faltantes=$4, motivo_rejeicao=NULL, aprovado_por=NULL, aprovacao_em=NULL
+         WHERE id=$5 AND empresa_id=$6`,
+        [STATUSES_EDICAO.includes(statusInput) ? statusInput : "agendado",
+         aprovacao.motivo || null, aprovacao.data_minima || null, aprovacao.dias_faltantes || null, id, empresaId]
+      );
+    } else if (["rejeitado", "pendente_aprovacao"].includes(statusAtual)) {
+      // reagendamento limpo após rejeição: data agora válida → encerra a pendência
+      await client.query(
+        `UPDATE agendamentos
+         SET status_pretendido=NULL, motivo_urgencia=NULL, motivo_rejeicao=NULL,
+             aprovacao_data_minima=NULL, aprovacao_dias_faltantes=NULL
+         WHERE id=$1 AND empresa_id=$2`,
+        [id, empresaId]
+      );
+    }
 
     await Promise.all([
       client.query(`DELETE FROM agendamento_equipe WHERE agendamento_id=$1`, [id]),
@@ -591,6 +613,10 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     ]);
   } catch (e) {
     console.warn("Erro ao criar notificação de edição:", e.message);
+  }
+
+  if (aprovacao) {
+    notificarAdminsAprovacao(empresaId, id, ag?.titulo, ag?.cliente);
   }
 
   return ag;
