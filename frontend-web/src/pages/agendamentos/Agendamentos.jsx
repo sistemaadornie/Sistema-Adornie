@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import "./Agendamentos.css";
 import useAgendamentos from "./hooks/useAgendamentos";
 import { api } from "../../services/api";
@@ -235,12 +235,24 @@ function AgendamentosOperador() {
   const [filtroTipo,   setFiltroTipo]   = useState("todos");
   const [filtroEquipe, setFiltroEquipe] = useState("todos");
 
+  const location = useLocation();
+  const [prefillInstalacao, setPrefillInstalacao] = useState(null);
+
   const [modalNovo,           setModalNovo]           = useState(false);
   const [modalStatus,         setModalStatus]         = useState(null);
   const [agDetalhe,           setAgDetalhe]           = useState(null);
   const [agEditar,            setAgEditar]            = useState(null);
   const [salvando,            setSalvando]            = useState(false);
   const [toastMsg,            setToastMsg]            = useState({ texto: "", tipo: "" });
+
+  useEffect(() => {
+    const pre = location.state?.novoInstalacao;
+    if (pre) {
+      setPrefillInstalacao(pre);
+      setModalNovo(true);
+      window.history.replaceState({}, document.title); // limpa o state p/ não reabrir
+    }
+  }, [location.state]); // eslint-disable-line
 
   /* drag & drop — sem setState durante o movimento */
   const dragRef     = useRef(null);   // estado vivo do drag (não-React)
@@ -963,12 +975,14 @@ function AgendamentosOperador() {
       {/* ── MODAL: NOVO AGENDAMENTO ── */}
       {modalNovo && (
         <NovoAgendamentoModal
-          onClose={() => setModalNovo(false)}
+          onClose={() => { setModalNovo(false); setPrefillInstalacao(null); }}
           onSalvar={salvarNovoAg}
           equipe={equipeDisponivel}
           salvando={salvando}
           agendamentos={ags}
           dataInicial={`${curDia.getFullYear()}-${String(curDia.getMonth()+1).padStart(2,"0")}-${String(curDia.getDate()).padStart(2,"0")}`}
+          user={user}
+          prefill={prefillInstalacao}
         />
       )}
 
@@ -1003,6 +1017,7 @@ function AgendamentosOperador() {
           equipe={equipeDisponivel}
           salvando={salvando}
           agendamentos={ags}
+          user={user}
         />
       )}
 
@@ -1139,30 +1154,30 @@ function horaFimFromDuracao(hora, duracaoMin) {
   return `${String(fh).padStart(2, "0")}:${String(fm).padStart(2, "0")}`;
 }
 
-function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamentos, agEditar, dataInicial }) {
+function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamentos, agEditar, dataInicial, prefill, user }) {
   const modoEditar = !!agEditar;
   const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado");
   const [form, setForm] = useState({
-    titulo:      agEditar?.titulo      ?? "",
-    cliente:     agEditar?.cliente     ?? "",
-    tipo:        agEditar?.tipo        ?? TIPOS[0],
+    titulo:      agEditar?.titulo      ?? (prefill ? `Instalação — ${prefill.pedido_numero || ""}`.trim() : ""),
+    cliente:     agEditar?.cliente     ?? prefill?.cliente    ?? "",
+    tipo:        agEditar?.tipo        ?? "Instalação",
     data:        agEditar?.data        ?? dataInicial ?? "",
     hora:        agEditar?.hora        ?? "",
     hora_fim:    horaFimFromDuracao(agEditar?.hora, agEditar?.duracao_minutos),
-    cep:         agEditar?.cep         ?? "",
-    rua:         agEditar?.rua         ?? "",
-    numero:      agEditar?.numero      ?? "",
-    complemento: agEditar?.complemento ?? "",
-    bairro:      agEditar?.bairro      ?? "",
-    cidade:      agEditar?.cidade      ?? "",
-    estado:      agEditar?.estado      ?? "",
+    cep:         agEditar?.cep         ?? prefill?.cep         ?? "",
+    rua:         agEditar?.rua         ?? prefill?.rua         ?? "",
+    numero:      agEditar?.numero      ?? prefill?.numero      ?? "",
+    complemento: agEditar?.complemento ?? prefill?.complemento ?? "",
+    bairro:      agEditar?.bairro      ?? prefill?.bairro      ?? "",
+    cidade:      agEditar?.cidade      ?? prefill?.cidade      ?? "",
+    estado:      agEditar?.estado      ?? prefill?.estado      ?? "",
     descricao: [agEditar?.descricao, agEditar?.observacoes].filter(Boolean).join("\n\n"),
-    pedido_id:   agEditar?.pedido_id   ?? "",
+    pedido_id:   agEditar?.pedido_id   ?? (prefill?.pedido_id ? String(prefill.pedido_id) : ""),
   });
   const [pessoaObrigatoria, setPessoaObrigatoria] = useState(agEditar?.pessoa_obrigatoria_id ?? null);
   const [buscandoCEP,  setBuscandoCEP]  = useState(false);
   const [equipeSelec,  setEquipeSelec]  = useState(agEditar?.equipe ?? []);
-  const [itens,        setItens]        = useState(agEditar?.itens  ?? []);
+  const [itens,        setItens]        = useState(agEditar?.itens  ?? prefill?.itens ?? []);
   const [novoItem,     setNovoItem]     = useState("");
   const [anexos,       setAnexos]       = useState([]);
   const [dragOver,     setDragOver]     = useState(false);
