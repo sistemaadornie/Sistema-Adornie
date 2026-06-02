@@ -93,7 +93,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { empresa_id, id: userId } = req.user;
-    const { titulo, cliente, data, hora, equipe, itens, status } = req.body;
+    const { titulo, cliente, data, hora, equipe, itens, status, tipo } = req.body;
     const isPreAgendado = status === "pre_agendado";
     if (!titulo || !cliente || !data || (!isPreAgendado && !hora)) {
       return res.status(400).json({ message: isPreAgendado
