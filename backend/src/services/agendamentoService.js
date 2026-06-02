@@ -230,6 +230,7 @@ async function listar(empresaId, userId, permissoes, filtros) {
   const wheres = ["a.empresa_id = $1"];
 
   if (status)      { params.push(status);      wheres.push(`a.status = $${params.length}`); }
+  else             { wheres.push(`a.status NOT IN ('pendente_aprovacao','rejeitado')`); }
   if (tipo)        { params.push(tipo);         wheres.push(`a.tipo = $${params.length}`); }
   if (data_inicio) { params.push(data_inicio);  wheres.push(`a.data >= $${params.length}`); }
   if (data_fim)    { params.push(data_fim);     wheres.push(`a.data <= $${params.length}`); }
