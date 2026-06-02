@@ -760,7 +760,7 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
           JOIN agendamentos a ON a.id = ai.agendamento_id
           WHERE ai.pedido_item_id IS NOT NULL 
             AND a.tipo = 'Instalação'
-            AND a.status != 'cancelado'
+            AND a.status NOT IN ('cancelado','rejeitado')
         )
       ORDER BY pi.ordem ASC, pi.id ASC
     `;
