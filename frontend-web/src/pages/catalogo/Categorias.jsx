@@ -27,16 +27,25 @@ const CATEGORIAS_PADRAO = [
 ];
 
 /* ── Modal de criação/edição ── */
-function CategoriaModal({ categoria, onClose, onSalvar, salvando }) {
+function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
   const [nome, setNome] = useState(categoria?.nome || "");
   const [cor, setCor]   = useState(categoria?.cor  || "#C9A96E");
   const [erro, setErro] = useState(null);
+  const [logistica, setLogistica] = useState(prazos?.logistica_interna_dias ?? 2);
+  const [confeccao, setConfeccao] = useState(prazos?.confeccao_dias ?? 10);
+  const [expedicao, setExpedicao] = useState(prazos?.expedicao_dias ?? 3);
+  const [outros,    setOutros]    = useState(prazos?.outros_dias ?? 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!nome.trim()) { setErro("Nome é obrigatório."); return; }
     setErro(null);
-    onSalvar({ nome, cor });
+    onSalvar({ nome, cor, prazos: {
+      logistica_interna_dias: Number(logistica) || 0,
+      confeccao_dias: Number(confeccao) || 0,
+      expedicao_dias: Number(expedicao) || 0,
+      outros_dias: Number(outros) || 0,
+    }});
   };
 
   return (
@@ -70,6 +79,18 @@ function CategoriaModal({ categoria, onClose, onSalvar, salvando }) {
             </div>
           </div>
 
+          {categoria?.id && (
+            <div className="ag-form-field" style={{ marginTop: 12 }}>
+              <label>Prazos de instalação (dias úteis)</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <label style={{ fontSize: 12 }}>Logística<input type="number" min="0" value={logistica} onChange={(e) => setLogistica(e.target.value)} /></label>
+                <label style={{ fontSize: 12 }}>Confecção<input type="number" min="0" value={confeccao} onChange={(e) => setConfeccao(e.target.value)} /></label>
+                <label style={{ fontSize: 12 }}>Expedição<input type="number" min="0" value={expedicao} onChange={(e) => setExpedicao(e.target.value)} /></label>
+                <label style={{ fontSize: 12 }}>Outros<input type="number" min="0" value={outros} onChange={(e) => setOutros(e.target.value)} /></label>
+              </div>
+            </div>
+          )}
+
           {erro && <p className="arq-form-erro">{erro}</p>}
 
           <div className="modal-actions">
@@ -92,6 +113,7 @@ export default function Categorias({ onCategoriasChange }) {
   const [salvando, setSalvando]     = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [populando, setPopulando]   = useState(false);
+  const [prazosPorCat, setPrazosPorCat] = useState({});
 
   const carregar = async () => {
     setLoading(true);
@@ -106,20 +128,34 @@ export default function Categorias({ onCategoriasChange }) {
     }
   };
 
+  const carregarPrazos = async () => {
+    try {
+      const res = await api.get("/pedidos/config/prazos");
+      const mapa = {};
+      (res.prazos || []).forEach((p) => { mapa[p.categoria_id] = p; });
+      setPrazosPorCat(mapa);
+    } catch { /* silencioso */ }
+  };
+
   useEffect(() => { carregar(); }, []); // eslint-disable-line
+  useEffect(() => { carregarPrazos(); }, []); // eslint-disable-line
 
   const handleSalvar = async (dados) => {
     setSalvando(true);
     try {
       if (modal === "novo") {
-        const res = await api.post("/categorias", dados);
+        const res = await api.post("/categorias", { nome: dados.nome, cor: dados.cor });
         setCategorias((prev) => [...prev, res.categoria]);
         onCategoriasChange?.([...categorias, res.categoria]);
       } else {
-        const res = await api.put(`/categorias/${modal.id}`, dados);
+        const res = await api.put(`/categorias/${modal.id}`, { nome: dados.nome, cor: dados.cor });
         const atualizada = categorias.map((c) => c.id === res.categoria.id ? res.categoria : c);
         setCategorias(atualizada);
         onCategoriasChange?.(atualizada);
+        if (dados.prazos) {
+          await api.put("/pedidos/config/prazos", { prazos: [{ categoria_id: modal.id, ...dados.prazos }] });
+          await carregarPrazos();
+        }
       }
       setModal(null);
     } catch (err) {
@@ -205,6 +241,7 @@ export default function Categorias({ onCategoriasChange }) {
       {modal && (
         <CategoriaModal
           categoria={modal === "novo" ? null : modal}
+          prazos={modal && modal !== "novo" ? prazosPorCat[modal.id] : null}
           onClose={() => setModal(null)}
           onSalvar={handleSalvar}
           salvando={salvando}
