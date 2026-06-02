@@ -648,7 +648,8 @@ function AgendamentosOperador() {
       setAgDetalhe(null);
       mostrarToast("Agendamento atualizado com sucesso!");
     } catch (e) {
-      mostrarToast(e.message || "Erro ao editar agendamento.", "error");
+      if (!e?.data?.detalhes) mostrarToast(e.message || "Erro ao editar agendamento.", "error");
+      throw e;
     } finally {
       setSalvando(false);
     }
@@ -665,7 +666,8 @@ function AgendamentosOperador() {
       setModalNovo(false);
       mostrarToast("Agendamento criado com sucesso!");
     } catch (e) {
-      mostrarToast(e.message || "Erro ao criar agendamento.", "error");
+      if (!e?.data?.detalhes) mostrarToast(e.message || "Erro ao criar agendamento.", "error");
+      throw e;
     } finally {
       setSalvando(false);
     }
@@ -1182,6 +1184,8 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [anexos,       setAnexos]       = useState([]);
   const [dragOver,     setDragOver]     = useState(false);
   const [erroForm,     setErroForm]     = useState("");
+  const [erroPrazo,    setErroPrazo]    = useState(null); // { message, detalhes }
+  const [motivoUrgencia, setMotivoUrgencia] = useState("");
   const [pedidosLista, setPedidosLista] = useState([]);
   const [clienteTel,   setClienteTel]   = useState("");
   const [clienteEmail, setClienteEmail] = useState("");
@@ -1320,6 +1324,67 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
     }
   }
 
+  function calcularDuracao() {
+    let novoInicio = 0;
+    let duracaoMinutos = 0;
+    let novoFim = 0;
+    if (form.hora) {
+      const [nh, nm] = form.hora.split(":").map(Number);
+      novoInicio = nh * 60 + nm;
+      novoFim = novoInicio;
+      if (form.hora_fim) {
+        const [fh, fm] = form.hora_fim.split(":").map(Number);
+        novoFim = fh * 60 + fm;
+        duracaoMinutos = novoFim > novoInicio ? novoFim - novoInicio : 0;
+      }
+    }
+    return { novoInicio, novoFim, duracaoMinutos };
+  }
+
+  function montarPayload(duracaoMinutos) {
+    const partes = [form.rua, form.numero, form.complemento, form.bairro, form.cidade, form.estado ? `- ${form.estado}` : ""].filter(Boolean);
+    const endereco = partes.length ? partes.join(", ") + (form.cep ? ` — CEP ${form.cep}` : "") : (agEditar?.endereco || null);
+    return {
+      ...form,
+      observacoes: null,
+      endereco,
+      equipe: equipeSelec,
+      itens,
+      anexos,
+      duracao_minutos: duracaoMinutos,
+      pessoa_obrigatoria_id: pessoaObrigatoria,
+      pedido_id: form.pedido_id ? Number(form.pedido_id) : null,
+      status: preAgendado ? "pre_agendado" : "agendado",
+      cliente_novo: !clienteSel,
+      cliente_telefone: clienteTel || undefined,
+      cliente_email: clienteEmail || undefined,
+    };
+  }
+
+  async function enviar(payload) {
+    setErroPrazo(null);
+    setErroForm("");
+    try {
+      await onSalvar(payload);
+    } catch (err) {
+      if (err?.data?.detalhes) {
+        setErroPrazo({ message: err.message, detalhes: err.data.detalhes });
+      } else {
+        setErroForm(err?.message || "Erro ao salvar agendamento.");
+      }
+    }
+  }
+
+  function enviarComUrgencia() {
+    const { duracaoMinutos } = calcularDuracao();
+    enviar({ ...montarPayload(duracaoMinutos), solicitar_urgencia: true, motivo_urgencia: motivoUrgencia.trim() });
+  }
+
+  function enviarIgnorandoPrazo() {
+    const { duracaoMinutos } = calcularDuracao();
+    enviar({ ...montarPayload(duracaoMinutos), ignorar_prazos: true });
+  }
+
   function salvar() {
     if (!form.titulo || !form.cliente || !form.data || (!preAgendado && !form.hora)) {
       setErroForm(preAgendado
@@ -1328,23 +1393,14 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
       return;
     }
 
-    let novoInicio = 0;
-    let duracaoMinutos = 0;
-    let novoFim = 0;
+    const { novoInicio, novoFim, duracaoMinutos } = calcularDuracao();
 
-    if (form.hora) {
-      const [nh, nm] = form.hora.split(":").map(Number);
-      novoInicio = nh * 60 + nm;
-      novoFim = novoInicio;
-
-      if (form.hora_fim) {
-        const [fh, fm] = form.hora_fim.split(":").map(Number);
-        novoFim = fh * 60 + fm;
-        if (novoFim <= novoInicio) {
-          setErroForm("O horário de término deve ser após o horário de início.");
-          return;
-        }
-        duracaoMinutos = novoFim - novoInicio;
+    if (form.hora && form.hora_fim) {
+      const [fh, fm] = form.hora_fim.split(":").map(Number);
+      const novoFimCheck = fh * 60 + fm;
+      if (novoFimCheck <= novoInicio) {
+        setErroForm("O horário de término deve ser após o horário de início.");
+        return;
       }
     }
 
@@ -1368,24 +1424,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
       }
     }
 
-    setErroForm("");
-    const partes = [form.rua, form.numero, form.complemento, form.bairro, form.cidade, form.estado ? `- ${form.estado}` : ""].filter(Boolean);
-    const endereco = partes.length ? partes.join(", ") + (form.cep ? ` — CEP ${form.cep}` : "") : (agEditar?.endereco || null);
-    onSalvar({
-      ...form,
-      observacoes: null,
-      endereco,
-      equipe: equipeSelec,
-      itens,
-      anexos,
-      duracao_minutos: duracaoMinutos,
-      pessoa_obrigatoria_id: pessoaObrigatoria,
-      pedido_id: form.pedido_id ? Number(form.pedido_id) : null,
-      status: preAgendado ? "pre_agendado" : "agendado",
-      cliente_novo: !clienteSel,
-      cliente_telefone: clienteTel || undefined,
-      cliente_email: clienteEmail || undefined,
-    });
+    enviar(montarPayload(duracaoMinutos));
   }
 
   return (
@@ -1770,6 +1809,34 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
           </div>
 
         </div>
+
+        {erroPrazo && (
+          <div style={{ background: "color-mix(in srgb, #ef4444 10%, var(--color-surface))", border: "1px solid #ef4444", borderRadius: "var(--radius-md)", padding: 12, marginBottom: 10, margin: "0 24px 10px" }}>
+            <div style={{ fontWeight: 600, color: "#ef4444", marginBottom: 4 }}>⏰ Prazo mínimo não atendido</div>
+            <div style={{ fontSize: 13 }}>{erroPrazo.message}</div>
+            {erroPrazo.detalhes?.data_minima && (
+              <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 4 }}>
+                Data mínima: {erroPrazo.detalhes.data_minima.split("-").reverse().join("/")}
+                {typeof erroPrazo.detalhes.dias_uteis_faltantes === "number" ? ` · faltam ${erroPrazo.detalhes.dias_uteis_faltantes} dias úteis` : ""}
+              </div>
+            )}
+            <div style={{ marginTop: 10 }}>
+              <label style={{ fontSize: 12, fontWeight: 600 }}>Motivo da urgência</label>
+              <textarea value={motivoUrgencia} onChange={(e) => setMotivoUrgencia(e.target.value)} rows={2}
+                placeholder="Ex: cliente VIP, evento em data fixa…" style={{ width: "100%", marginTop: 4 }} />
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <button className="ek-btn ek-btn-primary" disabled={salvando || !motivoUrgencia.trim()} onClick={enviarComUrgencia}>
+                Solicitar aprovação de urgência
+              </button>
+              {(user?.permissoes || []).includes("ADMIN_MASTER") && (
+                <button className="ek-btn ek-btn-secondary" disabled={salvando} onClick={enviarIgnorandoPrazo}>
+                  Ignorar prazo (admin)
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {erroForm && (
           <div style={{
