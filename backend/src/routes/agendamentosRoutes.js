@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
+const permissionMiddleware = require("../middlewares/permissionMiddleware");
 const upload = require("../middlewares/uploadMemory");
 const { validarMagicBytes } = require("../middlewares/uploadMemory");
 const svc = require("../services/agendamentoService");
@@ -79,6 +80,17 @@ router.post("/:id/geocodificar", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /pendentes-aprovacao — lista solicitações de urgência (ADMIN_MASTER)
+router.get("/pendentes-aprovacao", authMiddleware, permissionMiddleware("ADMIN_MASTER"), async (req, res) => {
+  try {
+    const pendentes = await svc.listarPendentesAprovacao(req.user.empresa_id);
+    return res.json({ pendentes });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao listar solicitações de urgência." });
+  }
+});
+
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const ag = await svc.buscar(req.params.id, req.user.empresa_id);
@@ -127,12 +139,18 @@ router.post("/", authMiddleware, async (req, res) => {
     if ((!tipo || tipo === "Instalação") && itemIds.length > 0) {
       const validacao = await prazosService.validarPrazoInstalacao(empresa_id, data, itemIds);
       if (!validacao.valido) {
-        const temBypass = req.user.permissoes.includes("ADMIN_MASTER") && req.body.ignorar_prazos === true;
-        if (!temBypass) {
-          return res.status(400).json({ 
-            message: validacao.mensagem,
-            detalhes: validacao.detalhes
-          });
+        const isAdmin = req.user.permissoes.includes("ADMIN_MASTER");
+        const solicitouUrgencia = req.body.solicitar_urgencia === true && String(req.body.motivo_urgencia || "").trim();
+        if (isAdmin && req.body.ignorar_prazos === true) {
+          // bypass do admin — segue criação normal
+        } else if (solicitouUrgencia) {
+          req.body.aprovacao = {
+            motivo: String(req.body.motivo_urgencia).trim(),
+            data_minima: validacao.detalhes?.data_minima || null,
+            dias_faltantes: validacao.detalhes?.dias_uteis_faltantes || null,
+          };
+        } else {
+          return res.status(400).json({ message: validacao.mensagem, detalhes: validacao.detalhes });
         }
       }
     }
@@ -172,6 +190,21 @@ router.patch("/:id/reagendar", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(err.status || 500).json({ message: err.message || "Erro ao reagendar." });
+  }
+});
+
+// PATCH /:id/aprovacao — aprova ou rejeita solicitação de urgência (ADMIN_MASTER)
+router.patch("/:id/aprovacao", authMiddleware, permissionMiddleware("ADMIN_MASTER"), async (req, res) => {
+  try {
+    const { aprovado, motivo } = req.body;
+    if (typeof aprovado !== "boolean") {
+      return res.status(400).json({ message: "Campo 'aprovado' (boolean) é obrigatório." });
+    }
+    const ag = await svc.decidirAprovacao(req.params.id, req.user.empresa_id, req.user, { aprovado, motivo });
+    return res.json({ message: aprovado ? "Urgência aprovada." : "Solicitação rejeitada.", agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao decidir aprovação." });
   }
 });
 
@@ -220,12 +253,18 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if ((!tipo || tipo === "Instalação") && itemIds.length > 0 && data) {
       const validacao = await prazosService.validarPrazoInstalacao(empresa_id, data, itemIds);
       if (!validacao.valido) {
-        const temBypass = req.user.permissoes.includes("ADMIN_MASTER") && req.body.ignorar_prazos === true;
-        if (!temBypass) {
-          return res.status(400).json({ 
-            message: validacao.mensagem,
-            detalhes: validacao.detalhes
-          });
+        const isAdmin = req.user.permissoes.includes("ADMIN_MASTER");
+        const solicitouUrgencia = req.body.solicitar_urgencia === true && String(req.body.motivo_urgencia || "").trim();
+        if (isAdmin && req.body.ignorar_prazos === true) {
+          // bypass do admin
+        } else if (solicitouUrgencia) {
+          req.body.aprovacao = {
+            motivo: String(req.body.motivo_urgencia).trim(),
+            data_minima: validacao.detalhes?.data_minima || null,
+            dias_faltantes: validacao.detalhes?.dias_uteis_faltantes || null,
+          };
+        } else {
+          return res.status(400).json({ message: validacao.mensagem, detalhes: validacao.detalhes });
         }
       }
     }
