@@ -494,6 +494,7 @@ function AgendamentosOperador() {
               <div key={di} className="ag-week-day-col" style={{ position: "relative" }}>
                 {HORAS_DIA.map((h) => <div key={h} className="ag-week-slot" />)}
                 {evsDia.map((ev) => {
+                  if (!ev.hora) return null;
                   const [eh, em] = ev.hora.split(":").map(Number);
                   const topOffset  = minsToTop(eh * 60 + em) + 2;
                   const durMin     = ev.duracao_minutos ?? 60;
@@ -563,6 +564,7 @@ function AgendamentosOperador() {
               </div>
             )}
             {evsDia.map((ev) => {
+              if (!ev.hora) return null;
               const [eh, em]   = ev.hora.split(":").map(Number);
               const topOffset  = minsToTop(eh * 60 + em) + 2;
               const durMin     = ev.duracao_minutos ?? 60;
@@ -704,6 +706,7 @@ function AgendamentosOperador() {
     const gridEl = isWeek ? weekGridRef.current : dayGridRef.current;
     if (!gridEl) return;
     const rect = gridEl.getBoundingClientRect();
+    if (!ev.hora) return;
     const [h, m] = ev.hora.split(":").map(Number);
     let startColIndex = 0;
     let weekDays = null;
@@ -1167,8 +1170,6 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [pedidosLista, setPedidosLista] = useState([]);
   const [clienteTel,   setClienteTel]   = useState("");
   const [clienteEmail, setClienteEmail] = useState("");
-  const [criandoPedido,    setCriandoPedido]    = useState(false);
-  const [novoPedidoDesc,   setNovoPedidoDesc]   = useState("");
   const fileRef = useRef();
 
   /* Autocomplete de clientes */
@@ -1305,32 +1306,40 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   }
 
   function salvar() {
-    if (!form.titulo || !form.cliente || !form.data || !form.hora) {
-      setErroForm("Preencha os campos obrigatórios: título, cliente, data e horário.");
+    if (!form.titulo || !form.cliente || !form.data || (!preAgendado && !form.hora)) {
+      setErroForm(preAgendado
+        ? "Preencha os campos obrigatórios: título, cliente e data."
+        : "Preencha os campos obrigatórios: título, cliente, data e horário.");
       return;
     }
 
-    const [nh, nm] = form.hora.split(":").map(Number);
-    const novoInicio = nh * 60 + nm;
+    let novoInicio = 0;
     let duracaoMinutos = 0;
-    let novoFim = novoInicio;
+    let novoFim = 0;
 
-    if (form.hora_fim) {
-      const [fh, fm] = form.hora_fim.split(":").map(Number);
-      novoFim = fh * 60 + fm;
-      if (novoFim <= novoInicio) {
-        setErroForm("O horário de término deve ser após o horário de início.");
-        return;
+    if (form.hora) {
+      const [nh, nm] = form.hora.split(":").map(Number);
+      novoInicio = nh * 60 + nm;
+      novoFim = novoInicio;
+
+      if (form.hora_fim) {
+        const [fh, fm] = form.hora_fim.split(":").map(Number);
+        novoFim = fh * 60 + fm;
+        if (novoFim <= novoInicio) {
+          setErroForm("O horário de término deve ser após o horário de início.");
+          return;
+        }
+        duracaoMinutos = novoFim - novoInicio;
       }
-      duracaoMinutos = novoFim - novoInicio;
     }
 
-    if (duracaoMinutos > 0 && equipeSelec.length > 0) {
+    if (form.hora && duracaoMinutos > 0 && equipeSelec.length > 0) {
       const conflito = agendamentos.find((ag) => {
         if (ag.id === agEditar?.id) return false;
         if (ag.data !== form.data) return false;
         const instaladorComum = (ag.equipe ?? []).some((uid) => equipeSelec.includes(uid));
         if (!instaladorComum) return false;
+        if (!ag.hora) return false;
         const [ah, am] = ag.hora.split(":").map(Number);
         const agInicio = ah * 60 + am;
         const agFim = agInicio + (ag.duracao_minutos || 0);
@@ -1361,9 +1370,6 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
       cliente_novo: !clienteSel,
       cliente_telefone: clienteTel || undefined,
       cliente_email: clienteEmail || undefined,
-      novo_pedido: criandoPedido && novoPedidoDesc.trim()
-        ? { descricao: novoPedidoDesc.trim() }
-        : undefined,
     });
   }
 
@@ -1426,8 +1432,6 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
                   setClienteSel(null);
                   setClienteTel("");
                   setClienteEmail("");
-                  setCriandoPedido(false);
-                  setNovoPedidoDesc("");
                 }}
                 onFocus={() => form.cliente.length >= 2 && setMostrarSug(clientesSug.length > 0)}
                 onBlur={() => setTimeout(() => setMostrarSug(false), 180)}
@@ -1464,67 +1468,39 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
               )}
             </div>
             <div className="ag-form-field">
-              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span>Pedido vinculado <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span></span>
-                {(clienteSel || clienteNovo) && !criandoPedido && (
-                  <button
-                    type="button"
-                    style={{ fontSize: 11, fontWeight: 600, color: "var(--color-primary)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                    onClick={() => { setCriandoPedido(true); set("pedido_id", ""); }}
-                  >
-                    + Criar novo
-                  </button>
-                )}
-                {criandoPedido && (
-                  <button
-                    type="button"
-                    style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                    onClick={() => { setCriandoPedido(false); setNovoPedidoDesc(""); }}
-                  >
-                    ← Selecionar existente
-                  </button>
-                )}
-              </label>
-              {criandoPedido ? (
-                <input
-                  placeholder="Descrição do novo pedido..."
-                  value={novoPedidoDesc}
-                  onChange={(e) => setNovoPedidoDesc(e.target.value)}
-                />
-              ) : (
-                <select
-                  value={form.pedido_id}
-                  onChange={(e) => {
-                    const pid = e.target.value;
-                    set("pedido_id", pid);
-                    if (pid) {
-                      const ped = pedidosLista.find((p) => String(p.id) === pid);
-                      if (ped && (ped.rua || ped.cidade || ped.cep)) {
-                        setForm((prev) => ({
-                          ...prev,
-                          pedido_id:   pid,
-                          cep:         ped.cep         || prev.cep,
-                          rua:         ped.rua         || prev.rua,
-                          numero:      ped.numero      || prev.numero,
-                          complemento: ped.complemento || prev.complemento,
-                          bairro:      ped.bairro      || prev.bairro,
-                          cidade:      ped.cidade      || prev.cidade,
-                          estado:      ped.estado      || prev.estado,
-                        }));
-                      }
+              <label>Pedido vinculado <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span></label>
+              <select
+                value={form.pedido_id}
+                onChange={(e) => {
+                  const pid = e.target.value;
+                  set("pedido_id", pid);
+                  if (pid) {
+                    const ped = pedidosLista.find((p) => String(p.id) === pid);
+                    if (ped && (ped.rua || ped.cidade || ped.cep)) {
+                      setForm((prev) => ({
+                        ...prev,
+                        pedido_id:   pid,
+                        cep:         ped.cep         || prev.cep,
+                        rua:         ped.rua         || prev.rua,
+                        numero:      ped.numero_rua  || prev.numero,
+                        complemento: ped.complemento || prev.complemento,
+                        bairro:      ped.bairro      || prev.bairro,
+                        cidade:      ped.cidade      || prev.cidade,
+                        estado:      ped.estado      || prev.estado,
+                      }));
                     }
-                  }}
-                  disabled={!clienteSel && !clienteNovo}
-                  title={!clienteSel && !clienteNovo ? "Selecione um cliente primeiro" : undefined}
-                >
-                  <option value="">— Nenhum —</option>
-                  {pedidosLista.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.numero}{p.descricao ? ` — ${p.descricao.slice(0, 40)}` : ""}
-                    </option>
-                  ))}
-                </select>
-              )}
+                  }
+                }}
+                disabled={!clienteSel && !clienteNovo}
+                title={!clienteSel && !clienteNovo ? "Selecione um cliente primeiro" : undefined}
+              >
+                <option value="">— Nenhum —</option>
+                {pedidosLista.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.numero}{p.descricao ? ` — ${p.descricao.slice(0, 40)}` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1592,7 +1568,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
               <input type="date" value={form.data} onChange={(e) => set("data", e.target.value)} />
             </div>
             <div className="ag-form-field">
-              <label>Início *</label>
+              <label>Início {preAgendado ? <span style={{ fontWeight: 400, color: "var(--color-text-muted)" }}>(opcional)</span> : "*"}</label>
               <input type="time" value={form.hora} onChange={(e) => set("hora", e.target.value)} />
             </div>
             <div className="ag-form-field">
@@ -1943,7 +1919,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--color-border)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
               {[
                 ["Status",  <span key="s" className={`ag-badge ${meta.classe}`}>{meta.label}</span>],
-                ["Horário", ag.hora],
+                ["Horário", faixaHora(ag.hora, ag.duracao_minutos) || "—"],
                 ["Data",    ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"],
                 ["Tipo",    ag.tipo],
                 ...(ag.pedido_numero ? [["Pedido", ag.pedido_numero]] : []),
@@ -2070,7 +2046,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--color-border)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
             {[
               ["Status",  <span key="s" className={`ag-badge ${meta.classe}`}>{meta.label}</span>],
-              ["Horário", ag.hora],
+              ["Horário", faixaHora(ag.hora, ag.duracao_minutos) || "—"],
               ["Data",    ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"],
               ["Tipo",    ag.tipo],
               ...(ag.pedido_numero ? [["Pedido", ag.pedido_numero]] : []),

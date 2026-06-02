@@ -322,6 +322,7 @@ function GradeHoraria({ agsDoDia, user, onSelect }) {
 
         {/* Blocos de agendamento */}
         {agsDoDia.map((ag) => {
+          if (!ag.hora) return null;
           const [h, m] = ag.hora.split(":").map(Number);
           const topFrac = h + m / 60;
           const top = Math.max(0, (topFrac - HORA_INICIO) * SLOT_H);

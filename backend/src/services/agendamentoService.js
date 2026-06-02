@@ -90,7 +90,7 @@ async function montarAgendamento(id, empresaId) {
         po.nome_completo AS pessoa_obrigatoria_nome,
         po.foto_url      AS pessoa_obrigatoria_foto,
         CASE WHEN ped.id IS NOT NULL
-          THEN 'P-' || LPAD(ped.id::TEXT, 4, '0')
+          THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
           ELSE NULL
         END AS pedido_numero
       FROM agendamentos a
@@ -156,16 +156,51 @@ async function inserirEquipe(agId, equipe, client = db) {
   );
 }
 
+/* ── criar Ordem de Serviço (OS) se não existir para itens de conferência ── */
+async function criarOSSeNaoExistir(itens, client = db) {
+  if (!itens || !itens.length) return;
+  for (const it of itens) {
+    let pedido_item_id = null;
+    if (it && typeof it === "object") {
+      pedido_item_id = it.pedido_item_id || it.id || null;
+    }
+    if (!pedido_item_id) continue;
+
+    const check = await client.query(
+      `SELECT id FROM ordem_servico WHERE pedido_item_id = $1 LIMIT 1`,
+      [pedido_item_id]
+    );
+    if (check.rows.length === 0) {
+      await client.query(
+        `INSERT INTO ordem_servico (pedido_item_id, status, aberta_em, created_at, updated_at)
+         VALUES ($1, 'aberta', NOW(), NOW(), NOW())`,
+        [pedido_item_id]
+      );
+    }
+  }
+}
+
 /* ── inserir itens em batch (aceita client de transação) ── */
 async function inserirItens(agId, itens, client = db) {
-  const filtrados = itens.filter((n) => n?.trim());
-  if (!filtrados.length) return;
-  const placeholders = filtrados.map((_, i) => `($1, $${i + 2})`).join(", ");
-  await client.query(
-    `INSERT INTO agendamento_itens (agendamento_id, nome) VALUES ${placeholders}`,
-    [agId, ...filtrados.map((n) => n.trim())]
-  );
+  if (!itens || !itens.length) return;
+  for (const it of itens) {
+    let nome = "";
+    let pedido_item_id = null;
+    if (typeof it === "string") {
+      nome = it.trim();
+    } else if (it && typeof it === "object") {
+      nome = (it.nome || it.descricao || "").trim();
+      pedido_item_id = it.pedido_item_id || it.id || null;
+    }
+    if (!nome) continue;
+
+    await client.query(
+      `INSERT INTO agendamento_itens (agendamento_id, nome, pedido_item_id) VALUES ($1, $2, $3)`,
+      [agId, nome, pedido_item_id]
+    );
+  }
 }
+
 
 /* ═══════════════════════════════════════════
    Funções exportadas
@@ -227,7 +262,7 @@ async function listar(empresaId, userId, permissoes, filtros) {
          WHERE l.agendamento_id=a.id AND l.acao='editado'
          ORDER BY l.criado_em DESC LIMIT 1) AS editado_em,
       CASE WHEN ped.id IS NOT NULL
-        THEN 'P-' || LPAD(ped.id::TEXT, 4, '0')
+        THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
         ELSE NULL
       END AS pedido_numero
     FROM agendamentos a
@@ -351,7 +386,7 @@ async function criar(empresaId, userId, dados) {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19)
       RETURNING id
       `,
-      [empresaId, titulo, cliente, tipo||"Instalação", data, hora,
+      [empresaId, titulo, cliente, tipo||"Instalação", data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
        userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusCriacao]
@@ -361,6 +396,10 @@ async function criar(empresaId, userId, dados) {
     db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [pedidoIdFinal, agId]).catch(() => {});
 
     await Promise.all([inserirEquipe(agId, equipe, client), inserirItens(agId, itens, client)]);
+
+    if (tipo === "Conferência") {
+      await criarOSSeNaoExistir(itens, client);
+    }
 
     await client.query("COMMIT");
 
@@ -448,7 +487,7 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
           ${enderecoMudou ? ", lat=NULL, lng=NULL, geocod_falhou=FALSE" : ""}
       WHERE id=$19 AND empresa_id=$20
       `,
-      [titulo, cliente, tipo, data, hora,
+      [titulo, cliente, tipo, data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
        duracao_minutos||null, pessoa_obrigatoria_id||null, novoStatus, id, empresaId]
@@ -462,6 +501,10 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
       client.query(`DELETE FROM agendamento_itens WHERE agendamento_id=$1`, [id]),
     ]);
     await Promise.all([inserirEquipe(id, equipe, client), inserirItens(id, itens, client)]);
+
+    if (tipo === "Conferência") {
+      await criarOSSeNaoExistir(itens, client);
+    }
 
     await client.query("COMMIT");
   } catch (e) {
@@ -502,6 +545,9 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     if (String(antes ?? "") !== String(depois ?? "")) {
       campos.push({ campo: label, de: antes, para: depois });
     }
+  }
+  if (ant.status !== novoStatus) {
+    campos.push({ campo: "Status", de: ant.status, para: novoStatus });
   }
   const equipeNovaIds = new Set(equipe.map(String));
   const equipeAntIds  = new Set(equipeAnt.rows.map((r) => String(r.id)));
@@ -552,7 +598,7 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
   }
 
   const existe = await db.query(
-    `SELECT id, titulo, cliente, criado_por FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
+    `SELECT id, titulo, cliente, tipo, criado_por, status AS status_anterior FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
     [id, empresaId]
   );
   if (existe.rows.length === 0) { const e = new Error("Agendamento não encontrado."); e.status = 404; throw e; }
@@ -622,6 +668,56 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
          WHERE id=$2 AND empresa_id=$3`,
         [status, id, empresaId, userId]
       );
+
+      if (existe.rows[0]?.tipo === "Conferência") {
+        const itensAg = await client.query(
+          `SELECT pedido_item_id FROM agendamento_itens WHERE agendamento_id = $1 AND pedido_item_id IS NOT NULL`,
+          [id]
+        );
+        const isComercial = (permissoes || []).includes("COMERCIAL");
+
+        for (const row of itensAg.rows) {
+          const itemId = row.pedido_item_id;
+
+          const osCheck = await client.query(
+            `SELECT id FROM ordem_servico WHERE pedido_item_id = $1 LIMIT 1`,
+            [itemId]
+          );
+          let osId;
+          if (osCheck.rows.length === 0) {
+            const newOs = await client.query(
+              `INSERT INTO ordem_servico (pedido_item_id, status, aberta_em)
+               VALUES ($1, 'aberta', NOW()) RETURNING id`,
+              [itemId]
+            );
+            osId = newOs.rows[0].id;
+          } else {
+            osId = osCheck.rows[0].id;
+          }
+
+          if (isComercial) {
+            await client.query(
+              `UPDATE ordem_servico 
+               SET conferencia_consultora_usuario_id = $1,
+                   conferencia_consultora_at = NOW(),
+                   conferencia_consultora_obs = COALESCE(conferencia_consultora_obs, 'Concluído via agendamento de conferência.'),
+                   updated_at = NOW()
+               WHERE id = $2`,
+              [userId, osId]
+            );
+          } else {
+            await client.query(
+              `UPDATE ordem_servico 
+               SET conferencia_tecnico_usuario_id = $1,
+                   conferencia_tecnico_at = NOW(),
+                   conferencia_tecnico_obs = COALESCE(conferencia_tecnico_obs, 'Concluído via agendamento de conferência.'),
+                   updated_at = NOW()
+               WHERE id = $2`,
+              [userId, osId]
+            );
+          }
+        }
+      }
     } else if (status === "nao_concluido") {
       await client.query(
         `UPDATE agendamentos SET status=$1, observacoes_status=$2, atualizado_em=NOW(),
@@ -647,6 +743,14 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
       await gravarLog(id, empresaId, userId, nomeCompleto, "cancelado", {
         titulo: existe.rows[0]?.titulo, motivo: motivo||null,
       });
+    } else {
+      const statusAnterior = existe.rows[0]?.status_anterior;
+      if (statusAnterior && statusAnterior !== status) {
+        await gravarLog(id, empresaId, userId, nomeCompleto, "status_alterado", {
+          status_anterior: statusAnterior,
+          status_novo: status,
+        });
+      }
     }
 
     await client.query("COMMIT");

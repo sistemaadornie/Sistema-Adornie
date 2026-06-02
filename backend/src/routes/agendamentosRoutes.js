@@ -3,6 +3,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMemory");
 const { validarMagicBytes } = require("../middlewares/uploadMemory");
 const svc = require("../services/agendamentoService");
+const prazosService = require("../services/prazosService");
 
 const router = express.Router();
 
@@ -92,9 +93,12 @@ router.get("/:id", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { empresa_id, id: userId } = req.user;
-    const { titulo, cliente, data, hora, equipe, itens } = req.body;
-    if (!titulo || !cliente || !data || !hora) {
-      return res.status(400).json({ message: "Campos obrigatórios: título, cliente, data e horário." });
+    const { titulo, cliente, data, hora, equipe, itens, status } = req.body;
+    const isPreAgendado = status === "pre_agendado";
+    if (!titulo || !cliente || !data || (!isPreAgendado && !hora)) {
+      return res.status(400).json({ message: isPreAgendado
+        ? "Campos obrigatórios: título, cliente e data."
+        : "Campos obrigatórios: título, cliente, data e horário." });
     }
     if (typeof titulo === "string" && titulo.length > 200) {
       return res.status(400).json({ message: "Título muito longo (máx. 200 caracteres)." });
@@ -102,7 +106,10 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
       return res.status(400).json({ message: "Data inválida. Use o formato AAAA-MM-DD." });
     }
-    if (!hora || !/^\d{2}:\d{2}$/.test(hora)) {
+    if (hora && !/^\d{2}:\d{2}$/.test(hora)) {
+      return res.status(400).json({ message: "Hora inválida. Use o formato HH:MM." });
+    }
+    if (!isPreAgendado && !hora) {
       return res.status(400).json({ message: "Hora inválida. Use o formato HH:MM." });
     }
     if (equipe !== undefined && (!Array.isArray(equipe) || equipe.length > 50)) {
@@ -111,6 +118,25 @@ router.post("/", authMiddleware, async (req, res) => {
     if (itens !== undefined && (!Array.isArray(itens) || itens.length > 200)) {
       return res.status(400).json({ message: "Campo itens inválido (máx. 200 itens)." });
     }
+
+    // Validação de prazos mínimos para agendamentos do tipo Instalação
+    const itemIds = (itens || [])
+      .map((it) => (it && typeof it === "object" ? (it.pedido_item_id || it.id) : null))
+      .filter(Boolean);
+
+    if ((!tipo || tipo === "Instalação") && itemIds.length > 0) {
+      const validacao = await prazosService.validarPrazoInstalacao(empresa_id, data, itemIds);
+      if (!validacao.valido) {
+        const temBypass = req.user.permissoes.includes("ADMIN_MASTER") && req.body.ignorar_prazos === true;
+        if (!temBypass) {
+          return res.status(400).json({ 
+            message: validacao.mensagem,
+            detalhes: validacao.detalhes
+          });
+        }
+      }
+    }
+
     const ag = await svc.criar(empresa_id, userId, req.body);
     return res.status(201).json({ message: "Agendamento criado!", agendamento: ag });
   } catch (err) {
@@ -184,6 +210,26 @@ router.post("/:id/anexos", authMiddleware, upload.array("arquivos", 20), validar
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const { empresa_id, id: userId, nome_completo } = req.user;
+    const { tipo, data, itens } = req.body;
+
+    // Validação de prazos mínimos para agendamentos do tipo Instalação
+    const itemIds = (itens || [])
+      .map((it) => (it && typeof it === "object" ? (it.pedido_item_id || it.id) : null))
+      .filter(Boolean);
+
+    if ((!tipo || tipo === "Instalação") && itemIds.length > 0 && data) {
+      const validacao = await prazosService.validarPrazoInstalacao(empresa_id, data, itemIds);
+      if (!validacao.valido) {
+        const temBypass = req.user.permissoes.includes("ADMIN_MASTER") && req.body.ignorar_prazos === true;
+        if (!temBypass) {
+          return res.status(400).json({ 
+            message: validacao.mensagem,
+            detalhes: validacao.detalhes
+          });
+        }
+      }
+    }
+
     const ag = await svc.atualizar(req.params.id, empresa_id, userId, nome_completo, req.body);
     return res.json({ message: "Agendamento atualizado!", agendamento: ag });
   } catch (err) {

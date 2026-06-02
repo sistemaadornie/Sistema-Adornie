@@ -57,7 +57,17 @@ export const KEYWORD_MODELS = [
 
 export function detectarTipo(descricao = "") {
   const lower = descricao.toLowerCase();
-  return KEYWORD_MODELS.find((cfg) =>
-    cfg.keywords.some((k) => lower.includes(k))
-  ) ?? null;
+  let bestMatch = null;
+  let bestPos = Infinity;
+
+  for (const cfg of KEYWORD_MODELS) {
+    for (const k of cfg.keywords) {
+      const pos = lower.indexOf(k);
+      if (pos !== -1 && pos < bestPos) {
+        bestPos = pos;
+        bestMatch = cfg;
+      }
+    }
+  }
+  return bestMatch;
 }

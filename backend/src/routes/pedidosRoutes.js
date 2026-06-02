@@ -24,6 +24,13 @@ function parsearData(str) {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
+function splitMedidas(medidas) {
+  if (!medidas) return { largura: null, altura: null };
+  const parts = String(medidas).split(/[xX×]/);
+  const norm = s => (s || "").trim() || null;
+  return { largura: norm(parts[0]), altura: norm(parts[1]) };
+}
+
 // ─── Extração posicional da tabela de itens via pdfreader ────────────────────
 
 function lerFragmentos(buffer) {
@@ -229,7 +236,7 @@ async function extrairItensTabela(buffer, _dbg = {}) {
     itens.push({
       descricao: c.descricao || `Item ${ai + 1}`,
       ambiente: c.ambiente, referencia: c.referencia, cor: c.cor,
-      medidas, quantidade: qtde, unidade,
+      medidas, ...splitMedidas(medidas), quantidade: qtde, unidade,
       preco_unitario: preco, valor,
     });
   }
@@ -351,7 +358,7 @@ function extrairItensTabelaRawText(texto) {
     itens.push({
       descricao: descricao || `Item ${itens.length + 1}`,
       ambiente, referencia, cor: '',
-      medidas, quantidade: qtde, unidade,
+      medidas, ...splitMedidas(medidas), quantidade: qtde, unidade,
       preco_unitario, valor,
     });
   }
@@ -713,6 +720,59 @@ router.get("/:id", authMiddleware, async (req, res) => {
     return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar pedido." });
   }
 });
+
+router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const empresaId = req.user.empresa_id;
+
+    const pedCheck = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (pedCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    const query = `
+      SELECT 
+        pi.id,
+        pi.ambiente,
+        pi.descricao,
+        pi.quantidade,
+        pi.unidade,
+        pi.valor,
+        COALESCE(pi.categoria_id, prod.categoria_id) AS categoria_id,
+        cat.nome AS categoria_nome,
+        COALESCE(cp.logistica_interna_dias, 2) AS logistica_interna_dias,
+        COALESCE(cp.confeccao_dias, 10) AS confeccao_dias,
+        COALESCE(cp.expedicao_dias, 3) AS expedicao_dias,
+        COALESCE(cp.outros_dias, 0) AS outros_dias
+      FROM pedido_itens pi
+      LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+      LEFT JOIN produtos prod ON prod.id = oi.produto_id
+      LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      LEFT JOIN categoria_prazos cp ON cp.categoria_id = COALESCE(pi.categoria_id, prod.categoria_id) AND cp.empresa_id = $2
+      WHERE pi.pedido_id = $1
+        AND pi.id NOT IN (
+          SELECT ai.pedido_item_id 
+          FROM agendamento_itens ai
+          JOIN agendamentos a ON a.id = ai.agendamento_id
+          WHERE ai.pedido_item_id IS NOT NULL 
+            AND a.tipo = 'Instalação'
+            AND a.status != 'cancelado'
+        )
+      ORDER BY pi.ordem ASC, pi.id ASC
+    `;
+
+    const { rows } = await db.query(query, [pedidoId, empresaId]);
+    return res.json({ itens: rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar itens disponíveis para pré-agendamento." });
+  }
+});
+
 
 router.post("/", authMiddleware, async (req, res) => {
   try {

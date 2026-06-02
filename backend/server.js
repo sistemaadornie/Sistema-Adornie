@@ -46,8 +46,10 @@ const categoriasRoutes   = require("./src/routes/categoriasRoutes");
 const ordemServicoRoutes = require("./src/routes/ordemServicoRoutes");
 const orcamentosRoutes   = require("./src/routes/orcamentosRoutes");
 const uploadRoutes       = require("./src/routes/uploadRoutes");
+const prazosRoutes       = require("./src/routes/prazosRoutes");
 
 const app = express();
+
 
 // Confia no proxy reverso SOMENTE se explicitamente configurado.
 // Sem isso, X-Forwarded-For não é usado pelo express — previne bypass de rate limit via header forjado.
@@ -153,6 +155,7 @@ app.use("/api/arquitetos",    arquitetosRoutes);
 app.use("/api/categorias",   categoriasRoutes);
 app.use("/api/os",           ordemServicoRoutes);
 app.use("/api/orcamentos",   orcamentosRoutes);
+app.use("/api/pedidos/config/prazos", prazosRoutes);
 app.use("/api",              uploadRoutes);
 
 // Porta

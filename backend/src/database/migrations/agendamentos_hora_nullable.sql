@@ -1,0 +1,1 @@
+ALTER TABLE agendamentos ALTER COLUMN hora DROP NOT NULL;

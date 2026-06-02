@@ -17,8 +17,14 @@ function fmtMoeda(v) {
   return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function parseMedidas(medidas) {
+  if (!medidas) return { largura: "", altura: "" };
+  const parts = String(medidas).split(/[xX×]/);
+  return { largura: (parts[0] || "").trim(), altura: (parts[1] || "").trim() };
+}
+
 function itemVazio() {
-  return { ambiente: "", referencia: "", cor: "", descricao: "", medidas: "", quantidade: 1, unidade: "UN", preco_unitario: "", valor: "" };
+  return { ambiente: "", referencia: "", cor: "", descricao: "", largura: "", altura: "", quantidade: 1, unidade: "UN", preco_unitario: "", valor: "" };
 }
 function pagVazio() {
   return { forma: "PIX / DEPÓSITO", parcela: "1/1", vencimento: "", valor: "" };
@@ -89,7 +95,13 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       total:               ext.total               ?? "",
       _endereco_completo:  ext.endereco_completo   || "",
     });
-    setItens(ext.itens?.length ? ext.itens.map(it => ({ ...itemVazio(), ...it })) : [itemVazio()]);
+    setItens(ext.itens?.length ? ext.itens.map(it => {
+      const { medidas, largura, altura, ...rest } = it;
+      const dims = (largura != null || altura != null)
+        ? { largura: largura ?? "", altura: altura ?? "" }
+        : parseMedidas(medidas);
+      return { ...itemVazio(), ...rest, ...dims };
+    }) : [itemVazio()]);
     setPagamentos(ext.pagamentos?.length
       ? ext.pagamentos.map(pg => ({ ...pagVazio(), ...pg, vencimento: pg.vencimento || "" }))
       : [pagVazio()]);
@@ -193,8 +205,13 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
     const itensFinais = filteredWithOrigIdx.map(({ it, origIdx }) => {
       const sel = selecoes[origIdx] || {};
       const vinculadoOrigIdx = sel.item_vinculado_idx ?? null;
+      const { largura, altura, ...restIt } = it;
+      const medidas = [largura, altura].filter(Boolean).join("x") || null;
       return {
-        ...it,
+        ...restIt,
+        largura:              largura || null,
+        altura:               altura  || null,
+        medidas,
         modelo:               sel.modelo              || null,
         especificacoes:       sel.especificacoes      || null,
         item_vinculado_ordem: vinculadoOrigIdx != null
@@ -215,7 +232,7 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay pd-modal-overlay" onClick={onClose}>
       <div className="modal-box pd-modal-grande" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -505,7 +522,7 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
 
                   return (
                     <>
-                      <div className="pd-itens-editor">
+                      <div className={`pd-itens-editor${hasTrilho ? " pd-itens-com-trilho" : ""}`}>
                         <div className="pd-itens-editor-header">
                           <span>#</span>
                           <span>Ambiente</span>
@@ -514,7 +531,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                           <span>Produto</span>
                           <span>Modelo</span>
                           {hasTrilho && <span>Vinculado a</span>}
-                          <span>Medidas</span>
+                          <span>Largura</span>
+                          <span>Altura</span>
                           <span>Qtde</span>
                           <span>Un</span>
                           <span>Preço Unit.</span>
@@ -614,7 +632,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                                 </div>
                               )}
 
-                              <input placeholder="2,00x3,00" value={it.medidas   || ""} onChange={(e) => setItem(i, "medidas",       e.target.value)} />
+                              <input placeholder="2,00" value={it.largura || ""} onChange={(e) => setItem(i, "largura", e.target.value)} />
+                              <input placeholder="3,00" value={it.altura  || ""} onChange={(e) => setItem(i, "altura",  e.target.value)} />
                               <input type="number" min="0" step="0.01" value={it.quantidade || 1} onChange={(e) => setItem(i, "quantidade",    e.target.value)} />
                               <select value={it.unidade || "UN"} onChange={(e) => setItem(i, "unidade", e.target.value)}>
                                 {UNIDADES.map((u) => <option key={u}>{u}</option>)}

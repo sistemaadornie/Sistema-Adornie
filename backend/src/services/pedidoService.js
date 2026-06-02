@@ -133,7 +133,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `UPDATE pedido_itens
          SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
              quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
-             modelo=$11, especificacoes=$12, item_vinculado_id = COALESCE($13, item_vinculado_id)
+             modelo=$11, especificacoes=$12, item_vinculado_id = COALESCE($13, item_vinculado_id),
+             largura=$16, altura=$17
          WHERE id=$14 AND pedido_id=$15`,
         [
           it.ambiente?.trim()    || null,
@@ -151,6 +152,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
           it.item_vinculado_id   || null,
           itemId,
           pedidoId,
+          toDecimal(it.largura),
+          toDecimal(it.altura),
         ]
       );
       insertedIds.push(itemId);
@@ -160,8 +163,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
             quantidade, unidade, preco_unitario, valor, ordem,
-            modelo, especificacoes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            modelo, especificacoes, largura, altura)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
          RETURNING id`,
         [
           pedidoId,
@@ -177,6 +180,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
           i,
           it.modelo?.trim()      || null,
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
+          toDecimal(it.largura),
+          toDecimal(it.altura),
         ]
       );
       insertedIds.push(ins.rows[0].id);

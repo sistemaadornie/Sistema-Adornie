@@ -666,7 +666,7 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--color-border)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
             {[
               ["Status",  <span key="s" className={`ag-badge ${meta.classe}`}>{meta.label}</span>],
-              ["Horário agendado", ag.hora],
+              ["Horário agendado", faixaHora(ag.hora, ag.duracao_minutos) || "—"],
               ["Data",    ag.data ? isoParaDate(ag.data).toLocaleDateString("pt-BR") : "—"],
               ["Tipo",    ag.tipo],
             ].map(([lbl, val]) => (
@@ -913,10 +913,23 @@ function HistoricoDetalheModal({ ag: agResumido, onClose }) {
 }
 
 const ACAO_CFG = {
-  editado:   { icon: "✏", cor: "#8b5cf6", label: "Editou" },
-  cancelado: { icon: "■", cor: "#ef4444", label: "Cancelou" },
-  excluido:  { icon: "✗", cor: "#6b7280", label: "Excluiu" },
+  editado:         { icon: "✏", cor: "#8b5cf6", label: "Editou" },
+  cancelado:       { icon: "■", cor: "#ef4444", label: "Cancelou" },
+  excluido:        { icon: "✗", cor: "#6b7280", label: "Excluiu" },
+  status_alterado: { icon: "↺", cor: "#3b82f6", label: "Alterou status" },
 };
+
+const STATUS_LABEL = {
+  pre_agendado:  "Pré agendado",
+  agendado:      "Agendado",
+  andamento:     "Em andamento",
+  concluido:     "Concluído",
+  nao_concluido: "Não concluído",
+  cancelado:     "Cancelado",
+  atrasado:      "Atrasado",
+  aguardando:    "Aguardando",
+};
+function fmtStatus(s) { return STATUS_LABEL[s] || s; }
 
 function LogEvento({ log }) {
   const d    = log.detalhes || {};
@@ -931,7 +944,11 @@ function LogEvento({ log }) {
       if (d.hora_anterior !== d.hora_nova || d.duracao_anterior !== d.duracao_nova)
         itens.push({ campo: "Horário", de: faixaHora(d.hora_anterior, d.duracao_anterior), para: faixaHora(d.hora_nova, d.duracao_nova) });
     } else {
-      itens = d.campos || [];
+      itens = (d.campos || []).map((item) =>
+        item.campo === "Status"
+          ? { ...item, de: item.de ? fmtStatus(item.de) : item.de, para: item.para ? fmtStatus(item.para) : item.para }
+          : item
+      );
     }
   }
 
@@ -984,6 +1001,21 @@ function LogEvento({ log }) {
       {log.acao === "cancelado" && d.motivo && (
         <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginLeft: 32 }}>
           Motivo: <em>{d.motivo}</em>
+        </div>
+      )}
+
+      {/* Transição de status */}
+      {log.acao === "status_alterado" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 32, fontSize: 12 }}>
+          <span style={{
+            background: "color-mix(in srgb, #94a3b8 18%, var(--color-surface))",
+            color: "var(--color-text-secondary)", borderRadius: 4, padding: "2px 8px", fontWeight: 600,
+          }}>{fmtStatus(d.status_anterior)}</span>
+          <span style={{ color: "var(--color-text-muted)" }}>→</span>
+          <span style={{
+            background: "color-mix(in srgb, #3b82f6 18%, var(--color-surface))",
+            color: "#3b82f6", borderRadius: 4, padding: "2px 8px", fontWeight: 600,
+          }}>{fmtStatus(d.status_novo)}</span>
         </div>
       )}
 
