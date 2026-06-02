@@ -336,6 +336,10 @@ async function criar(empresaId, userId, dados) {
   } = dados;
   const statusCriacao = statusInput === "pre_agendado" ? "pre_agendado" : "agendado";
 
+  const aprovacao = dados.aprovacao || null;            // { motivo, data_minima, dias_faltantes }
+  const statusFinal = aprovacao ? "pendente_aprovacao" : statusCriacao;
+  const statusPretendido = aprovacao ? statusCriacao : null;
+
   /* Resolve ou cria o cliente */
   const { id: clienteId, criado: clienteCriado } = await resolverCliente(
     empresaId, cliente,
@@ -389,11 +393,21 @@ async function criar(empresaId, userId, dados) {
       [empresaId, titulo, cliente, tipo||"Instalação", data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
-       userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusCriacao]
+       userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusFinal]
     );
     const agId = result.rows[0].id;
     db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, agId]).catch(() => {});
     db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [pedidoIdFinal, agId]).catch(() => {});
+
+    if (aprovacao) {
+      await client.query(
+        `UPDATE agendamentos
+         SET status_pretendido=$1, motivo_urgencia=$2, aprovacao_solicitada_em=NOW(),
+             aprovacao_data_minima=$3, aprovacao_dias_faltantes=$4
+         WHERE id=$5`,
+        [statusPretendido, aprovacao.motivo || null, aprovacao.data_minima || null, aprovacao.dias_faltantes || null, agId]
+      );
+    }
 
     await Promise.all([inserirEquipe(agId, equipe, client), inserirItens(agId, itens, client)]);
 
@@ -402,6 +416,10 @@ async function criar(empresaId, userId, dados) {
     }
 
     await client.query("COMMIT");
+
+    if (aprovacao) {
+      notificarAdminsAprovacao(empresaId, agId, titulo, cliente);
+    }
 
     // geocodifica em background sem bloquear a resposta
     geocodificarAgendamento({ endereco, rua, numero, bairro, cidade, estado })
