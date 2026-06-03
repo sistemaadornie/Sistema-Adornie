@@ -11,5 +11,4 @@ CREATE TABLE IF NOT EXISTS pedido_anexos (
   UNIQUE(pedido_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_pedido_anexos_empresa_id ON pedido_anexos (empresa_id);
-CREATE INDEX IF NOT EXISTS idx_pedido_anexos_created_at ON pedido_anexos (created_at);
+CREATE INDEX IF NOT EXISTS idx_pedido_anexos_empresa_created ON pedido_anexos (empresa_id, created_at DESC);
