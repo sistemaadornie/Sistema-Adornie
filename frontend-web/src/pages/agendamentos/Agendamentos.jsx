@@ -1246,7 +1246,7 @@ function horaFimFromDuracao(hora, duracaoMin) {
 
 function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamentos, agEditar, dataInicial, prefill, user }) {
   const modoEditar = !!agEditar;
-  const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado");
+  const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado" || !!prefill);
   const [form, setForm] = useState({
     titulo:      agEditar?.titulo      ?? (prefill ? `Instalação — ${prefill.pedido_numero || ""}`.trim() : ""),
     cliente:     agEditar?.cliente     ?? prefill?.cliente    ?? "",
