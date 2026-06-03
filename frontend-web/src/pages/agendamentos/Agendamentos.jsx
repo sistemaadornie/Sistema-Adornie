@@ -1810,7 +1810,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
             <div className="ag-itens-list">
               {itens.map((it, i) => (
                 <div key={i} className="ag-item-tag">
-                  📦 {it}
+                  📦 {typeof it === "string" ? it : it.nome}
                   <button onClick={() => setItens((p) => p.filter((_, j) => j !== i))}>×</button>
                 </div>
               ))}
