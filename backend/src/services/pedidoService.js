@@ -21,7 +21,8 @@ async function montarPedido(id, empresaId) {
             c.nome          AS cliente_nome,
             c.telefone      AS cliente_telefone,
             u.nome_completo AS consultor_nome,
-            a.nome          AS arquiteto_nome
+            a.nome          AS arquiteto_nome,
+            EXISTS(SELECT 1 FROM pedido_anexos pa WHERE pa.pedido_id = p.id) AS tem_anexo_pdf
      FROM pedidos p
      LEFT JOIN clientes c  ON c.id = p.cliente_id   AND c.deleted_at IS NULL
      LEFT JOIN usuarios u  ON u.id = p.consultor_id
