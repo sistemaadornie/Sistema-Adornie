@@ -17,7 +17,7 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'pedido_itens' AND column_name = 'item_vinculado_id'
+    WHERE table_name = 'pedido_itens' AND column_name = 'item_vinculado_id' AND table_schema = 'public'
   ) THEN
     INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
     SELECT id, item_vinculado_id, 'acessorio'
@@ -26,5 +26,16 @@ BEGIN
     ON CONFLICT DO NOTHING;
 
     ALTER TABLE pedido_itens DROP COLUMN item_vinculado_id;
+  END IF;
+END $$;
+
+-- Garante que nenhum item se vincule a si mesmo
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_piv_no_self_ref'
+  ) THEN
+    ALTER TABLE pedido_item_vinculos
+      ADD CONSTRAINT chk_piv_no_self_ref CHECK (item_id <> item_vinculado_id);
   END IF;
 END $$;
