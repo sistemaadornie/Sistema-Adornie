@@ -477,4 +477,37 @@ async function importar(empresaId, userId, dados) {
   return criar(empresaId, userId, dadosCompletos);
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, importar };
+async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, valor) {
+  const CAMPOS_VALIDOS = ["verificacao_ok", "categorizacao_ok"];
+  if (!CAMPOS_VALIDOS.includes(campo)) {
+    const err = new Error("Campo inválido");
+    err.status = 400;
+    throw err;
+  }
+
+  const { rows } = await db.query(
+    `SELECT consultor_id FROM pedidos WHERE id = $1 AND empresa_id = $2`,
+    [pedidoId, empresaId]
+  );
+  if (!rows.length) {
+    const err = new Error("Pedido não encontrado");
+    err.status = 404;
+    throw err;
+  }
+
+  const temPermGeral = (permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
+  if (!temPermGeral && Number(rows[0].consultor_id) !== Number(userId)) {
+    const err = new Error("Acesso negado");
+    err.status = 403;
+    throw err;
+  }
+
+  await db.query(
+    `UPDATE pedidos SET ${campo} = $1 WHERE id = $2 AND empresa_id = $3`,
+    [valor, pedidoId, empresaId]
+  );
+
+  return { [campo]: valor };
+}
+
+module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa };
