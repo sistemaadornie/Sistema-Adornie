@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { api } from "../../services/api";
 import { detectarTipo } from "./importKeywordConfig";
 import ModeloSelectorPanel from "./ModeloSelectorPanel";
+import VincularPdfTab from "./VincularPdfTab";
 
 const FORMAS_PAGAMENTO = ["PIX / DEPÓSITO", "CONTRA ENTREGA", "CARTÃO DE CRÉDITO", "BOLETO", "DINHEIRO", "CHEQUE"];
 const UNIDADES = ["M2", "ML", "UN", "PÇ"];
@@ -31,12 +32,10 @@ function pagVazio() {
 }
 
 export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
-  const inputRef = useRef(null);
   const [etapa,         setEtapa]         = useState("upload"); // upload | revisao
-  const [modoUpload,    setModoUpload]    = useState("texto");  // texto | pdf
+  const [abaAtiva,      setAbaAtiva]      = useState("texto"); // "texto" | "vincular"
   const [carregando,    setCarregando]    = useState(false);
   const [erro,          setErro]          = useState("");
-  const [arquivo,       setArquivo]       = useState(null);
   const [textoColar,    setTextoColar]    = useState("");
   const [form,          setForm]          = useState(null);
   const [itens,         setItens]         = useState([]);
@@ -120,24 +119,6 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       aplicarExtraido(res.extraido, "texto colado");
     } catch (e) {
       setErro(e.message || "Erro ao processar o texto.");
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  async function handleUpload(file) {
-    if (!file) return;
-    setArquivo(file);
-    setErro("");
-    setCarregando(true);
-    try {
-      const fd = new FormData();
-      fd.append("arquivo", file);
-      const res = await api.post("/pedidos/importar-pdf", fd, true);
-      const ext = res.extraido;
-      aplicarExtraido(ext, arquivo?.name || "PDF");
-    } catch (e) {
-      setErro(e.message || "Erro ao processar o PDF.");
     } finally {
       setCarregando(false);
     }
@@ -237,7 +218,7 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
         <div className="modal-header">
           <div>
             <h2>Importar Pedido</h2>
-            <p>{etapa === "upload" ? "Cole o texto ou faça upload do PDF do edecoração" : "Revise os dados extraídos antes de salvar"}</p>
+            <p>{etapa === "upload" ? "Cole o texto do edecoração ou vincule um PDF original" : "Revise os dados extraídos antes de salvar"}</p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
@@ -248,29 +229,29 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
           {etapa === "upload" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-              {/* Seletor de modo */}
+              {/* Abas: Importar Texto | Vincular PDF */}
               <div style={{ display: "flex", gap: 0, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
                 {[
-                  { id: "texto", icon: "📋", label: "Colar texto (recomendado)" },
-                  { id: "pdf",   icon: "📄", label: "Upload PDF" },
-                ].map(m => (
+                  { id: "texto",    icon: "📋", label: "Importar por Texto" },
+                  { id: "vincular", icon: "📎", label: "Vincular PDF" },
+                ].map(aba => (
                   <button
-                    key={m.id}
-                    onClick={() => { setModoUpload(m.id); setErro(""); }}
+                    key={aba.id}
+                    onClick={() => { setAbaAtiva(aba.id); setErro(""); }}
                     style={{
                       flex: 1, padding: "10px 16px", fontSize: 13, fontWeight: 600,
                       border: "none", cursor: "pointer", transition: "all 0.15s",
-                      background: modoUpload === m.id ? "var(--color-primary)" : "var(--color-surface-soft)",
-                      color: modoUpload === m.id ? "#fff" : "var(--color-text-muted)",
+                      background: abaAtiva === aba.id ? "var(--color-primary)" : "var(--color-surface-soft)",
+                      color: abaAtiva === aba.id ? "#fff" : "var(--color-text-muted)",
                     }}
                   >
-                    {m.icon} {m.label}
+                    {aba.icon} {aba.label}
                   </button>
                 ))}
               </div>
 
-              {/* MODO: COLAR TEXTO */}
-              {modoUpload === "texto" && (
+              {/* ABA: COLAR TEXTO */}
+              {abaAtiva === "texto" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
                     Abra o pedido no edecoração, pressione <strong>Ctrl+A</strong> para selecionar tudo,
@@ -299,34 +280,9 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                 </div>
               )}
 
-              {/* MODO: UPLOAD PDF */}
-              {modoUpload === "pdf" && (
-                <div className="pd-import-upload" style={{ padding: 0 }}>
-                  <div
-                    className={`pd-import-dropzone${carregando ? " loading" : ""}`}
-                    onClick={() => !carregando && inputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const f = e.dataTransfer.files[0];
-                      if (f?.type === "application/pdf") handleUpload(f);
-                    }}
-                  >
-                    {carregando ? (
-                      <><div className="pd-spinner" /><p>Processando PDF...</p></>
-                    ) : (
-                      <>
-                        <div style={{ fontSize: 48 }}>📄</div>
-                        <p style={{ fontWeight: 600, marginTop: 12 }}>Clique ou arraste o PDF aqui</p>
-                        <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 4 }}>
-                          Apenas arquivos .pdf do sistema edecoração
-                        </p>
-                        {arquivo && <div style={{ marginTop: 12, fontSize: 13, color: "var(--color-text-muted)" }}>📎 {arquivo.name}</div>}
-                      </>
-                    )}
-                  </div>
-                  <input ref={inputRef} type="file" accept="application/pdf" style={{ display: "none" }} onChange={(e) => handleUpload(e.target.files[0])} />
-                </div>
+              {/* ABA: VINCULAR PDF ORIGINAL */}
+              {abaAtiva === "vincular" && (
+                <VincularPdfTab />
               )}
 
               {erro && (
