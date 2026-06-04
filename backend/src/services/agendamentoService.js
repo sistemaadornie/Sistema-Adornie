@@ -334,6 +334,7 @@ async function criar(empresaId, userId, dados) {
     status: statusInput,
     cliente_telefone, cliente_email, cliente_novo,
     novo_pedido,
+    agendamento_pai_id = null,
   } = dados;
   const statusCriacao = statusInput === "pre_agendado" ? "pre_agendado" : "agendado";
 
@@ -387,14 +388,16 @@ async function criar(empresaId, userId, dados) {
       `
       INSERT INTO agendamentos
         (empresa_id, titulo, cliente, tipo, data, hora, endereco, cep, rua, numero, complemento,
-         bairro, cidade, estado, descricao, observacoes, status, criado_por, duracao_minutos, pessoa_obrigatoria_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19)
+         bairro, cidade, estado, descricao, observacoes, status, criado_por, duracao_minutos,
+         pessoa_obrigatoria_id, agendamento_pai_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19,$21)
       RETURNING id
       `,
       [empresaId, titulo, cliente, tipo||"Instalação", data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
-       userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusFinal]
+       userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusFinal,
+       agendamento_pai_id||null]
     );
     const agId = result.rows[0].id;
     db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, agId]).catch(() => {});
@@ -417,6 +420,15 @@ async function criar(empresaId, userId, dados) {
     }
 
     await client.query("COMMIT");
+
+    // Auto-transição: pedido pendente → em_andamento ao criar pré-agendamento genitor
+    const temItensPedido = (itens || []).some((i) => i.pedido_item_id != null);
+    if (pedidoIdFinal && temItensPedido) {
+      await db.query(
+        `UPDATE pedidos SET status = 'em_andamento' WHERE id = $1 AND status = 'pendente'`,
+        [pedidoIdFinal]
+      );
+    }
 
     if (aprovacao) {
       notificarAdminsAprovacao(empresaId, agId, titulo, cliente);
@@ -804,6 +816,41 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     throw e;
   } finally {
     client.release();
+  }
+
+  // Auto-conclusão: se todos os genitores do pedido foram concluídos, conclui o pedido
+  if (status === "concluido") {
+    const agInfo = await db.query(
+      `SELECT pedido_id FROM agendamentos WHERE id = $1`, [id]
+    );
+    const pedidoId = agInfo.rows[0]?.pedido_id;
+    if (pedidoId) {
+      const isGenitor = await db.query(
+        `SELECT 1 FROM agendamento_itens
+         WHERE agendamento_id = $1 AND pedido_item_id IS NOT NULL LIMIT 1`,
+        [id]
+      );
+      if (isGenitor.rows.length > 0) {
+        const pendentes = await db.query(
+          `SELECT a.id FROM agendamentos a
+           WHERE a.pedido_id = $1 AND a.empresa_id = $2
+             AND EXISTS (
+               SELECT 1 FROM agendamento_itens ai
+               WHERE ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
+             )
+             AND a.status != 'concluido'
+             AND a.id != $3`,
+          [pedidoId, empresaId, id]
+        );
+        if (pendentes.rows.length === 0) {
+          await db.query(
+            `UPDATE pedidos SET status = 'concluido'
+             WHERE id = $1 AND status NOT IN ('cancelado', 'concluido')`,
+            [pedidoId]
+          );
+        }
+      }
+    }
   }
 
   const ag = await montarAgendamento(id, empresaId);
