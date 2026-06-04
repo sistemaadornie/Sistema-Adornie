@@ -199,7 +199,7 @@ export default function PedidoFluxo() {
                     <NoFluxo
                       label={`Pré-ag. ${idx + 1}`}
                       status={ag.status}
-                      pulsante={isCur}
+                      pulsante={isCur || ag.status === "atrasado"}
                       onClick={() =>
                         setNoselecionado({
                           key: `preag_${ag.id}`,
@@ -217,6 +217,7 @@ export default function PedidoFluxo() {
                         <NoFluxo
                           label={h.tipo || "Herdeiro"}
                           status={h.status}
+                          pulsante={h.status === "atrasado"}
                           onClick={() =>
                             setNoselecionado({
                               key:    `herd_${h.id}`,
