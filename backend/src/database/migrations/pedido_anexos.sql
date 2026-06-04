@@ -1,3 +1,5 @@
+-- ATENÇÃO: criado_por é UUID no Supabase (usuarios.id = UUID) e INTEGER no banco local.
+-- No banco local, execute com: criado_por INTEGER REFERENCES usuarios(id)
 CREATE TABLE IF NOT EXISTS pedido_anexos (
   id             SERIAL PRIMARY KEY,
   pedido_id      INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
