@@ -287,7 +287,7 @@ async function criar(empresaId, userId, dados) {
       [
         empresaId, cliente_id || null, cpf_cnpj?.trim() || null, email_cliente?.trim() || null,
         status, data_pedido || null,
-        consultor_id || null, arquiteto_id || null, descricao?.trim() || null, observacoes?.trim() || null,
+        consultor_id || userId, arquiteto_id || null, descricao?.trim() || null, observacoes?.trim() || null,
         observacoes_entrega?.trim() || null, userId,
         cep || null, rua || null, numero || null, complemento || null,
         bairro || null, cidade || null, estado || null, endereco,
