@@ -521,3 +521,10 @@
   font-size: 11px;
   user-select: none;
 }
+
+/* ── EDITOR DE ITENS no PedidoModal (medidas único + Vinculado a) ── */
+.pd-modal-itens.pd-itens-editor .pd-itens-editor-header,
+.pd-modal-itens.pd-itens-editor .pd-itens-editor-row {
+  /* # | Ambiente | Ref | Cor | Produto | Medidas | Qtde | Un | Preço Unit. | Total | Vinculado a | × */
+  grid-template-columns: 28px 100px 90px 80px 1fr 100px 52px 60px 90px 80px 140px 28px;
+}

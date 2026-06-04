@@ -43,7 +43,7 @@ function StatusBadge({ status }) {
 }
 
 function itemVazio() {
-  return { ambiente: "", referencia: "", cor: "", descricao: "", medidas: "", quantidade: 1, unidade: "UN", preco_unitario: "", valor: "" };
+  return { ambiente: "", referencia: "", cor: "", descricao: "", medidas: "", quantidade: 1, unidade: "UN", preco_unitario: "", valor: "", item_vinculado_idx: null };
 }
 function pagVazio() {
   return { forma: "PIX / DEPÓSITO", parcela: "1/1", vencimento: "", valor: "" };
@@ -687,7 +687,14 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
     desconto:            pedido?.desconto            ?? "",
     total:               pedido?.total               ?? "",
   });
-  const [itens,     setItens]     = useState(pedido?.itens?.length ? pedido.itens.map(it => ({ ...it })) : [itemVazio()]);
+  const [itens, setItens] = useState(() => {
+    if (!pedido?.itens?.length) return [itemVazio()];
+    return pedido.itens.map((it, _, arr) => {
+      const vinculoId = it.vinculos?.[0]?.item_vinculado_id ?? null;
+      const vinculoIdx = vinculoId != null ? arr.findIndex(other => other.id === vinculoId) : -1;
+      return { ...it, item_vinculado_idx: vinculoIdx >= 0 ? vinculoIdx : null };
+    });
+  });
   const [pagamentos, setPagamentos] = useState(pedido?.pagamentos?.length ? pedido.pagamentos.map(pg => ({ ...pg, vencimento: pg.vencimento ? pg.vencimento.slice(0, 10) : "" })) : [pagVazio()]);
 
   const [clientes,     setClientes]     = useState([]);
@@ -930,7 +937,7 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
           {/* ─── ABA: ITENS ─── */}
           {abaAtiva === "itens" && (
             <div>
-              <div className="pd-itens-editor">
+              <div className="pd-modal-itens pd-itens-editor">
                 <div className="pd-itens-editor-header">
                   <span>#</span>
                   <span>Ambiente</span>
@@ -942,6 +949,7 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
                   <span>Un</span>
                   <span>Preço Unit.</span>
                   <span>Total</span>
+                  <span>Vinculado a</span>
                   <span></span>
                 </div>
                 {itens.map((it, i) => (
@@ -958,6 +966,21 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
                     </select>
                     <input type="number" min="0" step="0.01" placeholder="0,00" value={it.preco_unitario} onChange={(e) => setItem(i, "preco_unitario", e.target.value)} />
                     <input readOnly value={it.valor ? fmtMoeda(it.valor) : ""} className="pd-item-total" />
+                    <select
+                      value={it.item_vinculado_idx ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setItem(i, "item_vinculado_idx", v === "" ? null : Number(v));
+                      }}
+                      style={{ fontSize: 11 }}
+                    >
+                      <option value="">— Nenhum —</option>
+                      {itens.map((other, j) => j !== i ? (
+                        <option key={j} value={j}>
+                          {j + 1} – {other.descricao || "(sem desc.)"}
+                        </option>
+                      ) : null)}
+                    </select>
                     <button className="pd-item-del" onClick={() => removeItem(i)} title="Remover item">×</button>
                   </div>
                 ))}
