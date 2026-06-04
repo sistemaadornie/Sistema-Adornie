@@ -526,4 +526,113 @@ router.post("/importar", authMiddleware, async (req, res) => {
   }
 });
 
+// Upload do PDF original do pedido (armazenamento, sem parsing)
+router.post("/:id/anexo-pdf", authMiddleware, uploadPdf.single("arquivo"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Nenhum arquivo enviado." });
+    }
+
+    // Magic bytes: %PDF (0x25 0x50 0x44 0x46)
+    const buf = req.file.buffer;
+    if (buf.length < 4 || buf[0] !== 0x25 || buf[1] !== 0x50 || buf[2] !== 0x44 || buf[3] !== 0x46) {
+      return res.status(400).json({ message: "Arquivo inválido: não é um PDF real." });
+    }
+
+    const pedidoId = parseInt(req.params.id, 10);
+    if (isNaN(pedidoId)) return res.status(400).json({ message: "ID de pedido inválido." });
+
+    // Valida pertencimento multi-tenant
+    const pedidoRes = await db.query(
+      `SELECT id FROM pedidos WHERE id=$1 AND empresa_id=$2 AND deleted_at IS NULL LIMIT 1`,
+      [pedidoId, req.user.empresa_id]
+    );
+    if (pedidoRes.rows.length === 0) {
+      return res.status(403).json({ message: "Pedido não encontrado ou sem permissão." });
+    }
+
+    // Rate limit: máx 20 uploads por hora por empresa
+    const rateRes = await db.query(
+      `SELECT COUNT(*) FROM pedido_anexos WHERE empresa_id=$1 AND created_at > NOW() - INTERVAL '1 hour'`,
+      [req.user.empresa_id]
+    );
+    if (parseInt(rateRes.rows[0].count, 10) >= 20) {
+      return res.status(429).json({ message: "Limite de uploads atingido. Tente novamente em 1 hora." });
+    }
+
+    // Upsert — substitui se já existir PDF para este pedido
+    const result = await db.query(
+      `INSERT INTO pedido_anexos (pedido_id, empresa_id, nome_arquivo, mime_type, tamanho_bytes, conteudo, criado_por)
+       VALUES ($1, $2, $3, 'application/pdf', $4, $5, $6)
+       ON CONFLICT (pedido_id) DO UPDATE SET
+         nome_arquivo  = EXCLUDED.nome_arquivo,
+         tamanho_bytes = EXCLUDED.tamanho_bytes,
+         conteudo      = EXCLUDED.conteudo,
+         criado_por    = EXCLUDED.criado_por,
+         created_at    = NOW()
+       RETURNING id, nome_arquivo, tamanho_bytes`,
+      [pedidoId, req.user.empresa_id, req.file.originalname, req.file.size, req.file.buffer, req.user.id]
+    );
+
+    return res.status(200).json({ message: "PDF vinculado com sucesso.", ...result.rows[0] });
+  } catch (err) {
+    console.error("[anexo-pdf POST]", err);
+    return res.status(500).json({ message: "Erro ao vincular PDF." });
+  }
+});
+
+// Serve o PDF original para visualização
+router.get("/:id/anexo-pdf", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = parseInt(req.params.id, 10);
+    if (isNaN(pedidoId)) return res.status(400).json({ message: "ID de pedido inválido." });
+
+    const result = await db.query(
+      `SELECT pa.nome_arquivo, pa.mime_type, pa.conteudo
+       FROM pedido_anexos pa
+       JOIN pedidos p ON p.id = pa.pedido_id
+       WHERE pa.pedido_id=$1 AND p.empresa_id=$2 AND p.deleted_at IS NULL
+       LIMIT 1`,
+      [pedidoId, req.user.empresa_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Nenhum PDF vinculado a este pedido." });
+    }
+
+    const { nome_arquivo, mime_type, conteudo } = result.rows[0];
+    const safeName = nome_arquivo.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+    res.setHeader("Content-Type", mime_type);
+    res.setHeader("Content-Disposition", `inline; filename="${safeName}"`);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    return res.send(conteudo);
+  } catch (err) {
+    console.error("[anexo-pdf GET]", err);
+    return res.status(500).json({ message: "Erro ao recuperar PDF." });
+  }
+});
+
+// Remove o PDF vinculado ao pedido
+router.delete("/:id/anexo-pdf", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = parseInt(req.params.id, 10);
+    if (isNaN(pedidoId)) return res.status(400).json({ message: "ID de pedido inválido." });
+
+    const pedidoRes = await db.query(
+      `SELECT id FROM pedidos WHERE id=$1 AND empresa_id=$2 AND deleted_at IS NULL LIMIT 1`,
+      [pedidoId, req.user.empresa_id]
+    );
+    if (pedidoRes.rows.length === 0) {
+      return res.status(403).json({ message: "Pedido não encontrado ou sem permissão." });
+    }
+
+    await db.query(`DELETE FROM pedido_anexos WHERE pedido_id=$1`, [pedidoId]);
+    return res.status(204).send();
+  } catch (err) {
+    console.error("[anexo-pdf DELETE]", err);
+    return res.status(500).json({ message: "Erro ao remover PDF." });
+  }
+});
+
 module.exports = router;
