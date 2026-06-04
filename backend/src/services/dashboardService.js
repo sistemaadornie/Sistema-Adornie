@@ -18,10 +18,10 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
   if (!temPermGeral) {
     params.push(userId);
-    conditions.push(`p.usuario_id = $${params.length}`);
+    conditions.push(`p.consultor_id = $${params.length}`);
   } else if (consultora_id) {
     params.push(Number(consultora_id));
-    conditions.push(`p.usuario_id = $${params.length}`);
+    conditions.push(`p.consultor_id = $${params.length}`);
   }
 
   if (status) {
@@ -39,7 +39,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        p.verificacao_ok,
        p.categorizacao_ok,
        p.total,
-       p.criado_em,
+       p.created_at AS criado_em,
        c.nome_completo                                          AS cliente_nome,
        u.nome_completo                                          AS consultor_nome,
        u.id                                                     AS consultor_id,
@@ -52,18 +52,18 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
            THEN true
          WHEN EXISTS (
            SELECT 1 FROM pedido_item_vinculos piv
-           JOIN pedido_itens pi2 ON pi2.id = piv.pedido_item_id
+           JOIN pedido_itens pi2 ON pi2.id = piv.item_id
            WHERE pi2.pedido_id = p.id
          ) THEN true
          ELSE false
        END                                                      AS vinculos_ok
      FROM pedidos p
      LEFT JOIN clientes    c  ON c.id  = p.cliente_id
-     LEFT JOIN usuarios    u  ON u.id  = p.usuario_id
+     LEFT JOIN usuarios    u  ON u.id  = p.consultor_id
      LEFT JOIN pedido_itens pi ON pi.pedido_id = p.id
      WHERE ${where}
      GROUP BY p.id, c.nome_completo, u.nome_completo, u.id
-     ORDER BY p.criado_em DESC`,
+     ORDER BY p.created_at DESC`,
     params
   );
 
@@ -134,13 +134,13 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { rows: pedidos } = await db.query(
     `SELECT p.id, p.numero_sequencial, p.status, p.verificacao_ok, p.categorizacao_ok,
-            p.total, p.criado_em,
+            p.total, p.created_at AS criado_em,
             c.nome_completo AS cliente_nome,
             u.nome_completo AS consultor_nome,
             u.id            AS consultor_id
      FROM pedidos p
      LEFT JOIN clientes c ON c.id = p.cliente_id
-     LEFT JOIN usuarios u ON u.id = p.usuario_id
+     LEFT JOIN usuarios u ON u.id = p.consultor_id
      WHERE p.id = $1 AND p.empresa_id = $2`,
     [pedidoId, empresaId]
   );
@@ -153,7 +153,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
 
   const pedido = pedidos[0];
   const temPermGeral = (permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
-  if (!temPermGeral && pedido.consultor_id !== userId) {
+  if (!temPermGeral && Number(pedido.consultor_id) !== Number(userId)) {
     const err = new Error("Acesso negado");
     err.status = 403;
     throw err;
@@ -163,7 +163,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     db.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id = $1 LIMIT 1`, [pedidoId]),
     db.query(
       `SELECT 1 FROM pedido_item_vinculos piv
-       JOIN pedido_itens pi ON pi.id = piv.pedido_item_id
+       JOIN pedido_itens pi ON pi.id = piv.item_id
        WHERE pi.pedido_id = $1 LIMIT 1`,
       [pedidoId]
     ),
