@@ -17,10 +17,9 @@ function BarraProgresso({ estagio }) {
   const preAgs = estagio.pre_agendamentos || [];
 
   const etapas = [
-    { key: "pdf",      label: "PDF",     ok: estagio.pdf_ok },
-    { key: "verif",    label: "Verif.",   ok: estagio.verificacao_ok },
-    { key: "categ",    label: "Categ.",   ok: estagio.categorizacao_ok },
-    { key: "vinculos", label: "Vínculos", ok: estagio.vinculos_ok },
+    { key: "pdf",   label: "PDF",   ok: estagio.pdf_ok },
+    { key: "verif", label: "Verif.", ok: estagio.verificacao_ok },
+    { key: "categ", label: "Categ.", ok: estagio.categorizacao_ok },
     ...preAgs.map((ag, i) => ({
       key: `preag_${ag.id}`,
       label: `Pré-ag. ${i + 1}`,
@@ -87,6 +86,11 @@ function CardPedido({ pedido, onVerFluxo }) {
         <span className="dp-itens">
           {pedido.itens_count} {pedido.itens_count === 1 ? "item" : "itens"}
         </span>
+        {pedido.criado_em && (
+          <span className="dp-data">
+            {new Date(pedido.criado_em).toLocaleDateString("pt-BR")}
+          </span>
+        )}
       </div>
       {estagio.proximo_prazo && (
         <div className={`dp-prazo dp-prazo-${estagio.nivel_alerta || ""}`}>
@@ -112,10 +116,21 @@ export default function DashboardPedidos() {
   const navigate  = useNavigate();
   const { user }  = useAuth();
   const { pedidos, loading, erro, carregar } = useDashboardPedidos();
-  const [filtroAtivo, setFiltroAtivo] = useState("todos");
-  const [visaoGeral,  setVisaoGeral]  = useState(false);
+  const [filtroAtivo,    setFiltroAtivo]    = useState("todos");
+  const [visaoGeral,     setVisaoGeral]     = useState(false);
+  const [consultoraFiltro, setConsultoraFiltro] = useState("");
 
   const temPermGeral = (user?.permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
+
+  const consultoras = useMemo(() => {
+    const map = new Map();
+    for (const p of pedidos) {
+      if (p.consultor_id && !map.has(p.consultor_id)) {
+        map.set(p.consultor_id, { id: p.consultor_id, nome: p.consultor_nome });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [pedidos]);
 
   const pedidosFiltrados = useMemo(() => {
     if (filtroAtivo === "todos")    return pedidos;
@@ -132,7 +147,8 @@ export default function DashboardPedidos() {
 
   function handleToggleVisao(geral) {
     setVisaoGeral(geral);
-    carregar(geral ? {} : { consultora_id: user?.id });
+    setConsultoraFiltro("");
+    carregar({});
   }
 
   if (loading) return <div className="dp-loading">Carregando pedidos...</div>;
@@ -143,19 +159,36 @@ export default function DashboardPedidos() {
       <div className="dp-header">
         <h1 className="dp-titulo">Dashboard de Pedidos</h1>
         {temPermGeral && (
-          <div className="dp-toggle">
-            <button
-              className={`dp-toggle-btn ${!visaoGeral ? "dp-toggle-ativo" : ""}`}
-              onClick={() => handleToggleVisao(false)}
-            >
-              Meus Pedidos
-            </button>
-            <button
-              className={`dp-toggle-btn ${visaoGeral ? "dp-toggle-ativo" : ""}`}
-              onClick={() => handleToggleVisao(true)}
-            >
-              Visão Geral
-            </button>
+          <div className="dp-toggle-section">
+            <div className="dp-toggle">
+              <button
+                className={`dp-toggle-btn ${!visaoGeral ? "dp-toggle-ativo" : ""}`}
+                onClick={() => handleToggleVisao(false)}
+              >
+                Visão Geral
+              </button>
+              <button
+                className={`dp-toggle-btn ${visaoGeral ? "dp-toggle-ativo" : ""}`}
+                onClick={() => handleToggleVisao(true)}
+              >
+                Por Consultora
+              </button>
+            </div>
+            {visaoGeral && consultoras.length > 0 && (
+              <select
+                className="dp-select-consultora"
+                value={consultoraFiltro}
+                onChange={(e) => {
+                  setConsultoraFiltro(e.target.value);
+                  carregar(e.target.value ? { consultora_id: e.target.value } : {});
+                }}
+              >
+                <option value="">Todas as consultoras</option>
+                {consultoras.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
       </div>

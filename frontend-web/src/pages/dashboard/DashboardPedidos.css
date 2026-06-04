@@ -202,3 +202,25 @@
 }
 
 .dp-linha.dp-ok { background: #10b981; }
+
+.dp-etapa.dp-atrasado .dp-label { color: #ef4444; font-weight: 600; }
+
+.dp-toggle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.dp-select-consultora {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #334155);
+  background: var(--color-surface, #1e293b);
+  color: var(--color-text, #f1f5f9);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.dp-data { color: var(--color-text-muted, #64748b); font-size: 12px; }
