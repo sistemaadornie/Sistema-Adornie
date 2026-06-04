@@ -3,6 +3,7 @@ const multer  = require("multer");
 const authMiddleware = require("../middlewares/authMiddleware");
 const svc = require("../services/pedidoService");
 const db  = require("../database/db");
+const dashboardSvc = require("../services/dashboardService");
 
 const router = express.Router();
 const uploadPdf = multer({
@@ -638,6 +639,44 @@ router.delete("/:id/anexo-pdf", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("[anexo-pdf DELETE]", err);
     return res.status(500).json({ message: "Erro ao remover PDF." });
+  }
+});
+
+// GET /api/pedidos/:id/fluxo
+router.get("/:id/fluxo", authMiddleware, async (req, res) => {
+  try {
+    const result = await dashboardSvc.buscarFluxoPedido(
+      Number(req.params.id),
+      req.user.empresa_id,
+      req.user.id,
+      req.user.permissoes
+    );
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar fluxo" });
+  }
+});
+
+// PATCH /api/pedidos/:id/etapa
+router.patch("/:id/etapa", authMiddleware, async (req, res) => {
+  try {
+    const { campo, valor } = req.body;
+    if (!campo || valor === undefined) {
+      return res.status(400).json({ message: "campo e valor são obrigatórios" });
+    }
+    const result = await svc.atualizarEtapa(
+      Number(req.params.id),
+      req.user.empresa_id,
+      req.user.id,
+      req.user.permissoes,
+      campo,
+      valor
+    );
+    return res.json({ message: "Etapa atualizada", ...result });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao atualizar etapa" });
   }
 });
 
