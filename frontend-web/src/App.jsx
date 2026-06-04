@@ -32,6 +32,8 @@ const Arquitetos             = lazy(() => import("./pages/arquitetos/Arquitetos"
 const Etiquetas              = lazy(() => import("./pages/etiquetas/Etiquetas"));
 const Orcamentos            = lazy(() => import("./pages/orcamentos/Orcamentos"));
 const OrcamentoWizard       = lazy(() => import("./pages/orcamentos/OrcamentoWizard"));
+const DashboardPedidos   = lazy(() => import("./pages/dashboard/DashboardPedidos"));
+const PedidoFluxo        = lazy(() => import("./pages/pedidos/PedidoFluxo"));
 
 import "./styles/theme.css";
 import "./styles/globals.css";
@@ -97,6 +99,8 @@ export default function App() {
                 <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/pedidos" element={<Pedidos />} />
                   <Route path="/pedidos/os/:osId" element={<OrdemServicoPage />} />
+                  <Route path="/pedidos/:id/fluxo"    element={<PedidoFluxo />} />
+                  <Route path="/dashboard-pedidos"    element={<DashboardPedidos />} />
                   <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
                   <Route path="/arquitetos"  element={<Arquitetos />} />
