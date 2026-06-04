@@ -5,7 +5,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 import PedidoPrint from "./PedidoPrint";
 import ImportarPedidoModal from "./ImportarPedidoModal";
 import ModalSelecionarItensInstalacao from "./ModalSelecionarItensInstalacao";
-import { api } from "../../services/api";
+import { api, API_BASE } from "../../services/api";
 import MidiasGaleria from "../../components/MidiasGaleria";
 import "./Pedidos.css";
 
@@ -179,14 +179,14 @@ export default function Pedidos() {
   async function handleAbrirPdf(pedidoId) {
     try {
       const token = localStorage.getItem("token");
-      const apiBase = `${import.meta.env.VITE_API_URL ?? "http://localhost:3001"}/api`;
-      const response = await fetch(`${apiBase}/pedidos/${pedidoId}/anexo-pdf`, {
+      const response = await fetch(`${API_BASE}/pedidos/${pedidoId}/anexo-pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) { mostrarToast("PDF não encontrado.", "error"); return; }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (_) {
       mostrarToast("Erro ao abrir PDF.", "error");
     }

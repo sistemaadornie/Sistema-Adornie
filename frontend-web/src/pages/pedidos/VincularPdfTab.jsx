@@ -57,6 +57,7 @@ export default function VincularPdfTab() {
       await api.post(`/pedidos/${pedidoSelecionado.id}/anexo-pdf`, fd, true);
       setFeedback({ tipo: "success", msg: `PDF vinculado ao pedido ${pedidoSelecionado.numero} com sucesso.` });
       setArquivo(null);
+      if (inputRef.current) inputRef.current.value = "";
       setPedidoSelecionado(null);
       setBusca("");
       setResultados([]);

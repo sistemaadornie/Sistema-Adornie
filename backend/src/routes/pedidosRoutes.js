@@ -16,6 +16,12 @@ const uploadPdf = multer({
   },
 });
 
+function handleUploadPdfErro(err, _req, res, _next) {
+  if (err?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ message: "O arquivo excede o limite de 5 MB." });
+  if (err?.message) return res.status(400).json({ message: err.message });
+  _next(err);
+}
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function limparMoeda(str) {
@@ -527,7 +533,7 @@ router.post("/importar", authMiddleware, async (req, res) => {
 });
 
 // Upload do PDF original do pedido (armazenamento, sem parsing)
-router.post("/:id/anexo-pdf", authMiddleware, uploadPdf.single("arquivo"), async (req, res) => {
+router.post("/:id/anexo-pdf", authMiddleware, uploadPdf.single("arquivo"), handleUploadPdfErro, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Nenhum arquivo enviado." });
@@ -627,7 +633,7 @@ router.delete("/:id/anexo-pdf", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Pedido não encontrado ou sem permissão." });
     }
 
-    await db.query(`DELETE FROM pedido_anexos WHERE pedido_id=$1`, [pedidoId]);
+    await db.query(`DELETE FROM pedido_anexos WHERE pedido_id=$1 AND empresa_id=$2`, [pedidoId, req.user.empresa_id]);
     return res.status(204).send();
   } catch (err) {
     console.error("[anexo-pdf DELETE]", err);
