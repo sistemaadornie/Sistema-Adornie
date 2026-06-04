@@ -48,11 +48,32 @@ async function montarPedido(id, empresaId) {
     [id]
   );
 
+  const itemIds = itensRes.rows.map(r => r.id);
+  let vinculosPorItem = {};
+  if (itemIds.length > 0) {
+    const vinculosRes = await db.query(
+      `SELECT item_id, item_vinculado_id, tipo_vinculo
+       FROM pedido_item_vinculos
+       WHERE item_id = ANY($1)`,
+      [itemIds]
+    );
+    for (const v of vinculosRes.rows) {
+      if (!vinculosPorItem[v.item_id]) vinculosPorItem[v.item_id] = [];
+      vinculosPorItem[v.item_id].push({
+        item_vinculado_id: v.item_vinculado_id,
+        tipo_vinculo: v.tipo_vinculo,
+      });
+    }
+  }
+
   return {
     ...p,
     numero_rua: p.numero,
     numero: p.numero_origem || fmtNumero(p.numero_sequencial || p.id),
-    itens: itensRes.rows,
+    itens: itensRes.rows.map(it => ({
+      ...it,
+      vinculos: vinculosPorItem[it.id] || [],
+    })),
     pagamentos: pagRes.rows,
   };
 }
