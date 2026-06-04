@@ -772,7 +772,18 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
     });
   }
   function addItem() { setItens((p) => [...p, itemVazio()]); }
-  function removeItem(i) { setItens((p) => p.filter((_, idx) => idx !== i)); }
+  function removeItem(i) {
+    setItens((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== i);
+      return filtered.map((it) => {
+        const v = it.item_vinculado_idx;
+        if (v === null || v === undefined) return it;
+        if (v === i) return { ...it, item_vinculado_idx: null };
+        if (v > i) return { ...it, item_vinculado_idx: v - 1 };
+        return it;
+      });
+    });
+  }
 
   // ── PAGAMENTOS ──
   function setPag(i, k, v) {
