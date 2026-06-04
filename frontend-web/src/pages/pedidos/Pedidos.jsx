@@ -176,6 +176,34 @@ export default function Pedidos() {
     }
   }
 
+  async function handleAbrirPdf(pedidoId) {
+    try {
+      const token = localStorage.getItem("token");
+      const apiBase = `${import.meta.env.VITE_API_URL ?? "http://localhost:3001"}/api`;
+      const response = await fetch(`${apiBase}/pedidos/${pedidoId}/anexo-pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) { mostrarToast("PDF não encontrado.", "error"); return; }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (_) {
+      mostrarToast("Erro ao abrir PDF.", "error");
+    }
+  }
+
+  async function handleRemoverPdf(pedidoId) {
+    if (!window.confirm("Remover o PDF original vinculado a este pedido?")) return;
+    try {
+      await api.delete(`/pedidos/${pedidoId}/anexo-pdf`);
+      mostrarToast("PDF removido.");
+      const res = await api.get(`/pedidos/${pedidoId}`);
+      setPedidoFull(res.pedido);
+    } catch (e) {
+      mostrarToast(e.message || "Erro ao remover PDF.", "error");
+    }
+  }
+
   return (
     <div className="ek-page">
 
@@ -289,6 +317,8 @@ export default function Pedidos() {
               onGerarOS={handleGerarOS}
               onAbrirOS={(id) => navigate(`/pedidos/os/${id}`)}
               onAgendarInstalacao={() => setInstalacaoPedido(pedidoFull || pedidoDetalheAtual)}
+              onAbrirPdf={() => handleAbrirPdf((pedidoFull || pedidoDetalheAtual).id)}
+              onRemoverPdf={() => handleRemoverPdf((pedidoFull || pedidoDetalheAtual).id)}
             />
           )}
         </div>
@@ -371,7 +401,7 @@ export default function Pedidos() {
 }
 
 /* ── DETALHE DO PEDIDO ── */
-function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onAbrirOS, onAgendarInstalacao }) {
+function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onAbrirOS, onAgendarInstalacao, onAbrirPdf, onRemoverPdf }) {
   return (
     <div className="pd-detalhe-inner">
       <div className="pd-detalhe-header">
@@ -396,6 +426,25 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
           <button className="ek-btn ek-btn-secondary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={onAgendarInstalacao}>
             📅 Agendar Instalação
           </button>
+          {pedido.tem_anexo_pdf && (
+            <>
+              <button
+                className="ek-btn ek-btn-secondary"
+                style={{ fontSize: 12, padding: "6px 12px" }}
+                onClick={onAbrirPdf}
+              >
+                📄 PDF Original
+              </button>
+              <button
+                className="ek-btn"
+                style={{ fontSize: 12, padding: "6px 12px", background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" }}
+                onClick={onRemoverPdf}
+                title="Remover PDF vinculado"
+              >
+                🗑 PDF
+              </button>
+            </>
+          )}
           <button className="ek-btn" style={{ fontSize: 12, padding: "6px 12px", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }} onClick={onExcluir}>
             🗑
           </button>
