@@ -153,10 +153,17 @@ export default function Pedidos() {
     }
   }
 
-  async function handleImportarSalvar(dados) {
+  async function handleImportarSalvar(dados, pdfFile) {
     setSalvando(true);
     try {
       const novo = await importar(dados);
+      if (pdfFile && novo?.id) {
+        try {
+          const fd = new FormData();
+          fd.append("arquivo", pdfFile);
+          await api.post(`/pedidos/${novo.id}/anexo-pdf`, fd, true);
+        } catch (_) {}
+      }
       setImportarAberto(false);
       mostrarToast("Pedido importado com sucesso!");
       await selecionarPedido(novo);

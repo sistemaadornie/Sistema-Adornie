@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "../../services/api";
 import { detectarTipo } from "./importKeywordConfig";
 import ModeloSelectorPanel from "./ModeloSelectorPanel";
-import VincularPdfTab from "./VincularPdfTab";
 
 const FORMAS_PAGAMENTO = ["PIX / DEPÓSITO", "CONTRA ENTREGA", "CARTÃO DE CRÉDITO", "BOLETO", "DINHEIRO", "CHEQUE"];
 const UNIDADES = ["M2", "ML", "UN", "PÇ"];
@@ -32,10 +31,11 @@ function pagVazio() {
 }
 
 export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
+  const pdfRef = useRef(null);
   const [etapa,         setEtapa]         = useState("upload"); // upload | revisao
-  const [abaAtiva,      setAbaAtiva]      = useState("texto"); // "texto" | "vincular"
   const [carregando,    setCarregando]    = useState(false);
   const [erro,          setErro]          = useState("");
+  const [pdfOriginal,   setPdfOriginal]   = useState(null); // File | null
   const [textoColar,    setTextoColar]    = useState("");
   const [form,          setForm]          = useState(null);
   const [itens,         setItens]         = useState([]);
@@ -209,7 +209,7 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
       pagamentos:   pagamentos.filter((pg) => pg.forma?.trim()),
     };
     delete dados._endereco_completo;
-    onSalvar(dados);
+    onSalvar(dados, pdfOriginal);
   }
 
   return (
@@ -218,72 +218,89 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
         <div className="modal-header">
           <div>
             <h2>Importar Pedido</h2>
-            <p>{etapa === "upload" ? "Cole o texto do edecoração ou vincule um PDF original" : "Revise os dados extraídos antes de salvar"}</p>
+            <p>{etapa === "upload" ? "Cole o texto do edecoração e anexe o PDF original (opcional)" : "Revise os dados extraídos antes de salvar"}</p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
         <div className="modal-body pd-modal-body-scroll">
 
-          {/* ─── ETAPA 1: UPLOAD / COLAR ─── */}
+          {/* ─── ETAPA 1: COLAR TEXTO ─── */}
           {etapa === "upload" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-              {/* Abas: Importar Texto | Vincular PDF */}
-              <div style={{ display: "flex", gap: 0, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                {[
-                  { id: "texto",    icon: "📋", label: "Importar por Texto" },
-                  { id: "vincular", icon: "📎", label: "Vincular PDF" },
-                ].map(aba => (
-                  <button
-                    key={aba.id}
-                    onClick={() => { setAbaAtiva(aba.id); setErro(""); }}
-                    style={{
-                      flex: 1, padding: "10px 16px", fontSize: 13, fontWeight: 600,
-                      border: "none", cursor: "pointer", transition: "all 0.15s",
-                      background: abaAtiva === aba.id ? "var(--color-primary)" : "var(--color-surface-soft)",
-                      color: abaAtiva === aba.id ? "#fff" : "var(--color-text-muted)",
-                    }}
-                  >
-                    {aba.icon} {aba.label}
-                  </button>
-                ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+                  Abra o pedido no edecoração, pressione <strong>Ctrl+A</strong> para selecionar tudo,
+                  depois <strong>Ctrl+C</strong> para copiar e cole aqui abaixo:
+                </div>
+                <textarea
+                  rows={12}
+                  placeholder={"Cole o conteúdo do PDF aqui...\n\nExemplo:\nPedido de Venda\n#00002372\n29/04/2026\n..."}
+                  value={textoColar}
+                  onChange={(e) => setTextoColar(e.target.value)}
+                  style={{
+                    width: "100%", fontFamily: "monospace", fontSize: 12,
+                    padding: "10px 12px", border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)", background: "var(--color-surface)",
+                    color: "var(--color-text)", resize: "vertical", lineHeight: 1.5,
+                  }}
+                />
+                <button
+                  className="ek-btn ek-btn-primary"
+                  onClick={handleTexto}
+                  disabled={carregando || !textoColar.trim()}
+                  style={{ alignSelf: "flex-end", minWidth: 140 }}
+                >
+                  {carregando ? "Processando..." : "Processar texto →"}
+                </button>
               </div>
 
-              {/* ABA: COLAR TEXTO */}
-              {abaAtiva === "texto" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
-                    Abra o pedido no edecoração, pressione <strong>Ctrl+A</strong> para selecionar tudo,
-                    depois <strong>Ctrl+C</strong> para copiar e cole aqui abaixo:
-                  </div>
-                  <textarea
-                    rows={12}
-                    placeholder={"Cole o conteúdo do PDF aqui...\n\nExemplo:\nPedido de Venda\n#00002372\n29/04/2026\n..."}
-                    value={textoColar}
-                    onChange={(e) => setTextoColar(e.target.value)}
-                    style={{
-                      width: "100%", fontFamily: "monospace", fontSize: 12,
-                      padding: "10px 12px", border: "1px solid var(--color-border)",
-                      borderRadius: "var(--radius-md)", background: "var(--color-surface)",
-                      color: "var(--color-text)", resize: "vertical", lineHeight: 1.5,
-                    }}
-                  />
-                  <button
-                    className="ek-btn ek-btn-primary"
-                    onClick={handleTexto}
-                    disabled={carregando || !textoColar.trim()}
-                    style={{ alignSelf: "flex-end", minWidth: 140 }}
-                  >
-                    {carregando ? "Processando..." : "Processar texto →"}
-                  </button>
+              {/* PDF original — opcional */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", marginBottom: 6 }}>
+                  PDF original (opcional) — será vinculado ao pedido após importar
                 </div>
-              )}
-
-              {/* ABA: VINCULAR PDF ORIGINAL */}
-              {abaAtiva === "vincular" && (
-                <VincularPdfTab />
-              )}
+                <div
+                  onClick={() => pdfRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer.files[0];
+                    if (f?.type === "application/pdf" && f.size <= 5 * 1024 * 1024) setPdfOriginal(f);
+                  }}
+                  style={{
+                    border: "2px dashed var(--color-border)", borderRadius: "var(--radius-md)",
+                    padding: "12px 16px", textAlign: "center", cursor: "pointer",
+                    background: pdfOriginal ? "rgba(34,197,94,0.05)" : "var(--color-surface-soft)",
+                    fontSize: 13, color: "var(--color-text-muted)",
+                    display: "flex", alignItems: "center", gap: 10,
+                  }}
+                >
+                  {pdfOriginal ? (
+                    <>
+                      <span>📄</span>
+                      <span style={{ flex: 1, textAlign: "left" }}>{pdfOriginal.name}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setPdfOriginal(null); if (pdfRef.current) pdfRef.current.value = ""; }}
+                        style={{ border: "none", background: "transparent", cursor: "pointer", color: "#ef4444", fontSize: 16, lineHeight: 1 }}
+                      >×</button>
+                    </>
+                  ) : (
+                    <span>📎 Arraste o PDF aqui ou clique para selecionar (máx 5 MB)</span>
+                  )}
+                </div>
+                <input
+                  ref={pdfRef}
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files[0];
+                    if (f?.type === "application/pdf" && f.size <= 5 * 1024 * 1024) setPdfOriginal(f);
+                  }}
+                />
+              </div>
 
               {erro && (
                 <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", borderRadius: "var(--radius-md)", color: "#ef4444", fontSize: 13 }}>
