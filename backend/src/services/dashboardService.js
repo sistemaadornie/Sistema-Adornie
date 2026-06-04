@@ -73,7 +73,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
   // Genitores: agendamentos com pedido_id + itens de pedido vinculados
   const { rows: preAgs } = await db.query(
-    `SELECT a.id, a.pedido_id, a.status, a.data_inicio, COUNT(ai.id) AS itens_count
+    `SELECT a.id, a.pedido_id, a.status, a.data AS data_inicio, COUNT(ai.id) AS itens_count
      FROM agendamentos a
      JOIN agendamento_itens ai ON ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
      WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
@@ -171,14 +171,14 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   ]);
 
   const { rows: genitoresRaw } = await db.query(
-    `SELECT a.id, a.status, a.tipo, a.data_inicio
+    `SELECT a.id, a.status, a.tipo, a.data AS data_inicio
      FROM agendamentos a
      WHERE a.pedido_id = $1 AND a.empresa_id = $2
        AND EXISTS (
          SELECT 1 FROM agendamento_itens ai
          WHERE ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
        )
-     ORDER BY a.data_inicio`,
+     ORDER BY a.data`,
     [pedidoId, empresaId]
   );
 
@@ -209,10 +209,10 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       [genitoreIds]
     ),
     db.query(
-      `SELECT id, agendamento_pai_id, tipo, status, data_inicio
+      `SELECT id, agendamento_pai_id, tipo, status, data AS data_inicio
        FROM agendamentos
        WHERE agendamento_pai_id = ANY($1) AND empresa_id = $2
-       ORDER BY data_inicio`,
+       ORDER BY data`,
       [genitoreIds, empresaId]
     ),
   ]);
