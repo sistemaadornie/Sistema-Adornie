@@ -29,6 +29,10 @@ describe('buscar (montarPedido)', () => {
 
     const result = await svc.buscar(1, 10);
 
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining('pedido_item_vinculos'),
+      [[10, 11]]
+    );
     expect(result.itens).toHaveLength(2);
     expect(result.itens[0].vinculos).toEqual([]);
     expect(result.itens[1].vinculos).toEqual([

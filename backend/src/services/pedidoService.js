@@ -49,7 +49,7 @@ async function montarPedido(id, empresaId) {
   );
 
   const itemIds = itensRes.rows.map(r => r.id);
-  let vinculosPorItem = {};
+  const vinculosPorItem = {};
   if (itemIds.length > 0) {
     const vinculosRes = await db.query(
       `SELECT item_id, item_vinculado_id, tipo_vinculo
