@@ -155,9 +155,9 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `UPDATE pedido_itens
          SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
              quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
-             modelo=$11, especificacoes=$12, item_vinculado_id = COALESCE($13, item_vinculado_id),
-             largura=$16, altura=$17
-         WHERE id=$14 AND pedido_id=$15`,
+             modelo=$11, especificacoes=$12,
+             largura=$13, altura=$14
+         WHERE id=$15 AND pedido_id=$16`,
         [
           it.ambiente?.trim()    || null,
           it.referencia?.trim()  || null,
@@ -171,11 +171,10 @@ async function _salvarItens(client, pedidoId, itens = []) {
           i,
           it.modelo?.trim()      || null,
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
-          it.item_vinculado_id   || null,
-          itemId,
-          pedidoId,
           toDecimal(it.largura),
           toDecimal(it.altura),
+          itemId,
+          pedidoId,
         ]
       );
       insertedIds.push(itemId);
@@ -210,13 +209,21 @@ async function _salvarItens(client, pedidoId, itens = []) {
     }
   }
 
-  // Resolve item_vinculado_ordem → item_vinculado_id para novos itens
+  // Salva vínculos na tabela pedido_item_vinculos
+  // Suporta item_vinculado_idx (PedidoModal) e item_vinculado_ordem (ImportarPedidoModal — compat)
+  if (insertedIds.length > 0) {
+    await client.query(
+      `DELETE FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
+      [insertedIds]
+    );
+  }
   for (let i = 0; i < itens.length; i++) {
-    const ordem = itens[i].item_vinculado_ordem;
-    if (ordem != null && Number.isFinite(Number(ordem)) && Number(ordem) !== i && insertedIds[Number(ordem)] != null) {
+    const idx = itens[i].item_vinculado_idx ?? itens[i].item_vinculado_ordem ?? null;
+    if (idx != null && Number.isFinite(Number(idx)) && insertedIds[Number(idx)] != null) {
       await client.query(
-        `UPDATE pedido_itens SET item_vinculado_id = $1 WHERE id = $2`,
-        [insertedIds[Number(ordem)], insertedIds[i]]
+        `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
+         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+        [insertedIds[i], insertedIds[Number(idx)], itens[i].tipo_vinculo || 'acessorio']
       );
     }
   }
