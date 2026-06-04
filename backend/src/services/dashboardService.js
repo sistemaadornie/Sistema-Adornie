@@ -40,7 +40,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        p.categorizacao_ok,
        p.total,
        p.created_at AS criado_em,
-       c.nome_completo                                          AS cliente_nome,
+       c.nome                                                   AS cliente_nome,
        u.nome_completo                                          AS consultor_nome,
        u.id                                                     AS consultor_id,
        COUNT(pi.id)                                             AS itens_count,
@@ -62,7 +62,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
      LEFT JOIN usuarios    u  ON u.id  = p.consultor_id
      LEFT JOIN pedido_itens pi ON pi.pedido_id = p.id
      WHERE ${where}
-     GROUP BY p.id, c.nome_completo, u.nome_completo, u.id
+     GROUP BY p.id, c.nome, u.nome_completo, u.id
      ORDER BY p.created_at DESC`,
     params
   );
@@ -135,7 +135,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { rows: pedidos } = await db.query(
     `SELECT p.id, p.numero_sequencial, p.status, p.verificacao_ok, p.categorizacao_ok,
             p.total, p.created_at AS criado_em,
-            c.nome_completo AS cliente_nome,
+            c.nome          AS cliente_nome,
             u.nome_completo AS consultor_nome,
             u.id            AS consultor_id
      FROM pedidos p
