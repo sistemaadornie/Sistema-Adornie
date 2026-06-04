@@ -136,10 +136,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
   const idsParaDeletar = existingIds.filter((id) => !incomingIds.includes(id));
   if (idsParaDeletar.length > 0) {
     await client.query(`DELETE FROM ordem_servico WHERE pedido_item_id = ANY($1)`, [idsParaDeletar]);
-    await client.query(
-      `UPDATE pedido_itens SET item_vinculado_id = NULL WHERE item_vinculado_id = ANY($1)`,
-      [idsParaDeletar]
-    );
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
   }
 
@@ -219,7 +215,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
   }
   for (let i = 0; i < itens.length; i++) {
     const idx = itens[i].item_vinculado_idx ?? itens[i].item_vinculado_ordem ?? null;
-    if (idx != null && Number.isFinite(Number(idx)) && insertedIds[Number(idx)] != null) {
+    if (idx != null && Number.isFinite(Number(idx)) && Number(idx) !== i && insertedIds[Number(idx)] != null) {
       await client.query(
         `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
          VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
