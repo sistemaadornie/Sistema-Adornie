@@ -797,12 +797,25 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
   function removePag(i) { setPagamentos((p) => p.filter((_, idx) => idx !== i)); }
 
   function salvar() {
+    // Filtra itens e remapeia item_vinculado_idx para índices pós-filtro
+    const itensFiltrados = itens
+      .map((it, origIdx) => ({ it, origIdx }))
+      .filter(({ it }) => it.descricao?.trim());
+    const origToNew = {};
+    itensFiltrados.forEach(({ origIdx }, newIdx) => { origToNew[origIdx] = newIdx; });
+    const itensFinais = itensFiltrados.map(({ it }) => ({
+      ...it,
+      item_vinculado_idx: it.item_vinculado_idx != null
+        ? (origToNew[it.item_vinculado_idx] ?? null)
+        : null,
+    }));
+
     const dados = {
       ...form,
       cliente_id:   form.cliente_id   ? Number(form.cliente_id)   : null,
       consultor_id: form.consultor_id ? Number(form.consultor_id) : null,
       arquiteto_id: form.arquiteto_id ? Number(form.arquiteto_id) : null,
-      itens:     itens.filter((it) => it.descricao?.trim()),
+      itens:     itensFinais,
       pagamentos: pagamentos.filter((pg) => pg.forma?.trim()),
     };
     onSalvar(dados);
