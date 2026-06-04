@@ -502,76 +502,101 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
         )}
 
         {/* Itens */}
-        {pedido.itens?.length > 0 && (
-          <div className="pd-detalhe-section">
-            <div className="cl-section-title">Itens do Pedido</div>
-            <div className="pd-itens-table-wrap">
-              <table className="pd-itens-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Ambiente</th>
-                    <th>Referência</th>
-                    <th>Cor</th>
-                    <th>Produto</th>
-                    <th>Medidas</th>
-                    <th>Qtde</th>
-                    <th>Un</th>
-                    <th>Preço</th>
-                    <th>Total</th>
-                    <th>Ficha OS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pedido.itens.map((it, i) => (
-                    <tr key={i}>
-                      <td>{i + 1}</td>
-                      <td>{it.ambiente || "—"}</td>
-                      <td>{it.referencia || "—"}</td>
-                      <td>{it.cor || "—"}</td>
-                      <td>{it.descricao}</td>
-                      <td>{it.medidas || "—"}</td>
-                      <td>{it.quantidade}</td>
-                      <td>{it.unidade || "—"}</td>
-                      <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
-                      <td style={{ fontWeight: 600 }}>{it.valor != null ? `R$ ${fmtMoeda(it.valor)}` : "—"}</td>
-                      <td>
-                        {ehCortina(it.descricao, it.referencia) ? (
-                          it.os_id ? (
-                            <button
-                              onClick={() => onAbrirOS(it.os_id)}
-                              className="ek-btn"
-                              style={{
-                                fontSize: 11,
-                                padding: "4px 8px",
-                                background: it.os_status === "aberta" ? "#fef3c7" : "#d1fae5",
-                                color: it.os_status === "aberta" ? "#d97706" : "#065f46",
-                                border: `1px solid ${it.os_status === "aberta" ? "#fcd34d" : "#6ee7b7"}`,
-                                fontWeight: 600
-                              }}
-                            >
-                              {it.os_status === "aberta" ? "📋 OS: Aberta" : "✅ OS: Preenchida"}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => onGerarOS(it.id)}
-                              className="ek-btn ek-btn-secondary"
-                              style={{ fontSize: 11, padding: "4px 8px" }}
-                            >
-                              📋 Gerar OS
-                            </button>
-                          )
-                        ) : (
-                          <span style={{ color: "var(--color-text-muted)", fontSize: 11 }}>—</span>
-                        )}
-                      </td>
+        {pedido.itens?.length > 0 && (() => {
+          // Monta árvore: pai → [filhos]
+          const idSet = new Set(pedido.itens.map(it => it.id));
+          const filhosPorPai = {};
+          for (const it of pedido.itens) {
+            const paiId = it.vinculos?.[0]?.item_vinculado_id;
+            if (paiId && idSet.has(paiId)) {
+              if (!filhosPorPai[paiId]) filhosPorPai[paiId] = [];
+              filhosPorPai[paiId].push(it);
+            }
+          }
+          const idsFilhos = new Set(Object.values(filhosPorPai).flat().map(it => it.id));
+          const itensOrdenados = [];
+          let seq = 1;
+          for (const pai of pedido.itens.filter(it => !idsFilhos.has(it.id))) {
+            itensOrdenados.push({ item: pai, nivel: 0, seq: seq++ });
+            for (const filho of (filhosPorPai[pai.id] || [])) {
+              itensOrdenados.push({ item: filho, nivel: 1, seq: seq++ });
+            }
+          }
+
+          return (
+            <div className="pd-detalhe-section">
+              <div className="cl-section-title">Itens do Pedido</div>
+              <div className="pd-itens-table-wrap">
+                <table className="pd-itens-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Ambiente</th>
+                      <th>Referência</th>
+                      <th>Cor</th>
+                      <th>Produto</th>
+                      <th>Medidas</th>
+                      <th>Qtde</th>
+                      <th>Un</th>
+                      <th>Preço</th>
+                      <th>Total</th>
+                      <th>Ficha OS</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {itensOrdenados.map(({ item: it, nivel, seq: s }) => (
+                      <tr key={it.id} className={nivel > 0 ? "pd-item-filho" : ""}>
+                        <td>
+                          {nivel > 0 && <span className="pd-item-indent">└─</span>}
+                          {s}
+                        </td>
+                        <td>{it.ambiente || "—"}</td>
+                        <td>{it.referencia || "—"}</td>
+                        <td>{it.cor || "—"}</td>
+                        <td>{it.descricao}</td>
+                        <td>{it.medidas || "—"}</td>
+                        <td>{it.quantidade}</td>
+                        <td>{it.unidade || "—"}</td>
+                        <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
+                        <td style={{ fontWeight: 600 }}>{it.valor != null ? `R$ ${fmtMoeda(it.valor)}` : "—"}</td>
+                        <td>
+                          {ehCortina(it.descricao, it.referencia) ? (
+                            it.os_id ? (
+                              <button
+                                onClick={() => onAbrirOS(it.os_id)}
+                                className="ek-btn"
+                                style={{
+                                  fontSize: 11,
+                                  padding: "4px 8px",
+                                  background: it.os_status === "aberta" ? "#fef3c7" : "#d1fae5",
+                                  color: it.os_status === "aberta" ? "#d97706" : "#065f46",
+                                  border: `1px solid ${it.os_status === "aberta" ? "#fcd34d" : "#6ee7b7"}`,
+                                  fontWeight: 600
+                                }}
+                              >
+                                {it.os_status === "aberta" ? "📋 OS: Aberta" : "✅ OS: Preenchida"}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => onGerarOS(it.id)}
+                                className="ek-btn ek-btn-secondary"
+                                style={{ fontSize: 11, padding: "4px 8px" }}
+                              >
+                                📋 Gerar OS
+                              </button>
+                            )
+                          ) : (
+                            <span style={{ color: "var(--color-text-muted)", fontSize: 11 }}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Totais */}
         {pedido.total != null && (

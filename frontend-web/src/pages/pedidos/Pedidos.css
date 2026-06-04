@@ -507,3 +507,17 @@
   cursor: default;
   opacity: 0.7;
 }
+
+/* ── TREE VIEW — itens vinculados no detalhe ── */
+.pd-item-filho {
+  background: rgba(0, 0, 0, 0.025);
+}
+.pd-item-filho td {
+  border-top: none;
+}
+.pd-item-indent {
+  color: var(--color-text-muted);
+  margin-right: 4px;
+  font-size: 11px;
+  user-select: none;
+}
