@@ -47,6 +47,7 @@ const ordemServicoRoutes = require("./src/routes/ordemServicoRoutes");
 const orcamentosRoutes   = require("./src/routes/orcamentosRoutes");
 const uploadRoutes       = require("./src/routes/uploadRoutes");
 const prazosRoutes       = require("./src/routes/prazosRoutes");
+const dashboardRoutes    = require("./src/routes/dashboardRoutes");
 
 const app = express();
 
@@ -146,6 +147,7 @@ app.use("/api/veiculos",      veiculosRoutes);
 app.use("/api/relatorios",    relatoriosRoutes);
 app.use("/api/crews",         crewRoutes);
 app.use("/api/pedidos",       pedidosRoutes);
+app.use("/api/dashboard",     dashboardRoutes);
 app.use("/api/crm",           crmRoutes);
 app.use("/api/produtos",      produtosRoutes);
 app.use("/api/fornecedores",   fornecedoresRoutes);
