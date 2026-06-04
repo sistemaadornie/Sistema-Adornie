@@ -165,7 +165,7 @@ Na aba **Itens**, cada linha ganha uma coluna **"Vinculado a"**:
 - `<select>` com opções: `— Nenhum —` + `{índice+1} – {descrição}` para cada outro item
 - Um item não pode se vincular a si mesmo (opção filtrada)
 - Estado: `item_vinculado_idx` (índice posicional, 0-based) por item
-- Ao carregar pedido para edição: resolve `vinculos[0].item_vinculado_id` → índice posicional via `itens.findIndex(it => it.id === v.item_vinculado_id)`
+- Ao carregar pedido para edição: resolve `vinculos[0].item_vinculado_id` → índice posicional via `itens.findIndex(it => it.id === v.item_vinculado_id)` *(vinculos[0] é intencional: a UI de edição suporta apenas um vínculo por item por enquanto; múltiplos serão abordados em iteração futura)*
 - Ao salvar: envia `item_vinculado_idx` junto com cada item
 
 ---

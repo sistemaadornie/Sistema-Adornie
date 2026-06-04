@@ -35,9 +35,9 @@ function BarcodeSVG({ value, height = 28, fontSize = 8 }) {
    Configuração por template
 ───────────────────────────────────────── */
 const MODELOS = {
-  produto: { label: "Etiqueta Produto",       w: 80,  h: 40,  cols: 3, pageW: 210, pageH: 297, mH: 5,  mV: 10, gH: 2, gV: 2, landscape: false },
-  placa:   { label: "Placa ID",               w: 150, h: 70,  cols: 1, pageW: 210, pageH: 297, mH: 30, mV: 20, gH: 0, gV: 8, landscape: false },
-  cortina: { label: "Cortina Armazenamento",  w: 92,  h: 136, cols: 2, pageW: 210, pageH: 297, mH: 10, mV: 10, gH: 5, gV: 5, landscape: false },
+  produto: { label: "Etiqueta Produto",       w: 50,  h: 80,  cols: 3, pageW: 210, pageH: 297, mH: 10, mV: 10, gH: 5, gV: 5, landscape: false },
+  placa:   { label: "Placa ID",               w: 50,  h: 80,  cols: 3, pageW: 210, pageH: 297, mH: 10, mV: 10, gH: 5, gV: 5, landscape: false },
+  cortina: { label: "Cortina Armazenamento",  w: 50,  h: 80,  cols: 3, pageW: 210, pageH: 297, mH: 10, mV: 10, gH: 5, gV: 5, landscape: false },
   tecido:  { label: "Tecido Armazenamento",    w: 277, h: 190, cols: 1, pageW: 297, pageH: 210, mH: 10, mV: 10, gH: 0, gV: 0, landscape: true  },
 };
 
@@ -56,10 +56,10 @@ function PreviewLabelProduto({ item, cfg, logo, sc }) {
   const preco = Number(item.preco || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <div className="etq-label etq-l-produto" style={{ width: px(80), height: px(40) }}>
+    <div className="etq-label etq-l-produto" style={{ width: px(50), height: px(80) }}>
       <div className="etq-lp-top">
         {cfg.mostrarLogo && logo && (
-          <img src={logo} alt="" style={{ height: px(10), marginRight: px(2), flexShrink: 0, objectFit: "contain" }} />
+          <img src={logo} alt="" style={{ height: px(8), marginRight: px(2), flexShrink: 0, objectFit: "contain" }} />
         )}
         <div style={{ flex: 1, overflow: "hidden" }}>
           {cfg.mostrarNome && (
@@ -74,8 +74,8 @@ function PreviewLabelProduto({ item, cfg, logo, sc }) {
       </div>
       <div className="etq-lp-bottom">
         {cfg.mostrarBarcode && item.referencia ? (
-          <div style={{ flex: 1, maxWidth: px(52) }}>
-            <BarcodeSVG value={item.referencia} height={px(9)} fontSize={px(2.3)} />
+          <div style={{ flex: 1, maxWidth: px(44) }}>
+            <BarcodeSVG value={item.referencia} height={px(14)} fontSize={px(2.3)} />
           </div>
         ) : <div style={{ flex: 1 }} />}
         {cfg.mostrarPreco && (
@@ -90,28 +90,28 @@ function PreviewLabelPlaca({ item, cfg, logo, sc }) {
   const px = v => v * sc;
 
   return (
-    <div className="etq-label etq-l-placa" style={{ width: px(150), height: px(70) }}>
-      <div className="etq-placa-header" style={{ paddingBottom: px(2.5), marginBottom: px(2.5) }}>
+    <div className="etq-label etq-l-placa" style={{ width: px(50), height: px(80) }}>
+      <div className="etq-placa-header" style={{ paddingBottom: px(2), marginBottom: px(2) }}>
         {cfg.mostrarLogo && logo && (
-          <img src={logo} alt="" style={{ height: px(13), marginRight: px(3), objectFit: "contain" }} />
+          <img src={logo} alt="" style={{ height: px(8), marginRight: px(2), objectFit: "contain" }} />
         )}
-        <div className="etq-placa-titulo" style={{ fontSize: px(7) }}>
+        <div className="etq-placa-titulo" style={{ fontSize: px(5) }}>
           {item.titulo || "TÍTULO"}
         </div>
       </div>
       {item.subtitulo && (
-        <div className="etq-placa-sub" style={{ fontSize: px(4.2), marginBottom: px(2) }}>
+        <div className="etq-placa-sub" style={{ fontSize: px(3.5), marginBottom: px(2) }}>
           {item.subtitulo}
         </div>
       )}
       {cfg.mostrarReferencia && item.referencia && (
-        <div className="etq-placa-refs" style={{ fontSize: px(3) }}>
+        <div className="etq-placa-refs" style={{ fontSize: px(2.8) }}>
           <span>REF: {item.referencia}</span>
         </div>
       )}
       {cfg.mostrarBarcode && item.referencia && (
-        <div style={{ width: px(110), marginTop: "auto" }}>
-          <BarcodeSVG value={item.referencia} height={px(11)} fontSize={px(2.7)} />
+        <div style={{ width: px(44), marginTop: "auto" }}>
+          <BarcodeSVG value={item.referencia} height={px(10)} fontSize={px(2.5)} />
         </div>
       )}
     </div>
@@ -184,13 +184,12 @@ function PreviewLabelTecido({ item, cfg, logo, sc }) {
 function PreviewLabelCortina({ item, cfg, logo, sc }) {
   const px = v => v * sc;
   return (
-    <div className="etq-label etq-l-cortina" style={{ width: px(92), height: px(136) }}>
+    <div className="etq-label etq-l-cortina" style={{ width: px(50), height: px(80) }}>
 
-      {/* Header: título + logo */}
+      {/* Header: logo */}
       <div className="etq-cor-header">
-        <div className="etq-cor-titulo" style={{ fontSize: px(4.2) }}>CORTINAS</div>
         {cfg.mostrarLogo && logo && (
-          <img src={logo} alt="" className="etq-cor-logo" style={{ height: px(8) }} />
+          <img src={logo} alt="" className="etq-cor-logo" style={{ height: px(6) }} />
         )}
       </div>
 
@@ -199,16 +198,16 @@ function PreviewLabelCortina({ item, cfg, logo, sc }) {
         {/* Coluna campos */}
         <div className="etq-cor-fields">
           <div className="etq-cor-field">
-            <span className="etq-cor-key" style={{ fontSize: px(2.8) }}>CLIENTE</span>
-            <div className="etq-cor-val" style={{ fontSize: px(4.8) }}>{item.cliente || "—"}</div>
+            <span className="etq-cor-key" style={{ fontSize: px(2.2) }}>CLIENTE</span>
+            <div className="etq-cor-val" style={{ fontSize: px(4) }}>{item.cliente || "—"}</div>
           </div>
           <div className="etq-cor-field">
-            <span className="etq-cor-key" style={{ fontSize: px(2.8) }}>PEDIDO</span>
-            <div className="etq-cor-val" style={{ fontSize: px(4.2) }}>{item.pedido || "—"}</div>
+            <span className="etq-cor-key" style={{ fontSize: px(2.2) }}>PEDIDO</span>
+            <div className="etq-cor-val" style={{ fontSize: px(3.5) }}>{item.pedido || "—"}</div>
           </div>
           <div className="etq-cor-field etq-cor-field-grow">
-            <span className="etq-cor-key" style={{ fontSize: px(2.8) }}>ITENS</span>
-            <div className="etq-cor-itens" style={{ fontSize: px(3.5) }}>{item.itens || "—"}</div>
+            <span className="etq-cor-key" style={{ fontSize: px(2.2) }}>ITENS</span>
+            <div className="etq-cor-itens" style={{ fontSize: px(2.9) }}>{item.itens || "—"}</div>
           </div>
         </div>
 
@@ -220,15 +219,15 @@ function PreviewLabelCortina({ item, cfg, logo, sc }) {
 
       {/* Footer: Trilhos */}
       <div className="etq-cor-footer">
-        <span className="etq-cor-key" style={{ fontSize: px(2.8) }}>TRILHOS ESTÃO PRONTOS?</span>
+        <span className="etq-cor-key" style={{ fontSize: px(2.2) }}>TRILHOS PRONTOS?</span>
         <div className="etq-cor-opcoes">
           <div className="etq-cor-opcao">
-            <div className="etq-cor-box" style={{ width: px(6), height: px(6), borderWidth: px(0.6) }} />
-            <span style={{ fontSize: px(4) }}>Sim</span>
+            <div className="etq-cor-box" style={{ width: px(4.5), height: px(4.5), borderWidth: px(0.5) }} />
+            <span style={{ fontSize: px(3.5) }}>Sim</span>
           </div>
           <div className="etq-cor-opcao">
-            <div className="etq-cor-box" style={{ width: px(6), height: px(6), borderWidth: px(0.6) }} />
-            <span style={{ fontSize: px(4) }}>Não</span>
+            <div className="etq-cor-box" style={{ width: px(4.5), height: px(4.5), borderWidth: px(0.5) }} />
+            <span style={{ fontSize: px(3.5) }}>Não</span>
           </div>
         </div>
       </div>
@@ -251,21 +250,21 @@ function renderPreviewLabel(tipo, item, cfg, logo, sc, i) {
 function PrintLabelProduto({ item, cfg, logo }) {
   const preco = Number(item.preco || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   return (
-    <div style={{ width: "80mm", height: "40mm", border: "0.3pt solid #bbb", display: "flex", flexDirection: "column", padding: "1.5mm", boxSizing: "border-box", overflow: "hidden", fontFamily: "Arial, sans-serif", background: "#fff" }}>
+    <div style={{ width: "50mm", height: "80mm", border: "1pt solid #444", display: "flex", flexDirection: "column", padding: "2mm", boxSizing: "border-box", overflow: "hidden", fontFamily: "Arial, sans-serif", background: "#fff" }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5mm", flex: 1, overflow: "hidden" }}>
-        {cfg.mostrarLogo && logo && <img src={logo} alt="" style={{ height: "10mm", objectFit: "contain", flexShrink: 0 }} />}
+        {cfg.mostrarLogo && logo && <img src={logo} alt="" style={{ height: "8mm", objectFit: "contain", flexShrink: 0 }} />}
         <div style={{ flex: 1, overflow: "hidden" }}>
-          {cfg.mostrarNome && <div style={{ fontSize: "10pt", fontWeight: "bold", lineHeight: 1.2 }}>{item.nome || "—"}</div>}
-          {cfg.mostrarReferencia && item.referencia && <div style={{ fontSize: "7pt", color: "#555", marginTop: "0.4mm" }}>Ref: {item.referencia}</div>}
+          {cfg.mostrarNome && <div style={{ fontSize: "9pt", fontWeight: "bold", lineHeight: 1.2 }}>{item.nome || "—"}</div>}
+          {cfg.mostrarReferencia && item.referencia && <div style={{ fontSize: "6pt", color: "#333", marginTop: "0.4mm" }}>Ref: {item.referencia}</div>}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: "1mm" }}>
         {cfg.mostrarBarcode && item.referencia && (
-          <div style={{ width: "48mm" }}>
-            <BarcodeSVG value={item.referencia} height={18} fontSize={6} />
+          <div style={{ width: "44mm" }}>
+            <BarcodeSVG value={item.referencia} height={22} fontSize={5} />
           </div>
         )}
-        {cfg.mostrarPreco && <div style={{ fontSize: "16pt", fontWeight: "900" }}>{preco}</div>}
+        {cfg.mostrarPreco && <div style={{ fontSize: "14pt", fontWeight: "900" }}>{preco}</div>}
       </div>
     </div>
   );
@@ -273,20 +272,20 @@ function PrintLabelProduto({ item, cfg, logo }) {
 
 function PrintLabelPlaca({ item, cfg, logo }) {
   return (
-    <div style={{ width: "150mm", height: "70mm", border: "0.5pt solid #888", display: "flex", flexDirection: "column", padding: "3mm", boxSizing: "border-box", fontFamily: "Arial, sans-serif", background: "#fff" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "3mm", borderBottom: "0.5pt solid #ccc", paddingBottom: "2.5mm", marginBottom: "2.5mm" }}>
-        {cfg.mostrarLogo && logo && <img src={logo} alt="" style={{ height: "13mm", objectFit: "contain" }} />}
-        <div style={{ fontSize: "20pt", fontWeight: "900", letterSpacing: "0.5pt" }}>{item.titulo || "TÍTULO"}</div>
+    <div style={{ width: "50mm", height: "80mm", border: "1pt solid #444", display: "flex", flexDirection: "column", padding: "3mm", boxSizing: "border-box", fontFamily: "Arial, sans-serif", background: "#fff" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "2mm", borderBottom: "1pt solid #555", paddingBottom: "2mm", marginBottom: "2mm" }}>
+        {cfg.mostrarLogo && logo && <img src={logo} alt="" style={{ height: "8mm", objectFit: "contain" }} />}
+        <div style={{ fontSize: "12pt", fontWeight: "900", letterSpacing: "0.5pt" }}>{item.titulo || "TÍTULO"}</div>
       </div>
-      {item.subtitulo && <div style={{ fontSize: "11pt", color: "#333", marginBottom: "2mm" }}>{item.subtitulo}</div>}
+      {item.subtitulo && <div style={{ fontSize: "9pt", color: "#222", marginBottom: "2mm" }}>{item.subtitulo}</div>}
       {cfg.mostrarReferencia && item.referencia && (
-        <div style={{ fontSize: "8pt", color: "#555", marginBottom: "auto" }}>
+        <div style={{ fontSize: "7pt", color: "#333", marginBottom: "auto" }}>
           REF: {item.referencia}
         </div>
       )}
       {cfg.mostrarBarcode && item.referencia && (
-        <div style={{ width: "110mm" }}>
-          <BarcodeSVG value={item.referencia} height={24} fontSize={7} />
+        <div style={{ width: "44mm" }}>
+          <BarcodeSVG value={item.referencia} height={20} fontSize={6} />
         </div>
       )}
     </div>
@@ -359,51 +358,50 @@ function PrintLabelTecido({ item, cfg, logo }) {
 function PrintLabelCortina({ item, cfg, logo }) {
   const base = { fontFamily: "Arial, sans-serif", background: "#fff", boxSizing: "border-box" };
   return (
-    <div style={{ ...base, width: "92mm", height: "136mm", border: "0.5pt solid #bbb", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ ...base, width: "50mm", height: "80mm", border: "1pt solid #444", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-      {/* Header: título + logo */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.5mm", padding: "2.5mm 3mm", borderBottom: "0.5pt solid #ddd", background: "#f5f5f5" }}>
-        <div style={{ fontSize: "10.5pt", fontWeight: "900", letterSpacing: "0.5pt", color: "#111", textAlign: "center" }}>CORTINAS</div>
+      {/* Header: logo */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "2mm 2.5mm", borderBottom: "1pt solid #555", background: "#f5f5f5" }}>
         {cfg.mostrarLogo && logo && (
-          <img src={logo} alt="" style={{ height: "8mm", objectFit: "contain" }} />
+          <img src={logo} alt="" style={{ height: "6mm", objectFit: "contain" }} />
         )}
       </div>
 
       {/* Body: campos (esquerda) + foto (direita) */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Coluna campos */}
-        <div style={{ flex: 1, padding: "3.5mm", display: "flex", flexDirection: "column", gap: "3.5mm", overflow: "hidden" }}>
+        <div style={{ flex: 1, padding: "2.5mm", display: "flex", flexDirection: "column", gap: "2mm", overflow: "hidden" }}>
           <div>
-            <div style={{ fontSize: "5.5pt", fontWeight: "700", color: "#999", letterSpacing: "0.8pt", marginBottom: "0.8mm", textTransform: "uppercase" }}>Cliente</div>
-            <div style={{ fontSize: "12pt", fontWeight: "800", color: "#111", lineHeight: 1.15 }}>{item.cliente || "—"}</div>
+            <div style={{ fontSize: "4.5pt", fontWeight: "700", color: "#555", letterSpacing: "0.8pt", marginBottom: "0.5mm", textTransform: "uppercase" }}>Cliente</div>
+            <div style={{ fontSize: "9pt", fontWeight: "800", color: "#111", lineHeight: 1.15 }}>{item.cliente || "—"}</div>
           </div>
           <div>
-            <div style={{ fontSize: "5.5pt", fontWeight: "700", color: "#999", letterSpacing: "0.8pt", marginBottom: "0.8mm", textTransform: "uppercase" }}>Pedido</div>
-            <div style={{ fontSize: "10pt", fontWeight: "700", color: "#222" }}>{item.pedido || "—"}</div>
+            <div style={{ fontSize: "4.5pt", fontWeight: "700", color: "#555", letterSpacing: "0.8pt", marginBottom: "0.5mm", textTransform: "uppercase" }}>Pedido</div>
+            <div style={{ fontSize: "8pt", fontWeight: "700", color: "#222" }}>{item.pedido || "—"}</div>
           </div>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <div style={{ fontSize: "5.5pt", fontWeight: "700", color: "#999", letterSpacing: "0.8pt", marginBottom: "0.8mm", textTransform: "uppercase" }}>Itens</div>
-            <div style={{ fontSize: "8.5pt", color: "#333", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{item.itens || "—"}</div>
+            <div style={{ fontSize: "4.5pt", fontWeight: "700", color: "#555", letterSpacing: "0.8pt", marginBottom: "0.5mm", textTransform: "uppercase" }}>Itens</div>
+            <div style={{ fontSize: "6.5pt", color: "#333", lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{item.itens || "—"}</div>
           </div>
         </div>
 
         {/* Coluna imagem */}
-        <div style={{ width: "30mm", flexShrink: 0, borderLeft: "0.5pt solid #ddd", overflow: "hidden" }}>
+        <div style={{ width: "16mm", flexShrink: 0, borderLeft: "1pt solid #555", overflow: "hidden" }}>
           <img src="/cortina.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
       </div>
 
       {/* Footer: Trilhos */}
-      <div style={{ padding: "3mm 3.5mm", borderTop: "0.5pt solid #ddd", background: "#f5f5f5" }}>
-        <div style={{ fontSize: "6pt", fontWeight: "700", color: "#666", letterSpacing: "0.5pt", marginBottom: "2.5mm" }}>TRILHOS ESTÃO PRONTOS?</div>
-        <div style={{ display: "flex", gap: "7mm" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "2.5mm" }}>
-            <div style={{ width: "6mm", height: "6mm", border: "0.8pt solid #333", borderRadius: "0.8mm", flexShrink: 0 }} />
-            <span style={{ fontSize: "10pt", fontWeight: "700" }}>Sim</span>
+      <div style={{ padding: "2mm 2.5mm", borderTop: "1pt solid #555", background: "#f5f5f5" }}>
+        <div style={{ fontSize: "4.5pt", fontWeight: "700", color: "#444", letterSpacing: "0.5pt", marginBottom: "1.5mm" }}>TRILHOS PRONTOS?</div>
+        <div style={{ display: "flex", gap: "5mm" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "2mm" }}>
+            <div style={{ width: "4.5mm", height: "4.5mm", border: "0.8pt solid #333", borderRadius: "0.8mm", flexShrink: 0 }} />
+            <span style={{ fontSize: "8pt", fontWeight: "700" }}>Sim</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "2.5mm" }}>
-            <div style={{ width: "6mm", height: "6mm", border: "0.8pt solid #333", borderRadius: "0.8mm", flexShrink: 0 }} />
-            <span style={{ fontSize: "10pt", fontWeight: "700" }}>Não</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "2mm" }}>
+            <div style={{ width: "4.5mm", height: "4.5mm", border: "0.8pt solid #333", borderRadius: "0.8mm", flexShrink: 0 }} />
+            <span style={{ fontSize: "8pt", fontWeight: "700" }}>Não</span>
           </div>
         </div>
       </div>

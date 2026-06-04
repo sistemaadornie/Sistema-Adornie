@@ -159,6 +159,39 @@ function metaEvento(ev) {
   return STATUS_META[ev.status] || STATUS_META.agendado;
 }
 
+function computeEventColumns(evsDia) {
+  const sorted = evsDia
+    .filter(ev => ev.hora)
+    .map(ev => {
+      const [h, m] = ev.hora.split(':').map(Number);
+      const start = h * 60 + m;
+      const end = start + Math.max(ev.duracao_minutos || 60, 15);
+      return { ev, start, end, col: 0, totalCols: 1 };
+    })
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+
+  if (!sorted.length) return [];
+
+  const colEnds = [];
+  for (const item of sorted) {
+    let c = colEnds.findIndex(e => e <= item.start);
+    if (c === -1) c = colEnds.length;
+    colEnds[c] = item.end;
+    item.col = c;
+  }
+
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (sorted[j].start >= sorted[i].end) break;
+      const cols = Math.max(sorted[i].col, sorted[j].col) + 1;
+      if (sorted[i].totalCols < cols) sorted[i].totalCols = cols;
+      if (sorted[j].totalCols < cols) sorted[j].totalCols = cols;
+    }
+  }
+
+  return sorted.map(({ ev, col, totalCols }) => ({ ...ev, _col: col, _totalCols: totalCols }));
+}
+
 /* ── COMPONENTE PRINCIPAL ────────────────────────── */
 
 export default function Agendamentos() {
@@ -523,6 +556,31 @@ function AgendamentosOperador() {
             </div>
           ))}
         </div>
+        {/* Linha: eventos sem horário */}
+        {diasSemana.some(d => agsFiltrados.some(a => a.data === dateToISO(d) && !a.hora)) && (
+          <div className="ag-week-allday-row" style={{ minWidth: 700 }}>
+            <div className="ag-week-allday-label-cell">sem<br/>horário</div>
+            {diasSemana.map((d, di) => {
+              const iso = dateToISO(d);
+              const semHora = agsFiltrados.filter(a => a.data === iso && !a.hora);
+              return (
+                <div key={di} className="ag-week-allday-cell">
+                  {semHora.map(ev => (
+                    <div
+                      key={ev.id}
+                      className="ag-week-allday-event"
+                      style={{ background: corEvento(ev) }}
+                      onClick={() => setAgDetalhe(ev)}
+                    >
+                      {ev.titulo}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Grade horas */}
         <div className="ag-week-grid" style={{ minWidth: 700 }} ref={weekGridRef}>
           <div className="ag-week-time-col">
@@ -533,23 +591,27 @@ function AgendamentosOperador() {
           {diasSemana.map((d, di) => {
             const iso = dateToISO(d);
             const evsDia = agsFiltrados.filter((a) => a.data === iso);
+            const layouted = computeEventColumns(evsDia);
             return (
               <div key={di} className="ag-week-day-col" style={{ position: "relative" }}>
                 {HORAS_DIA.map((h) => <div key={h} className="ag-week-slot" />)}
-                {evsDia.map((ev) => {
-                  if (!ev.hora) return null;
+                {layouted.map((ev) => {
                   const [eh, em] = ev.hora.split(":").map(Number);
                   const topOffset  = minsToTop(eh * 60 + em) + 2;
                   const durMin     = ev.duracao_minutos ?? 60;
                   const alturaBase = Math.max(28, durMin / 60 * SLOT_PX);
                   const isDragging = draggingId === ev.id;
                   const canEdit    = podeEditarAgendamento(user, ev);
+                  const pct     = 100 / ev._totalCols;
+                  const leftPct = ev._col * pct;
                   return (
                     <div
                       key={ev.id}
                       className="ag-week-event"
                       style={{
                         top: topOffset, height: alturaBase,
+                        left: `calc(${leftPct}% + 2px)`,
+                        right: `calc(${100 - leftPct - pct}% + 2px)`,
                         background: corEvento(ev),
                         cursor: canEdit ? (isDragging ? "grabbing" : "grab") : "pointer",
                         opacity: isDragging ? 0.35 : 1,
@@ -584,12 +646,34 @@ function AgendamentosOperador() {
   function renderDia() {
     const isoDay = isoSelecionado;
     const evsDia = agsFiltrados.filter((a) => a.data === isoDay);
+    const evsSemHora = evsDia.filter(ev => !ev.hora);
+    const layouted   = computeEventColumns(evsDia);
     return (
       <div>
         <div className="ag-day-header">
           <strong>{curDia.getDate()}</strong>
           <span>{DIAS_SEMANA_FULL[curDia.getDay()]}, {MESES[curDia.getMonth()]} de {curDia.getFullYear()}</span>
         </div>
+
+        {/* Eventos sem horário */}
+        {evsSemHora.length > 0 && (
+          <div className="ag-day-allday">
+            <div className="ag-day-allday-label">sem<br/>horário</div>
+            <div className="ag-day-allday-events">
+              {evsSemHora.map(ev => (
+                <div
+                  key={ev.id}
+                  className="ag-week-allday-event"
+                  style={{ background: corEvento(ev) }}
+                  onClick={() => setAgDetalhe(ev)}
+                >
+                  {ev.titulo}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex" }} ref={dayGridRef}>
           <div className="ag-week-time-col">
             {HORAS_DIA.map((h) => (
@@ -606,25 +690,27 @@ function AgendamentosOperador() {
                 </div>
               </div>
             )}
-            {evsDia.map((ev) => {
-              if (!ev.hora) return null;
+            {layouted.map((ev) => {
               const [eh, em]   = ev.hora.split(":").map(Number);
               const topOffset  = minsToTop(eh * 60 + em) + 2;
               const durMin     = ev.duracao_minutos ?? 60;
               const alturaBase = Math.max(28, durMin / 60 * SLOT_PX);
               const isDragging = draggingId === ev.id;
               const canEdit    = podeEditarAgendamento(user, ev);
+              const pct     = 100 / ev._totalCols;
+              const leftPct = ev._col * pct;
               return (
                 <div
                   key={ev.id}
                   className="ag-week-event"
                   style={{
                     top: topOffset, height: alturaBase,
+                    left: `calc(${leftPct}% + 2px)`,
+                    right: `calc(${100 - leftPct - pct}% + 2px)`,
                     background: corEvento(ev),
                     cursor: canEdit ? (isDragging ? "grabbing" : "grab") : "pointer",
                     opacity: isDragging ? 0.35 : 1,
                     userSelect: "none",
-                    left: 2, right: 2,
                   }}
                   onClick={() => !isDragging && setAgDetalhe(ev)}
                   onMouseDown={canEdit ? (e) => startGridDrag(ev, "move", e, false) : undefined}
