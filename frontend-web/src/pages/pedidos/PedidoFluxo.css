@@ -416,7 +416,6 @@
   padding: 8px 10px; font-size: 13px;
 }
 .pf-form-field textarea { resize: vertical; min-height: 60px; }
-.pf-form-acoes { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 
 /* Itens editor */
 .pf-itens-editor-wrap { display: flex; flex-direction: column; gap: 6px; }
