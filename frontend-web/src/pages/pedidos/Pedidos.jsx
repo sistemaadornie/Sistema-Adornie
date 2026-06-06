@@ -43,7 +43,11 @@ function StatusBadge({ status }) {
 }
 
 function itemVazio() {
-  return { ambiente: "", referencia: "", cor: "", descricao: "", medidas: "", quantidade: 1, unidade: "UN", preco_unitario: "", valor: "", item_vinculado_idx: null };
+  return {
+    ambiente: "", referencia: "", cor: "", descricao: "", medidas: "",
+    quantidade: 1, unidade: "UN", preco_unitario: "", valor: "",
+    item_vinculado_idx: null, categoria_id: null, modelo: "",
+  };
 }
 function pagVazio() {
   return { forma: "PIX / DEPÓSITO", parcela: "1/1", vencimento: "", valor: "" };
@@ -481,25 +485,9 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
 
         {/* Itens */}
         {pedido.itens?.length > 0 && (() => {
-          // Monta árvore: pai → [filhos]
-          const idSet = new Set(pedido.itens.map(it => it.id));
-          const filhosPorPai = {};
-          for (const it of pedido.itens) {
-            const paiId = it.vinculos?.[0]?.item_vinculado_id;
-            if (paiId && idSet.has(paiId)) {
-              if (!filhosPorPai[paiId]) filhosPorPai[paiId] = [];
-              filhosPorPai[paiId].push(it);
-            }
-          }
-          const idsFilhos = new Set(Object.values(filhosPorPai).flat().map(it => it.id));
-          const itensOrdenados = [];
-          let seq = 1;
-          for (const pai of pedido.itens.filter(it => !idsFilhos.has(it.id))) {
-            itensOrdenados.push({ item: pai, nivel: 0, seq: seq++ });
-            for (const filho of (filhosPorPai[pai.id] || [])) {
-              itensOrdenados.push({ item: filho, nivel: 1, seq: seq++ });
-            }
-          }
+          // Mapa id → número sequencial original (1-based) para exibir referência do vínculo
+          const idToSeq = {};
+          pedido.itens.forEach((it, i) => { idToSeq[it.id] = i + 1; });
 
           return (
             <div className="pd-detalhe-section">
@@ -522,11 +510,17 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
                     </tr>
                   </thead>
                   <tbody>
-                    {itensOrdenados.map(({ item: it, nivel, seq: s }) => (
-                      <tr key={it.id} className={nivel > 0 ? "pd-item-filho" : ""}>
+                    {pedido.itens.map((it, i) => {
+                      const vinculoId = it.vinculos?.[0]?.item_vinculado_id;
+                      const vinculoSeq = vinculoId != null ? idToSeq[vinculoId] : null;
+                      return (
+                      <tr key={it.id} className={vinculoSeq != null ? "pd-item-filho" : ""}>
                         <td>
-                          {nivel > 0 && <span className="pd-item-indent">└─</span>}
-                          {s}
+                          {vinculoSeq != null && <span className="pd-item-indent">└─</span>}
+                          {i + 1}
+                          {vinculoSeq != null && (
+                            <span className="pd-item-vinculo-ref"> →#{String(vinculoSeq).padStart(2, "0")}</span>
+                          )}
                         </td>
                         <td>{it.ambiente || "—"}</td>
                         <td>{it.referencia || "—"}</td>
@@ -568,7 +562,8 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -678,6 +673,7 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
   const [clientes,     setClientes]     = useState([]);
   const [consultores,  setConsultores]  = useState([]);
   const [arquitetos,   setArquitetos]   = useState([]);
+  const [categorias,   setCategorias]   = useState([]);
   const [buscandoCEP,  setBuscandoCEP]  = useState(false);
   const [abaAtiva,     setAbaAtiva]     = useState("dados");
 
@@ -685,6 +681,7 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
     api.get("/clientes").then((r) => setClientes(r.clientes || [])).catch(() => {});
     api.get("/auth/admin/usuarios").then((r) => setConsultores((r.usuarios || []).filter((u) => u.status === "aprovado"))).catch(() => {});
     api.get("/arquitetos").then((r) => setArquitetos(r.arquitetos || [])).catch(() => {});
+    api.get("/categorias").then((r) => setCategorias(r.categorias || [])).catch(() => {});
   }, []);
 
   // Recalcula subtotal sempre que os itens mudam
@@ -946,6 +943,8 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
                   <span>Referência</span>
                   <span>Cor</span>
                   <span>Produto</span>
+                  <span>Categoria</span>
+                  <span>Modelo</span>
                   <span>Medidas</span>
                   <span>Qtde</span>
                   <span>Un</span>
@@ -961,6 +960,20 @@ function PedidoModal({ pedido, onClose, onSalvar, salvando }) {
                     <input placeholder="ADO500" value={it.referencia} onChange={(e) => setItem(i, "referencia", e.target.value)} />
                     <input placeholder="Offwhite" value={it.cor} onChange={(e) => setItem(i, "cor", e.target.value)} />
                     <input placeholder="Descrição do produto" value={it.descricao} onChange={(e) => setItem(i, "descricao", e.target.value)} className="pd-item-desc" />
+                    <select
+                      value={it.categoria_id ?? ""}
+                      onChange={(e) => setItem(i, "categoria_id", e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">— Categoria —</option>
+                      {categorias.map((c) => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                    </select>
+                    <input
+                      placeholder="Ex: Wave, Rolo/Rollo..."
+                      value={it.modelo || ""}
+                      onChange={(e) => setItem(i, "modelo", e.target.value)}
+                    />
                     <input placeholder="2,00x3,00" value={it.medidas} onChange={(e) => setItem(i, "medidas", e.target.value)} />
                     <input type="number" min="0" step="0.01" value={it.quantidade} onChange={(e) => setItem(i, "quantidade", e.target.value)} />
                     <select value={it.unidade} onChange={(e) => setItem(i, "unidade", e.target.value)}>
