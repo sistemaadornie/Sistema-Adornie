@@ -174,7 +174,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
           toDecimal(it.largura),
           toDecimal(it.altura),
-          it.categoria_id        || null,
+          it.categoria_id        ?? null,
           itemId,
           pedidoId,
         ]
@@ -205,7 +205,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
           toDecimal(it.largura),
           toDecimal(it.altura),
-          it.categoria_id        || null,
+          it.categoria_id        ?? null,
         ]
       );
       insertedIds.push(ins.rows[0].id);
