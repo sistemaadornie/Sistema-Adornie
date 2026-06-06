@@ -381,7 +381,7 @@ async function buscarClienteId(empresaId, campos) {
 const CATEGORIA_KEYWORDS_PEDIDO = [
   { keywords: ["cortina", "voil", "voile"],                                        nome: "Cortinas"         },
   { keywords: ["forro"],                                                            nome: "Forros"           },
-  { keywords: ["persiana", "rolo", "roller", "roman", "double vision", "vision"],  nome: "Persianas"        },
+  { keywords: ["persiana", "rolo", "roller", "roman", "double vision"],  nome: "Persianas"        },
   { keywords: ["trilho", "varão", "varao", "suporte"],                             nome: "Trilhos e Varões" },
   { keywords: ["tecido", "retalho"],                                                nome: "Tecidos"          },
   { keywords: ["tapete"],                                                           nome: "Tapetes"          },
@@ -538,12 +538,14 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
     try { cliente_id = await buscarClienteId(req.user.empresa_id, campos); } catch (_) {}
 
     // Resolve categoria_id por item a partir das keywords da descrição
-    const catRes = await db.query(
-      `SELECT id, LOWER(nome) AS nome_lower FROM categorias WHERE empresa_id=$1`,
-      [req.user.empresa_id]
-    );
     const catMap = {};
-    for (const c of catRes.rows) catMap[c.nome_lower] = c.id;
+    try {
+      const catRes = await db.query(
+        `SELECT id, LOWER(nome) AS nome_lower FROM categorias WHERE empresa_id=$1`,
+        [req.user.empresa_id]
+      );
+      for (const c of catRes.rows) catMap[c.nome_lower] = c.id;
+    } catch (_) {}
 
     const itensComCategoria = itens.map((it) => {
       const nomeCategoria = detectarNomeCategoriaPedido(it.descricao);
