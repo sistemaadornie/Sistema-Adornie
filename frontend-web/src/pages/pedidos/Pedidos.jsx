@@ -532,7 +532,7 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
                             ? (
                               <span
                                 className="pd-cat-badge"
-                                style={{ background: it.categoria_cor || "#C9A96E" }}
+                                style={{ background: it.categoria_cor || "#8B6914" }}
                               >
                                 {it.categoria_nome}
                               </span>

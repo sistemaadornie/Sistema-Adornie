@@ -10,7 +10,7 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO categorias (empresa_id, nome, cor, ordem)
-SELECT e.id, 'Motorização', '#FF6B35', 10
+SELECT e.id, 'Motorização', '#C04A1A', 10
 FROM empresas e
 WHERE NOT EXISTS (
   SELECT 1 FROM categorias c WHERE c.empresa_id = e.id AND LOWER(c.nome) = 'motorização'
@@ -24,7 +24,7 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO categorias (empresa_id, nome, cor, ordem)
-SELECT e.id, 'Almofadas', '#FF69B4', 12
+SELECT e.id, 'Almofadas', '#C0397A', 12
 FROM empresas e
 WHERE NOT EXISTS (
   SELECT 1 FROM categorias c WHERE c.empresa_id = e.id AND LOWER(c.nome) = 'almofadas'
