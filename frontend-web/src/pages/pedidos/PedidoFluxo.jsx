@@ -398,7 +398,8 @@ function SubAbaPagamentos({ pagamentos }) {
 /* ── MODAL DADOS DO PEDIDO ── */
 function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
   const navigate = useNavigate();
-  const [aba, setAba] = useState("detalhes");
+  const [subaba, setSubaba] = useState("geral");
+  const [historicoAberto, setHistoricoAberto] = useState(false);
   const [editando, setEditando] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   const [instalacao, setInstalacao] = useState(null);
@@ -531,250 +532,48 @@ function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
 
   return (
     <Modal titulo={`Dados do Pedido — ${pedido?.numero || `#${pedidoId}`}`} onClose={onClose}>
-      <div className="pf-modal-abas">
-        <button className={`pf-modal-aba${aba === "detalhes" ? " ativa" : ""}`} onClick={() => setAba("detalhes")}>Detalhes</button>
-        <button className={`pf-modal-aba${aba === "historico" ? " ativa" : ""}`} onClick={() => setAba("historico")}>Histórico</button>
-      </div>
+      <div className="pf-modal-layout">
+        <SidebarPedido
+          pedido={pedido}
+          etapa1Completa={etapa1Completa}
+          editando={editando}
+          salvando={salvando}
+          onEditar={() => setEditando(true)}
+          onCancelarEdicao={() => setEditando(false)}
+          onSalvar={handleSalvar}
+          onImprimir={() => setPrintOpen(true)}
+          onAbrirPdf={handleAbrirPdf}
+          onAgendar={() => setInstalacao(pedido)}
+          onHistorico={() => setHistoricoAberto(true)}
+          onExcluir={handleExcluir}
+        />
 
-      <div className="pf-modal-body">
-
-        {aba === "detalhes" && !editando && (
-          <>
-            <div className="pf-acoes">
-              <button className="pf-btn pf-btn-primary" onClick={() => setEditando(true)}>✏ Editar</button>
-              <button className="pf-btn" onClick={() => setPrintOpen(true)}>🖨 Imprimir</button>
-              {pedido?.tem_anexo_pdf && (
-                <button className="pf-btn" onClick={handleAbrirPdf}>📄 PDF Original</button>
-              )}
-              <button className="pf-btn" onClick={() => setInstalacao(pedido)}>📅 Agendar Instalação</button>
-              <button className="pf-btn pf-btn-danger" onClick={handleExcluir}>🗑 Excluir</button>
-            </div>
-
-            {!etapa1Completa && (
-              <div className="pf-etapa1-pendencias">
-                <strong>Pendências para concluir esta etapa:</strong>
-                <ul>
-                  {!pedido?.tem_anexo_pdf && <li>PDF original não vinculado</li>}
-                  {pedido?.itens?.some(it => !it.categoria_id) && (
-                    <li>Itens sem categoria: {pedido.itens.filter(it => !it.categoria_id).map(it => it.descricao || "(sem nome)").join(", ")}</li>
-                  )}
-                  {pedido?.itens?.some(it => !it.sem_vinculo && !(it.vinculos?.length)) && (
-                    <li>Itens sem vínculo resolvido — edite e marque "Nenhum" se não houver vínculo necessário</li>
-                  )}
-                </ul>
-              </div>
-            )}
-
-            <div className="pf-secao">
-              <div className="pf-secao-titulo">Informações</div>
-              <div className="pf-info-grid">
-                <div><span className="pf-info-label">Cliente</span>{pedido?.cliente_nome || "—"}</div>
-                <div><span className="pf-info-label">Consultora</span>{pedido?.consultor_nome || "—"}</div>
-                <div><span className="pf-info-label">Arquiteto</span>{pedido?.arquiteto_nome || "—"}</div>
-                <div><span className="pf-info-label">Data</span>{fmtData(pedido?.data_pedido)}</div>
-                <div><span className="pf-info-label">Total</span><span className="pf-valor-destaque">R$ {fmtMoeda(pedido?.total)}</span></div>
-                <div><span className="pf-info-label">Status</span>{pedido?.status}</div>
-              </div>
-            </div>
-
-            {pedido?.endereco && (
-              <div className="pf-secao">
-                <div className="pf-secao-titulo">Endereço de Entrega</div>
-                <p className="pf-texto">{pedido.endereco}</p>
-              </div>
-            )}
-
-            {pedido?.itens?.length > 0 && (
-              <div className="pf-secao">
-                <div className="pf-secao-titulo">Itens ({pedido.itens.length})</div>
-                <div className="pf-itens-wrap">
-                  <table className="pf-itens-table">
-                    <thead>
-                      <tr>
-                        <th>#</th><th>Produto</th><th>Categoria</th><th>Vínculo</th>
-                        <th>Larg.</th><th>Alt.</th><th>Qtde</th><th>Preço</th><th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pedido.itens.map((it, i) => (
-                        <tr key={it.id}>
-                          <td>{i + 1}</td>
-                          <td>{it.descricao}</td>
-                          <td>
-                            {it.categoria_nome
-                              ? <span className="pf-cat-badge" style={{ background: it.categoria_cor || "#8B6914" }}>{it.categoria_nome}</span>
-                              : <span className="pf-pendente">Sem categoria</span>}
-                          </td>
-                          <td>
-                            {it.sem_vinculo
-                              ? <span className="pf-sem-vinculo">Nenhum</span>
-                              : it.vinculos?.length
-                                ? <span className="pf-vinculado">Vinculado</span>
-                                : <span className="pf-pendente">Pendente</span>}
-                          </td>
-                          <td>{it.largura != null ? fmtMoeda(it.largura) : (it.medidas?.split(/[xX×]/)[0]?.trim() || "—")}</td>
-                          <td>{it.altura  != null ? fmtMoeda(it.altura)  : (it.medidas?.split(/[xX×]/)[1]?.trim() || "—")}</td>
-                          <td>{it.quantidade}</td>
-                          <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
-                          <td><strong>R$ {fmtMoeda(it.valor)}</strong></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="pf-totais">
-                  {pedido.subtotal != null && <div>SubTotal: R$ {fmtMoeda(pedido.subtotal)}</div>}
-                  {Number(pedido.desconto) > 0 && <div>Desconto: -R$ {fmtMoeda(pedido.desconto)}</div>}
-                  <div className="pf-total-final">Total: R$ {fmtMoeda(pedido.total)}</div>
-                </div>
-              </div>
-            )}
-
-            {pedido?.pagamentos?.length > 0 && (
-              <div className="pf-secao">
-                <div className="pf-secao-titulo">Pagamentos</div>
-                {Object.entries(
-                  pedido.pagamentos.reduce((acc, pg) => {
-                    if (!acc[pg.forma]) acc[pg.forma] = [];
-                    acc[pg.forma].push(pg);
-                    return acc;
-                  }, {})
-                ).map(([forma, pgs]) => (
-                  <div key={forma} className="pf-pag-grupo">
-                    <div className="pf-pag-forma">{forma}</div>
-                    {pgs.map((pg, i) => (
-                      <div key={i} className="pf-pag-row">
-                        <span>{pg.parcela}</span>
-                        <span>{fmtData(pg.vencimento)}</span>
-                        <span>R$ {fmtMoeda(pg.valor)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {pedido?.observacoes && (
-              <div className="pf-secao">
-                <div className="pf-secao-titulo">Observações</div>
-                <p className="pf-texto">{pedido.observacoes}</p>
-              </div>
-            )}
-
-            {pedido?.observacoes_entrega && (
-              <div className="pf-secao">
-                <div className="pf-secao-titulo">Previsão de Entrega</div>
-                <p className="pf-texto">{pedido.observacoes_entrega}</p>
-              </div>
-            )}
-
-            <div className="pf-secao">
-              <div className="pf-secao-titulo">Mídias</div>
-              <MidiasGaleria pedidoId={pedidoId} token={localStorage.getItem("token")} />
-            </div>
-          </>
-        )}
-
-        {aba === "detalhes" && editando && (
-          <div className="pf-form-edicao">
-            <div className="pf-form-row">
-              <div className="pf-form-field">
-                <label>Cliente</label>
-                <select value={form.cliente_id} onChange={e => setForm(f => ({ ...f, cliente_id: e.target.value }))}>
-                  <option value="">— Sem cliente —</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                </select>
-              </div>
-              <div className="pf-form-field">
-                <label>Status</label>
-                <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
-                  <option value="pendente">Pendente</option>
-                  <option value="em_andamento">Em andamento</option>
-                  <option value="concluido">Concluído</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              </div>
-              <div className="pf-form-field">
-                <label>Data do Pedido</label>
-                <input type="date" value={form.data_pedido} onChange={e => setForm(f => ({ ...f, data_pedido: e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="pf-form-row">
-              <div className="pf-form-field">
-                <label>Consultora</label>
-                <select value={form.consultor_id} onChange={e => setForm(f => ({ ...f, consultor_id: e.target.value }))}>
-                  <option value="">— Selecionar —</option>
-                  {consultores.map(u => <option key={u.id} value={u.id}>{u.nome_completo}</option>)}
-                </select>
-              </div>
-              <div className="pf-form-field">
-                <label>Arquiteto</label>
-                <select value={form.arquiteto_id} onChange={e => setForm(f => ({ ...f, arquiteto_id: e.target.value }))}>
-                  <option value="">— Selecionar —</option>
-                  {arquitetos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="pf-form-row">
-              <div className="pf-form-field" style={{ flex: 2 }}>
-                <label>Observações</label>
-                <textarea rows={2} value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} />
-              </div>
-              <div className="pf-form-field" style={{ flex: 2 }}>
-                <label>Previsão de Entrega</label>
-                <textarea rows={2} value={form.observacoes_entrega} onChange={e => setForm(f => ({ ...f, observacoes_entrega: e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="pf-secao-titulo" style={{ marginTop: 16 }}>Itens — Categoria e Vínculo</div>
-            <div className="pf-itens-editor-wrap">
-              {itens.map((it, i) => (
-                <div key={i} className="pf-item-edit-row">
-                  <span className="pf-item-num">{i + 1}</span>
-                  <span className="pf-item-desc" title={it.descricao}>{it.descricao || "(sem descrição)"}</span>
-                  <select
-                    value={it.categoria_id ?? ""}
-                    onChange={e => setItem(i, "categoria_id", e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">— Categoria —</option>
-                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                  </select>
-                  <select
-                    value={it.sem_vinculo ? "__nenhum__" : (it.item_vinculado_idx != null ? String(it.item_vinculado_idx) : "")}
-                    onChange={e => {
-                      if (e.target.value === "__nenhum__") {
-                        setItem(i, "sem_vinculo", true);
-                      } else {
-                        setItem(i, "sem_vinculo", false);
-                        setItem(i, "item_vinculado_idx", e.target.value === "" ? null : Number(e.target.value));
-                      }
-                    }}
-                  >
-                    <option value="">— Vínculo —</option>
-                    <option value="__nenhum__">Nenhum (sem vínculo necessário)</option>
-                    {itens.map((other, j) => j !== i ? (
-                      <option key={j} value={j}>{j + 1} – {other.descricao || "(sem desc.)"}</option>
-                    ) : null)}
-                  </select>
-                </div>
-              ))}
-            </div>
-
-            <div className="pf-form-acoes">
-              <button className="pf-btn" onClick={() => setEditando(false)} disabled={salvando}>Cancelar</button>
-              <button className="pf-btn pf-btn-primary" onClick={handleSalvar} disabled={salvando}>
-                {salvando ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
+        <div className="pf-modal-content">
+          <div className="pf-subabas">
+            <button className={`pf-subaba${subaba === "geral" ? " ativa" : ""}`} onClick={() => setSubaba("geral")}>Geral</button>
+            <button className={`pf-subaba${subaba === "itens" ? " ativa" : ""}`} onClick={() => setSubaba("itens")}>Itens ({pedido?.itens?.length ?? 0})</button>
+            <button className={`pf-subaba${subaba === "pagamentos" ? " ativa" : ""}`} onClick={() => setSubaba("pagamentos")}>Pagamentos</button>
+            <button className={`pf-subaba${subaba === "midias" ? " ativa" : ""}`} onClick={() => setSubaba("midias")}>Mídias</button>
           </div>
-        )}
 
-        {aba === "historico" && (
-          <AbaHistorico pedidoId={pedidoId} etapa="dados_pedido" />
-        )}
+          <div className="pf-subaba-corpo">
+            {subaba === "geral" && (
+              editando
+                ? <FormGeralPedido form={form} setForm={setForm} clientes={clientes} consultores={consultores} arquitetos={arquitetos} />
+                : <SubAbaGeral pedido={pedido} etapa1Completa={etapa1Completa} />
+            )}
 
+            {subaba === "itens" && (
+              editando
+                ? <EditorItensPedido itens={itens} setItem={setItem} categorias={categorias} />
+                : <SubAbaItens itens={pedido?.itens} subtotal={pedido?.subtotal} desconto={pedido?.desconto} total={pedido?.total} />
+            )}
+
+            {subaba === "pagamentos" && <SubAbaPagamentos pagamentos={pedido?.pagamentos} />}
+
+            {subaba === "midias" && <MidiasGaleria pedidoId={pedidoId} token={localStorage.getItem("token")} />}
+          </div>
+        </div>
       </div>
 
       {toast && <div className="pf-toast">{toast}</div>}
@@ -806,6 +605,20 @@ function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
             });
           }}
         />
+      )}
+
+      {historicoAberto && (
+        <div className="pf-drawer-overlay" onClick={() => setHistoricoAberto(false)}>
+          <div className="pf-drawer-historico" onClick={e => e.stopPropagation()}>
+            <div className="pf-drawer-header">
+              <h3 className="pf-drawer-titulo">Histórico</h3>
+              <button className="pf-modal-fechar" onClick={() => setHistoricoAberto(false)}>×</button>
+            </div>
+            <div className="pf-drawer-corpo">
+              <AbaHistorico pedidoId={pedidoId} etapa="dados_pedido" />
+            </div>
+          </div>
+        </div>
       )}
     </Modal>
   );
