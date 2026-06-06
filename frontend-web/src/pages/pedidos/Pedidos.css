@@ -344,17 +344,11 @@
 .pd-itens-editor-header,
 .pd-itens-editor-row {
   display: grid;
-  /* # | Ambiente | Referência | Cor | Produto | Modelo | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
+  /* # | Ambiente | Referência | Cor | Produto | Categoria | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
   grid-template-columns: 28px 110px 100px 90px 1fr 130px 75px 75px 58px 68px 100px 90px 28px;
   gap: 4px;
   align-items: center;
   padding: 6px 10px;
-}
-/* Com coluna "Vinculado a" (quando há trilho) */
-.pd-itens-com-trilho .pd-itens-editor-header,
-.pd-itens-com-trilho .pd-itens-editor-row {
-  /* # | Ambiente | Referência | Cor | Produto | Modelo | Vinculado a | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
-  grid-template-columns: 28px 110px 100px 90px 1fr 130px 150px 75px 75px 58px 68px 100px 90px 28px;
 }
 .pd-itens-editor-header {
   background: var(--color-surface-soft);
@@ -519,6 +513,12 @@
   color: var(--color-text-muted);
   margin-right: 4px;
   font-size: 11px;
+  user-select: none;
+}
+.pd-item-vinculo-ref {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  margin-left: 3px;
   user-select: none;
 }
 
