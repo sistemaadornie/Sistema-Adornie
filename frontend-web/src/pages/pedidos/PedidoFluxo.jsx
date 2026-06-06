@@ -275,6 +275,96 @@ function FormGeralPedido({ form, setForm, clientes, consultores, arquitetos }) {
   );
 }
 
+/* ── SUB-ABA: ITENS (visualização) ── */
+function SubAbaItens({ itens, subtotal, desconto, total }) {
+  if (!itens?.length) {
+    return <p className="pf-sem-ag">Nenhum item cadastrado.</p>;
+  }
+
+  return (
+    <>
+      <div className="pf-itens-wrap">
+        <table className="pf-itens-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Produto</th><th>Categoria</th><th>Vínculo</th>
+              <th>Larg.</th><th>Alt.</th><th>Qtde</th><th>Preço</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {itens.map((it, i) => (
+              <tr key={it.id}>
+                <td>{i + 1}</td>
+                <td>{it.descricao}</td>
+                <td>
+                  {it.categoria_nome
+                    ? <span className="pf-cat-badge" style={{ background: it.categoria_cor || "#8B6914" }}>{it.categoria_nome}</span>
+                    : <span className="pf-pendente">Sem categoria</span>}
+                </td>
+                <td>
+                  {it.sem_vinculo
+                    ? <span className="pf-sem-vinculo">Nenhum</span>
+                    : it.vinculos?.length
+                      ? <span className="pf-vinculado">Vinculado</span>
+                      : <span className="pf-pendente">Pendente</span>}
+                </td>
+                <td>{it.largura != null ? fmtMoeda(it.largura) : (it.medidas?.split(/[xX×]/)[0]?.trim() || "—")}</td>
+                <td>{it.altura  != null ? fmtMoeda(it.altura)  : (it.medidas?.split(/[xX×]/)[1]?.trim() || "—")}</td>
+                <td>{it.quantidade}</td>
+                <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
+                <td><strong>R$ {fmtMoeda(it.valor)}</strong></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="pf-totais">
+        {subtotal != null && <div>SubTotal: R$ {fmtMoeda(subtotal)}</div>}
+        {Number(desconto) > 0 && <div>Desconto: -R$ {fmtMoeda(desconto)}</div>}
+        <div className="pf-total-final">Total: R$ {fmtMoeda(total)}</div>
+      </div>
+    </>
+  );
+}
+
+/* ── SUB-ABA: ITENS (edição — categoria e vínculo) ── */
+function EditorItensPedido({ itens, setItem, categorias }) {
+  return (
+    <div className="pf-itens-editor-wrap">
+      {itens.map((it, i) => (
+        <div key={i} className="pf-item-edit-row">
+          <span className="pf-item-num">{i + 1}</span>
+          <span className="pf-item-desc" title={it.descricao}>{it.descricao || "(sem descrição)"}</span>
+          <select
+            value={it.categoria_id ?? ""}
+            onChange={e => setItem(i, "categoria_id", e.target.value ? Number(e.target.value) : null)}
+          >
+            <option value="">— Categoria —</option>
+            {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+          <select
+            value={it.sem_vinculo ? "__nenhum__" : (it.item_vinculado_idx != null ? String(it.item_vinculado_idx) : "")}
+            onChange={e => {
+              if (e.target.value === "__nenhum__") {
+                setItem(i, "sem_vinculo", true);
+              } else {
+                setItem(i, "sem_vinculo", false);
+                setItem(i, "item_vinculado_idx", e.target.value === "" ? null : Number(e.target.value));
+              }
+            }}
+          >
+            <option value="">— Vínculo —</option>
+            <option value="__nenhum__">Nenhum (sem vínculo necessário)</option>
+            {itens.map((other, j) => j !== i ? (
+              <option key={j} value={j}>{j + 1} – {other.descricao || "(sem desc.)"}</option>
+            ) : null)}
+          </select>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── MODAL DADOS DO PEDIDO ── */
 function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
   const navigate = useNavigate();
