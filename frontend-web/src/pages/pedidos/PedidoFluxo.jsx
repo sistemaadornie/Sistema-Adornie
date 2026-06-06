@@ -110,6 +110,61 @@ function Modal({ titulo, onClose, children }) {
   );
 }
 
+const STATUS_PEDIDO_LABEL = {
+  pendente: "Pendente", em_andamento: "Em andamento",
+  concluido: "Concluído", cancelado: "Cancelado",
+};
+const STATUS_PEDIDO_COR = {
+  pendente: "#64748b", em_andamento: "#f59e0b",
+  concluido: "#10b981", cancelado: "#ef4444",
+};
+
+/* ── SIDEBAR DO PEDIDO ── */
+function SidebarPedido({
+  pedido, etapa1Completa, editando, salvando,
+  onEditar, onCancelarEdicao, onSalvar,
+  onImprimir, onAbrirPdf, onAgendar, onHistorico, onExcluir,
+}) {
+  const statusCor = STATUS_PEDIDO_COR[pedido?.status] || "#64748b";
+
+  return (
+    <div className="pf-modal-sidebar">
+      <div className="pf-sidebar-identidade">
+        <div className="pf-sidebar-cliente">{pedido?.cliente_nome || "—"}</div>
+        <span className="pf-status-badge" style={{ background: statusCor + "22", color: statusCor }}>
+          {STATUS_PEDIDO_LABEL[pedido?.status] || pedido?.status}
+        </span>
+        <div className="pf-sidebar-total">R$ {fmtMoeda(pedido?.total)}</div>
+        {!etapa1Completa && (
+          <span className="pf-sidebar-pendencia-badge">⚠ Pendências na etapa</span>
+        )}
+      </div>
+
+      <div className="pf-sidebar-acoes">
+        {editando ? (
+          <>
+            <button className="pf-btn" onClick={onCancelarEdicao} disabled={salvando}>Cancelar</button>
+            <button className="pf-btn pf-btn-primary" onClick={onSalvar} disabled={salvando}>
+              {salvando ? "Salvando..." : "💾 Salvar"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="pf-btn pf-btn-primary" onClick={onEditar}>✏ Editar</button>
+            <button className="pf-btn" onClick={onImprimir}>🖨 Imprimir</button>
+            {pedido?.tem_anexo_pdf && (
+              <button className="pf-btn" onClick={onAbrirPdf}>📄 PDF Original</button>
+            )}
+            <button className="pf-btn" onClick={onAgendar}>📅 Agendar Instalação</button>
+            <button className="pf-btn" onClick={onHistorico}>🕘 Histórico</button>
+            <button className="pf-btn pf-btn-danger" onClick={onExcluir}>🗑 Excluir</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── MODAL DADOS DO PEDIDO ── */
 function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
   const navigate = useNavigate();
@@ -307,7 +362,7 @@ function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
                     <thead>
                       <tr>
                         <th>#</th><th>Produto</th><th>Categoria</th><th>Vínculo</th>
-                        <th>Medidas</th><th>Qtde</th><th>Preço</th><th>Total</th>
+                        <th>Larg.</th><th>Alt.</th><th>Qtde</th><th>Preço</th><th>Total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -327,7 +382,8 @@ function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
                                 ? <span className="pf-vinculado">Vinculado</span>
                                 : <span className="pf-pendente">Pendente</span>}
                           </td>
-                          <td>{it.medidas || "—"}</td>
+                          <td>{it.largura != null ? fmtMoeda(it.largura) : (it.medidas?.split(/[xX×]/)[0]?.trim() || "—")}</td>
+                          <td>{it.altura  != null ? fmtMoeda(it.altura)  : (it.medidas?.split(/[xX×]/)[1]?.trim() || "—")}</td>
                           <td>{it.quantidade}</td>
                           <td>{it.preco_unitario != null ? `R$ ${fmtMoeda(it.preco_unitario)}` : "—"}</td>
                           <td><strong>R$ {fmtMoeda(it.valor)}</strong></td>
