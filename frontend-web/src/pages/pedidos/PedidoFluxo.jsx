@@ -365,6 +365,36 @@ function EditorItensPedido({ itens, setItem, categorias }) {
   );
 }
 
+/* ── SUB-ABA: PAGAMENTOS ── */
+function SubAbaPagamentos({ pagamentos }) {
+  if (!pagamentos?.length) {
+    return <p className="pf-sem-ag">Nenhum pagamento cadastrado.</p>;
+  }
+
+  return (
+    <>
+      {Object.entries(
+        pagamentos.reduce((acc, pg) => {
+          if (!acc[pg.forma]) acc[pg.forma] = [];
+          acc[pg.forma].push(pg);
+          return acc;
+        }, {})
+      ).map(([forma, pgs]) => (
+        <div key={forma} className="pf-pag-grupo">
+          <div className="pf-pag-forma">{forma}</div>
+          {pgs.map((pg, i) => (
+            <div key={i} className="pf-pag-row">
+              <span>{pg.parcela}</span>
+              <span>{fmtData(pg.vencimento)}</span>
+              <span>R$ {fmtMoeda(pg.valor)}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </>
+  );
+}
+
 /* ── MODAL DADOS DO PEDIDO ── */
 function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
   const navigate = useNavigate();
