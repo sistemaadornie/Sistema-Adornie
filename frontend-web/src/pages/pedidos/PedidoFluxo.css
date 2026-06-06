@@ -130,6 +130,7 @@
 }
 
 .pf-modal {
+  position: relative;
   background: var(--color-surface, #1e293b);
   border: 1px solid var(--color-border, #334155);
   border-radius: 16px;
@@ -155,6 +156,118 @@
   padding: 0 4px;
 }
 .pf-modal-fechar:hover { color: var(--color-text, #f1f5f9); }
+
+/* ── Layout em duas colunas (Modal Dados do Pedido) ── */
+.pf-modal-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pf-modal-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--color-bg, #0f172a);
+  border-right: 1px solid var(--color-border, #334155);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.pf-sidebar-identidade { display: flex; flex-direction: column; gap: 8px; }
+.pf-sidebar-cliente { font-size: 15px; font-weight: 700; color: var(--color-text, #f1f5f9); }
+.pf-sidebar-total   { font-size: 18px; font-weight: 700; color: #34d399; }
+.pf-sidebar-pendencia-badge {
+  font-size: 11px; font-weight: 600; color: #fcd34d;
+  background: rgba(252,211,77,0.12); border: 1px solid rgba(252,211,77,0.3);
+  border-radius: 8px; padding: 4px 8px; align-self: flex-start;
+}
+
+.pf-status-badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 3px 10px; border-radius: 10px; align-self: flex-start;
+}
+
+.pf-sidebar-acoes { display: flex; flex-direction: column; gap: 8px; }
+.pf-sidebar-acoes .pf-btn { width: 100%; text-align: left; }
+
+.pf-modal-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pf-subabas {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 16px 24px 0;
+  flex-shrink: 0;
+}
+.pf-subaba {
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--color-surface, #1e293b);
+  border: 1px solid var(--color-border, #334155);
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pf-subaba:hover { color: var(--color-text, #f1f5f9); }
+.pf-subaba.ativa {
+  background: var(--color-primary, #3b82f6);
+  border-color: var(--color-primary, #3b82f6);
+  color: #fff;
+}
+
+.pf-subaba-corpo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .pf-modal-layout { flex-direction: column; overflow-y: auto; }
+  .pf-modal-sidebar {
+    width: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border, #334155);
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pf-sidebar-acoes { flex-direction: row; flex-wrap: wrap; }
+  .pf-sidebar-acoes .pf-btn { width: auto; }
+}
+
+/* ── Drawer de Histórico (Modal Dados do Pedido) ── */
+.pf-drawer-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: flex-end;
+  z-index: 10;
+}
+.pf-drawer-historico {
+  width: 100%; max-width: 360px;
+  background: var(--color-surface, #1e293b);
+  border-left: 1px solid var(--color-border, #334155);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.pf-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border, #334155);
+  flex-shrink: 0;
+}
+.pf-drawer-titulo { font-size: 15px; font-weight: 700; color: var(--color-text, #f1f5f9); margin: 0; }
+.pf-drawer-corpo  { flex: 1; overflow-y: auto; padding: 8px 20px; }
 
 /* Abas */
 .pf-modal-abas {
