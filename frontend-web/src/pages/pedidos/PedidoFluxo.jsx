@@ -165,6 +165,116 @@ function SidebarPedido({
   );
 }
 
+/* ── SUB-ABA: GERAL (visualização) ── */
+function SubAbaGeral({ pedido, etapa1Completa }) {
+  return (
+    <>
+      {!etapa1Completa && (
+        <div className="pf-etapa1-pendencias">
+          <strong>Pendências para concluir esta etapa:</strong>
+          <ul>
+            {!pedido?.tem_anexo_pdf && <li>PDF original não vinculado</li>}
+            {pedido?.itens?.some(it => !it.categoria_id) && (
+              <li>Itens sem categoria: {pedido.itens.filter(it => !it.categoria_id).map(it => it.descricao || "(sem nome)").join(", ")}</li>
+            )}
+            {pedido?.itens?.some(it => !it.sem_vinculo && !(it.vinculos?.length)) && (
+              <li>Itens sem vínculo resolvido — edite e marque "Nenhum" se não houver vínculo necessário</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      <div className="pf-secao">
+        <div className="pf-secao-titulo">Informações</div>
+        <div className="pf-info-grid">
+          <div><span className="pf-info-label">Consultora</span>{pedido?.consultor_nome || "—"}</div>
+          <div><span className="pf-info-label">Arquiteto</span>{pedido?.arquiteto_nome || "—"}</div>
+          <div><span className="pf-info-label">Data</span>{fmtData(pedido?.data_pedido)}</div>
+        </div>
+      </div>
+
+      {pedido?.endereco && (
+        <div className="pf-secao">
+          <div className="pf-secao-titulo">Endereço de Entrega</div>
+          <p className="pf-texto">{pedido.endereco}</p>
+        </div>
+      )}
+
+      {pedido?.observacoes && (
+        <div className="pf-secao">
+          <div className="pf-secao-titulo">Observações</div>
+          <p className="pf-texto">{pedido.observacoes}</p>
+        </div>
+      )}
+
+      {pedido?.observacoes_entrega && (
+        <div className="pf-secao">
+          <div className="pf-secao-titulo">Previsão de Entrega</div>
+          <p className="pf-texto">{pedido.observacoes_entrega}</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ── SUB-ABA: GERAL (edição) ── */
+function FormGeralPedido({ form, setForm, clientes, consultores, arquitetos }) {
+  return (
+    <div className="pf-form-edicao">
+      <div className="pf-form-row">
+        <div className="pf-form-field">
+          <label>Cliente</label>
+          <select value={form.cliente_id} onChange={e => setForm(f => ({ ...f, cliente_id: e.target.value }))}>
+            <option value="">— Sem cliente —</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+        </div>
+        <div className="pf-form-field">
+          <label>Status</label>
+          <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div className="pf-form-field">
+          <label>Data do Pedido</label>
+          <input type="date" value={form.data_pedido} onChange={e => setForm(f => ({ ...f, data_pedido: e.target.value }))} />
+        </div>
+      </div>
+
+      <div className="pf-form-row">
+        <div className="pf-form-field">
+          <label>Consultora</label>
+          <select value={form.consultor_id} onChange={e => setForm(f => ({ ...f, consultor_id: e.target.value }))}>
+            <option value="">— Selecionar —</option>
+            {consultores.map(u => <option key={u.id} value={u.id}>{u.nome_completo}</option>)}
+          </select>
+        </div>
+        <div className="pf-form-field">
+          <label>Arquiteto</label>
+          <select value={form.arquiteto_id} onChange={e => setForm(f => ({ ...f, arquiteto_id: e.target.value }))}>
+            <option value="">— Selecionar —</option>
+            {arquitetos.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="pf-form-row">
+        <div className="pf-form-field" style={{ flex: 2 }}>
+          <label>Observações</label>
+          <textarea rows={2} value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} />
+        </div>
+        <div className="pf-form-field" style={{ flex: 2 }}>
+          <label>Previsão de Entrega</label>
+          <textarea rows={2} value={form.observacoes_entrega} onChange={e => setForm(f => ({ ...f, observacoes_entrega: e.target.value }))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── MODAL DADOS DO PEDIDO ── */
 function ModalDadosPedido({ pedido, pedidoId, onClose, onAtualizado, user }) {
   const navigate = useNavigate();
