@@ -1,5 +1,7 @@
 -- categorias_padrao_v2.sql
 -- Insere as 4 novas categorias para cada empresa que ainda não as tem.
+BEGIN;
+
 INSERT INTO categorias (empresa_id, nome, cor, ordem)
 SELECT e.id, 'Forros', '#7B68EE', 9
 FROM empresas e
@@ -27,3 +29,5 @@ FROM empresas e
 WHERE NOT EXISTS (
   SELECT 1 FROM categorias c WHERE c.empresa_id = e.id AND LOWER(c.nome) = 'almofadas'
 );
+
+COMMIT;
