@@ -377,6 +377,28 @@ async function buscarClienteId(empresaId, campos) {
   return null;
 }
 
+// ─── Detecção de categoria por keyword na descrição do item ──────────────────
+const CATEGORIA_KEYWORDS_PEDIDO = [
+  { keywords: ["cortina", "voil", "voile"],                                        nome: "Cortinas"         },
+  { keywords: ["forro"],                                                            nome: "Forros"           },
+  { keywords: ["persiana", "rolo", "roller", "roman", "double vision", "vision"],  nome: "Persianas"        },
+  { keywords: ["trilho", "varão", "varao", "suporte"],                             nome: "Trilhos e Varões" },
+  { keywords: ["tecido", "retalho"],                                                nome: "Tecidos"          },
+  { keywords: ["tapete"],                                                           nome: "Tapetes"          },
+  { keywords: ["almofada"],                                                         nome: "Almofadas"        },
+  { keywords: ["motor", "motoriza", "motorizado"],                                  nome: "Motorização"      },
+  { keywords: ["controle", "comando", "acionador"],                                 nome: "Controles"        },
+];
+
+function detectarNomeCategoriaPedido(descricao) {
+  if (!descricao) return null;
+  const lower = descricao.toLowerCase();
+  for (const { keywords, nome } of CATEGORIA_KEYWORDS_PEDIDO) {
+    if (keywords.some((k) => lower.includes(k))) return nome;
+  }
+  return null;
+}
+
 // ─── rotas ──────────────────────────────────────────────────────────────────
 
 router.get("/", authMiddleware, async (req, res) => {
@@ -515,7 +537,23 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
     let cliente_id = null;
     try { cliente_id = await buscarClienteId(req.user.empresa_id, campos); } catch (_) {}
 
-    return res.json({ extraido: { ...campos, itens, consultor_id, arquiteto_id, cliente_id } });
+    // Resolve categoria_id por item a partir das keywords da descrição
+    const catRes = await db.query(
+      `SELECT id, LOWER(nome) AS nome_lower FROM categorias WHERE empresa_id=$1`,
+      [req.user.empresa_id]
+    );
+    const catMap = {};
+    for (const c of catRes.rows) catMap[c.nome_lower] = c.id;
+
+    const itensComCategoria = itens.map((it) => {
+      const nomeCategoria = detectarNomeCategoriaPedido(it.descricao);
+      const categoria_id = nomeCategoria ? (catMap[nomeCategoria.toLowerCase()] ?? null) : null;
+      return { ...it, categoria_id };
+    });
+
+    return res.json({
+      extraido: { ...campos, itens: itensComCategoria, consultor_id, arquiteto_id, cliente_id },
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Erro ao processar texto.", erro: err.message });
