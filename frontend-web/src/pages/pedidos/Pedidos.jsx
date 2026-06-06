@@ -501,6 +501,7 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
                       <th>Referência</th>
                       <th>Cor</th>
                       <th>Produto</th>
+                      <th>Categoria</th>
                       <th>Medidas</th>
                       <th>Qtde</th>
                       <th>Un</th>
@@ -526,6 +527,19 @@ function DetalhePedido({ pedido, onEditar, onExcluir, onImprimir, onGerarOS, onA
                         <td>{it.referencia || "—"}</td>
                         <td>{it.cor || "—"}</td>
                         <td>{it.descricao}</td>
+                        <td>
+                          {it.categoria_nome
+                            ? (
+                              <span
+                                className="pd-cat-badge"
+                                style={{ background: it.categoria_cor || "#C9A96E" }}
+                              >
+                                {it.categoria_nome}
+                              </span>
+                            )
+                            : <span style={{ color: "var(--color-text-muted)" }}>—</span>
+                          }
+                        </td>
                         <td>{it.medidas || "—"}</td>
                         <td>{it.quantidade}</td>
                         <td>{it.unidade || "—"}</td>

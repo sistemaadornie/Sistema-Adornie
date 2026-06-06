@@ -522,6 +522,16 @@
   user-select: none;
 }
 
+.pd-cat-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
 /* ── EDITOR DE ITENS no PedidoModal (com Categoria + Modelo) ── */
 .pd-modal-itens.pd-itens-editor .pd-itens-editor-header,
 .pd-modal-itens.pd-itens-editor .pd-itens-editor-row {
