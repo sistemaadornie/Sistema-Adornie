@@ -1,4 +1,5 @@
 const db = require("../database/db");
+const auditSvc = require("./auditoriaService");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
 const { isInstaladorPuro, isComercialPuro, podeGerenciarAgendamentos } = require("./permissionService");
@@ -428,6 +429,13 @@ async function criar(empresaId, userId, dados) {
         `UPDATE pedidos SET status = 'em_andamento' WHERE id = $1 AND status = 'pendente'`,
         [pedidoIdFinal]
       );
+      await db.query(
+        `INSERT INTO pedido_auditoria
+           (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+         VALUES ($1,$2,$3,'entrega','pre_agendamento_criado',$4)`,
+        [pedidoIdFinal, empresaId, userId || null,
+          `Pré-agendamento criado${data ? ` para ${data}` : ""}`]
+      );
     }
 
     if (aprovacao) {
@@ -848,7 +856,19 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
              WHERE id = $1 AND status NOT IN ('cancelado', 'concluido')`,
             [pedidoId]
           );
+          await db.query(
+            `INSERT INTO pedido_auditoria
+               (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+             VALUES ($1,$2,$3,'entrega','pedido_concluido','Pedido concluído automaticamente — todos os agendamentos finalizados')`,
+            [pedidoId, empresaId, userId || null]
+          );
         }
+        await db.query(
+          `INSERT INTO pedido_auditoria
+             (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+           VALUES ($1,$2,$3,'entrega','agendamento_concluido',$4)`,
+          [pedidoId, empresaId, userId || null, `Agendamento ${id} concluído`]
+        );
       }
     }
   }

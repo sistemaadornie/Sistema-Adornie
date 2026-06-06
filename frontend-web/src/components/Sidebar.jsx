@@ -51,7 +51,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const podeVerEtiquetas     = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerRelatorios    = temPerm(user, "OPERADOR_AGENDA", "ADMIN_MASTER");
   const podeVerConfiguracoes = temPerm(user, "ADMIN_MASTER");
-  const podeVerDashboardPedidos = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
 
   const navItemClass = ({ isActive }) =>
     `sidebar-item${isActive ? " active" : ""}`;
@@ -182,13 +181,6 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           <NavLink to="/pedidos" className={navItemClass} title="Pedidos">
             <FaClipboardList className="sidebar-icon" />
             {!collapsed && <span className="sidebar-label">Pedidos</span>}
-          </NavLink>
-        )}
-
-        {podeVerDashboardPedidos && (
-          <NavLink to="/dashboard-pedidos" className={navItemClass} title="Dashboard Pedidos">
-            <FaChartBar className="sidebar-icon" />
-            {!collapsed && <span className="sidebar-label">Dashboard</span>}
           </NavLink>
         )}
 

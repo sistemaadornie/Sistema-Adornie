@@ -1,6 +1,7 @@
 const db = require("../database/db");
 const cliSvc = require("./clienteService");
 const arqSvc = require("./arquitetoService");
+const auditSvc = require("./auditoriaService");
 
 const STATUS_VALIDOS = ["pendente", "em_andamento", "concluido", "cancelado"];
 
@@ -13,6 +14,29 @@ function toDecimal(v) {
   if (typeof v === "number") return isNaN(v) ? null : v;
   // String em formato brasileiro: "1.309,18" → 1309.18
   return parseFloat(String(v).replace(/\./g, "").replace(",", ".")) || null;
+}
+
+async function _verificarEtapa1(client, pedidoId) {
+  const [pdfRes, itensRes] = await Promise.all([
+    client.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id=$1 LIMIT 1`, [pedidoId]),
+    client.query(`SELECT id, categoria_id, sem_vinculo FROM pedido_itens WHERE pedido_id=$1`, [pedidoId]),
+  ]);
+
+  if (!pdfRes.rows.length) return false;
+
+  const itens = itensRes.rows;
+  if (!itens.length) return false;
+
+  if (!itens.every(it => it.categoria_id != null)) return false;
+
+  const itemIds = itens.map(it => it.id);
+  const { rows: vinculosRows } = await client.query(
+    `SELECT DISTINCT item_id FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
+    [itemIds]
+  );
+  const comVinculo = new Set(vinculosRows.map(r => r.item_id));
+
+  return itens.every(it => it.sem_vinculo || comVinculo.has(it.id));
 }
 
 async function montarPedido(id, empresaId) {
@@ -157,8 +181,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
          SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
              quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
              modelo=$11, especificacoes=$12, largura=$13, altura=$14,
-             categoria_id=$15
-         WHERE id=$16 AND pedido_id=$17`,
+             categoria_id=$15, sem_vinculo=$16
+         WHERE id=$17 AND pedido_id=$18`,
         [
           it.ambiente?.trim()    || null,
           it.referencia?.trim()  || null,
@@ -175,6 +199,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           toDecimal(it.largura),
           toDecimal(it.altura),
           it.categoria_id        ?? null,
+          it.sem_vinculo         ?? false,
           itemId,
           pedidoId,
         ]
@@ -186,8 +211,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
             quantidade, unidade, preco_unitario, valor, ordem,
-            modelo, especificacoes, largura, altura, categoria_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+            modelo, especificacoes, largura, altura, categoria_id, sem_vinculo)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
          RETURNING id`,
         [
           pedidoId,
@@ -206,6 +231,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           toDecimal(it.largura),
           toDecimal(it.altura),
           it.categoria_id        ?? null,
+          it.sem_vinculo         ?? false,
         ]
       );
       insertedIds.push(ins.rows[0].id);
@@ -317,7 +343,7 @@ async function criar(empresaId, userId, dados) {
   }
 }
 
-async function atualizar(id, empresaId, dados) {
+async function atualizar(id, empresaId, dados, userId) {
   const {
     cliente_id, cpf_cnpj, email_cliente, status, data_pedido,
     consultor_id, arquiteto_id, descricao, observacoes, observacoes_entrega,
@@ -342,6 +368,12 @@ async function atualizar(id, empresaId, dados) {
   const partes = [rua, numero, complemento, bairro, cidade, estado ? `- ${estado}` : ""].filter(Boolean);
   const endereco = partes.length ? partes.join(", ") + (cep ? ` — CEP ${cep}` : "") : null;
 
+  // Captura estado atual para diff de auditoria
+  const pedidoAntes = await montarPedido(id, empresaId);
+  if (!pedidoAntes) {
+    const e = new Error("Pedido não encontrado."); e.status = 404; throw e;
+  }
+
   const client = await db.connect();
   try {
     await client.query("BEGIN");
@@ -357,7 +389,7 @@ async function atualizar(id, empresaId, dados) {
        RETURNING id`,
       [
         cliente_id || null, cpf_cnpj?.trim() || null, email_cliente?.trim() || null,
-        status, data_pedido || null,
+        status || pedidoAntes.status, data_pedido || null,
         consultor_id || null, arquiteto_id || null, descricao?.trim() || null, observacoes?.trim() || null,
         observacoes_entrega?.trim() || null,
         cep || null, rua || null, numero || null, complemento || null,
@@ -373,6 +405,59 @@ async function atualizar(id, empresaId, dados) {
 
     await _salvarItens(client, id, itens);
     await _salvarPagamentos(client, id, pagamentos);
+
+    // Verifica se etapa 1 foi concluída agora e seta verificacao_ok
+    const etapa1Ok = await _verificarEtapa1(client, id);
+    const etapa1FoiConcluida = etapa1Ok && !pedidoAntes.verificacao_ok;
+    if (etapa1FoiConcluida) {
+      await client.query(
+        `UPDATE pedidos SET verificacao_ok=true WHERE id=$1 AND empresa_id=$2`,
+        [id, empresaId]
+      );
+    }
+
+    // Diff campo a campo para auditoria
+    const camposAuditados = [
+      "cliente_id","cpf_cnpj","email_cliente","status","data_pedido",
+      "consultor_id","arquiteto_id","descricao","observacoes","observacoes_entrega",
+      "cep","rua","bairro","cidade","estado","subtotal","desconto","total",
+    ];
+    const dadosDepoisAudit = {
+      cliente_id, cpf_cnpj, email_cliente, status, data_pedido,
+      consultor_id, arquiteto_id, descricao, observacoes, observacoes_entrega,
+      cep, rua, bairro, cidade, estado, subtotal, desconto, total,
+    };
+    const diff = {};
+    for (const campo of camposAuditados) {
+      if (String(pedidoAntes[campo] ?? "") !== String(dadosDepoisAudit[campo] ?? "")) {
+        diff[campo] = { antes: pedidoAntes[campo], depois: dadosDepoisAudit[campo] };
+      }
+    }
+    const descDiff = Object.entries(diff)
+      .map(([k, { antes, depois }]) => `${k}: "${antes ?? ""}" → "${depois ?? ""}"`)
+      .join(", ");
+
+    await auditSvc.registrarAuditoria(client, {
+      pedidoId: id,
+      empresaId,
+      usuarioId: userId || null,
+      etapa: "dados_pedido",
+      acao: "edicao",
+      descricao: descDiff || "Pedido editado",
+      dadosAntes: { ...pedidoAntes },
+      dadosDepois: dadosDepoisAudit,
+    });
+
+    if (etapa1FoiConcluida) {
+      await auditSvc.registrarAuditoria(client, {
+        pedidoId: id,
+        empresaId,
+        usuarioId: userId || null,
+        etapa: "dados_pedido",
+        acao: "verificacao_ok",
+        descricao: "Verificação concluída — etapa 1 completa (PDF + categorias + vínculos)",
+      });
+    }
 
     await client.query("COMMIT");
     return montarPedido(id, empresaId);
@@ -477,11 +562,25 @@ async function importar(empresaId, userId, dados) {
       [empresaId, dados.numero_origem.trim()]
     );
     if (existe.rows.length > 0) {
-      return atualizar(existe.rows[0].id, empresaId, dadosCompletos);
+      const pedidoAtualizado = await atualizar(existe.rows[0].id, empresaId, dadosCompletos, userId);
+      await db.query(
+        `INSERT INTO pedido_auditoria
+           (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+         VALUES ($1,$2,$3,'dados_pedido','importacao','Pedido reimportado (substituição)')`,
+        [existe.rows[0].id, empresaId, userId || null]
+      );
+      return pedidoAtualizado;
     }
   }
 
-  return criar(empresaId, userId, dadosCompletos);
+  const pedidoCriado = await criar(empresaId, userId, dadosCompletos);
+  await db.query(
+    `INSERT INTO pedido_auditoria
+       (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+     VALUES ($1,$2,$3,'dados_pedido','importacao','Pedido importado')`,
+    [pedidoCriado.id, empresaId, userId || null]
+  );
+  return pedidoCriado;
 }
 
 async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, valor) {
@@ -509,10 +608,26 @@ async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, va
     throw err;
   }
 
-  await db.query(
-    `UPDATE pedidos SET ${campo} = $1 WHERE id = $2 AND empresa_id = $3`,
-    [valor, pedidoId, empresaId]
-  );
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `UPDATE pedidos SET ${campo} = $1 WHERE id = $2 AND empresa_id = $3`,
+      [valor, pedidoId, empresaId]
+    );
+    await auditSvc.registrarAuditoria(client, {
+      pedidoId, empresaId, usuarioId: userId,
+      etapa: "dados_pedido",
+      acao: campo,
+      descricao: `${campo} marcado como ${valor}`,
+    });
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   return { [campo]: valor };
 }

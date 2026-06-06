@@ -1,55 +1,39 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { api } from "../../../services/api";
 
 export default function usePedidos() {
-  const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [erro,    setErro]    = useState(null);
-  const inicializado = useRef(false);
+  const [pedidos, setPedidos]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [erro, setErro]         = useState(null);
+  const inicializado            = useRef(false);
 
   const carregar = useCallback(async (filtros = {}) => {
-    const isPrimeira = !inicializado.current;
+    setLoading(true);
     try {
-      if (isPrimeira) setLoading(true);
-      setErro(null);
       const params = new URLSearchParams();
-      if (filtros.q)      params.set("q",      filtros.q);
-      if (filtros.status) params.set("status", filtros.status);
-      const query = params.toString();
-      const res = await api.get(`/pedidos${query ? `?${query}` : ""}`);
+      if (filtros.consultora_id) params.set("consultora_id", filtros.consultora_id);
+      if (filtros.status)        params.set("status",        filtros.status);
+      if (filtros.alerta)        params.set("alerta",        filtros.alerta);
+      const qs = params.toString();
+      const res = await api.get(`/dashboard/pedidos${qs ? "?" + qs : ""}`);
       setPedidos(res.pedidos || []);
-      inicializado.current = true;
+      setErro(null);
     } catch (err) {
-      setErro(err.message || "Erro ao carregar pedidos.");
+      setErro(err.message);
     } finally {
-      if (isPrimeira) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
-
-  const criar = useCallback(async (dados) => {
-    const res = await api.post("/pedidos", dados);
-    await carregar();
-    return res.pedido;
+  useEffect(() => {
+    if (inicializado.current) return;
+    inicializado.current = true;
+    carregar();
   }, [carregar]);
 
-  const atualizar = useCallback(async (id, dados) => {
-    const res = await api.put(`/pedidos/${id}`, dados);
-    await carregar();
-    return res.pedido;
-  }, [carregar]);
+  const atualizarEtapa = useCallback(async (pedidoId, campo, valor) => {
+    await api.patch(`/pedidos/${pedidoId}/etapa`, { campo, valor });
+  }, []);
 
-  const excluir = useCallback(async (id) => {
-    await api.delete(`/pedidos/${id}`);
-    await carregar();
-  }, [carregar]);
-
-  const importar = useCallback(async (dados) => {
-    const res = await api.post("/pedidos/importar", dados);
-    await carregar();
-    return res.pedido;
-  }, [carregar]);
-
-  return { pedidos, loading, erro, carregar, criar, atualizar, excluir, importar };
+  return { pedidos, loading, erro, carregar, atualizarEtapa };
 }

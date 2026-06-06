@@ -4,6 +4,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const svc = require("../services/pedidoService");
 const db  = require("../database/db");
 const dashboardSvc = require("../services/dashboardService");
+const auditSvc = require("../services/auditoriaService");
 
 const router = express.Router();
 const uploadPdf = multer({
@@ -487,7 +488,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const pedido = await svc.atualizar(req.params.id, req.user.empresa_id, req.body);
+    const pedido = await svc.atualizar(req.params.id, req.user.empresa_id, req.body, req.user.id);
     return res.json({ message: "Pedido atualizado!", pedido });
   } catch (err) {
     console.error(err);
@@ -621,6 +622,13 @@ router.post("/:id/anexo-pdf", authMiddleware, uploadPdf.single("arquivo"), handl
       [pedidoId, req.user.empresa_id, req.file.originalname, req.file.size, req.file.buffer, req.user.id]
     );
 
+    await db.query(
+      `INSERT INTO pedido_auditoria
+         (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+       VALUES ($1,$2,$3,'dados_pedido','pdf_vinculado','PDF original vinculado ao pedido')`,
+      [pedidoId, req.user.empresa_id, req.user.id]
+    );
+
     return res.status(200).json({ message: "PDF vinculado com sucesso.", ...result.rows[0] });
   } catch (err) {
     console.error("[anexo-pdf POST]", err);
@@ -679,6 +687,23 @@ router.delete("/:id/anexo-pdf", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("[anexo-pdf DELETE]", err);
     return res.status(500).json({ message: "Erro ao remover PDF." });
+  }
+});
+
+// GET /api/pedidos/:id/auditoria?etapa=dados_pedido
+router.get("/:id/auditoria", authMiddleware, async (req, res) => {
+  try {
+    const { etapa } = req.query;
+    const registros = await auditSvc.listarAuditoria(
+      db,
+      Number(req.params.id),
+      req.user.empresa_id,
+      etapa || null
+    );
+    return res.json({ auditoria: registros });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message });
   }
 });
 

@@ -1,540 +1,244 @@
-/* ============================================================
-   PEDIDOS — estilos específicos
-   ============================================================ */
-
-/* ── SPINNER ── */
-.pd-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-primary, #3b82f6);
-  border-radius: 50%;
-  animation: pd-spin 0.75s linear infinite;
+/* ── Page ── */
+.dp-page {
+  padding: 24px;
+  max-width: 1200px;
   margin: 0 auto;
 }
-@keyframes pd-spin { to { transform: rotate(360deg); } }
 
-/* ── LAYOUT ── */
-/* 260px = ek-page padding (64) + ek-head (~80) + gap (28) + ek-toolbar (~60) + gap+marginBottom (48) + bottom padding (32) — ajuste se a toolbar mudar */
-.pd-layout {
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 20px;
-  height: calc(100vh - var(--header-height) - 260px);
-  overflow: hidden;
-}
-@media (max-width: 900px) {
-  .pd-layout {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-  }
-}
-
-/* ── LISTA ── */
-.pd-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  height: 100%;
-  overflow-y: auto;
-  padding: 2px;
-}
-@media (max-width: 900px) {
-  .pd-lista {
-    height: auto;
-    overflow-y: visible;
-  }
-}
-
-/* ── CARD ── */
-.pd-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  position: relative;
-}
-.pd-card:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-soft);
-  box-shadow: var(--shadow-soft);
-}
-.pd-card.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
-}
-.pd-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.pd-card-numero {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-text);
-  font-family: monospace;
-  letter-spacing: 0.5px;
-}
-.pd-card-cliente {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
-}
-.pd-card-consultor {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: 2px;
-}
-.pd-card-total {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 2px;
-}
-.pd-card-data {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-.pd-card-actions {
-  display: flex;
-  gap: 4px;
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-.pd-card:hover .pd-card-actions { opacity: 1; }
-
-/* ── STATUS BADGE ── */
-.pd-status-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-/* ── PAINEL DE DETALHE ── */
-.pd-detalhe {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  height: 100%;
-  overflow-y: auto;
-}
-@media (max-width: 900px) {
-  .pd-detalhe {
-    height: auto;
-    overflow-y: visible;
-    min-height: 200px;
-  }
-}
-.pd-detalhe-inner { display: flex; flex-direction: column; }
-.pd-detalhe-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 20px;
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  background: var(--color-surface);
-  z-index: 1;
-}
-.pd-detalhe-numero {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--color-text);
-  font-family: monospace;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.pd-detalhe-body {
-  padding: 16px 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.pd-detalhe-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.pd-info-card {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-}
-.pd-info-nome {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-.pd-info-sub {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
-.pd-texto {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin: 0;
-  white-space: pre-wrap;
-}
-.pd-vazio {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin: 0;
-  font-style: italic;
-}
-
-/* ── TABELA DE ITENS (detalhe) ── */
-.pd-itens-table-wrap {
-  overflow-x: auto;
-}
-.pd-itens-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.pd-itens-table th {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  padding: 6px 8px;
-  font-weight: 700;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--color-text-muted);
-  text-align: left;
-  white-space: nowrap;
-}
-.pd-itens-table td {
-  border: 1px solid var(--color-border);
-  padding: 6px 8px;
-  color: var(--color-text-secondary);
-  vertical-align: top;
-}
-.pd-itens-table tr:nth-child(even) td {
-  background: var(--color-surface-soft);
-}
-
-/* ── TOTAIS (detalhe) ── */
-.pd-totais-box {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-self: flex-end;
-  min-width: 220px;
-}
-.pd-totais-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.pd-totais-row.desconto { color: #ef4444; }
-.pd-totais-row.total {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text);
-  border-top: 1px solid var(--color-border);
-  padding-top: 6px;
-  margin-top: 2px;
-}
-
-/* ── PAGAMENTOS (detalhe) ── */
-.pd-pagamentos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.pd-pagamento-grupo {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
-}
-.pd-pagamento-forma {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
-  margin-bottom: 6px;
-}
-.pd-pagamento-row {
-  display: flex;
-  gap: 20px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  padding: 2px 0;
-}
-
-/* ── OVERLAY DO MODAL DE IMPORTAÇÃO — começa após a sidebar ── */
-.app-layout:has(.app-sidebar.collapsed) .pd-modal-overlay {
-  left: var(--sidebar-collapsed);
-}
-.app-layout:has(.app-sidebar:not(.collapsed)) .pd-modal-overlay {
-  left: var(--sidebar-width);
-}
-
-/* ── MODAL GRANDE (pedido completo) ── */
-.pd-modal-grande {
-  max-width: 1400px !important;
-  width: min(100%, 1400px) !important;
-}
-.pd-modal-body-scroll {
-  overflow-y: auto;
-  max-height: 75vh;
-}
-
-/* ── ABAS DO MODAL ── */
-.pd-modal-abas {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0 24px;
-  background: var(--color-surface-soft);
-}
-.pd-modal-aba {
-  padding: 10px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-bottom: -1px;
-}
-.pd-modal-aba:hover { color: var(--color-text); }
-.pd-modal-aba.ativa {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-}
-
-/* ── EDITOR DE ITENS (modal) ── */
-.pd-itens-editor {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-  margin-bottom: 8px;
-}
-.pd-itens-editor-header,
-.pd-itens-editor-row {
-  display: grid;
-  /* # | Ambiente | Referência | Cor | Produto | Categoria | Largura | Altura | Qtde | Un | Preço Unit. | Total | × */
-  grid-template-columns: 28px 110px 100px 90px 1fr 130px 75px 75px 58px 68px 100px 90px 28px;
-  gap: 4px;
-  align-items: center;
-  padding: 6px 10px;
-}
-.pd-itens-editor-header {
-  background: var(--color-surface-soft);
-  border-bottom: 1px solid var(--color-border);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--color-text-muted);
-}
-.pd-itens-editor-row {
-  border-bottom: 1px solid var(--color-border);
-}
-.pd-itens-editor-row:last-child { border-bottom: none; }
-.pd-itens-editor-row input,
-.pd-itens-editor-row select {
-  width: 100%;
-  font-size: 12px;
-  padding: 4px 6px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-.pd-item-num {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  font-weight: 700;
+.dp-loading, .dp-erro, .dp-vazio {
+  padding: 48px;
   text-align: center;
+  color: var(--color-text-muted, #9ca3af);
 }
-.pd-item-desc { /* sem estilo extra, usa o flex-grow */ }
-.pd-item-total {
-  background: var(--color-surface-soft) !important;
-  color: var(--color-text) !important;
-  font-weight: 700;
-}
-.pd-item-del {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0 2px;
-  line-height: 1;
-  transition: color var(--transition-fast);
-}
-.pd-item-del:hover { color: #ef4444; }
 
-/* ── TOTAIS EDITOR (na aba itens) ── */
-.pd-totais-editor {
+/* ── Header ── */
+.dp-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  padding: 12px 10px 4px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
 }
-.pd-totais-editor .pd-totais-row {
-  min-width: 260px;
+
+.dp-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+  margin: 0;
+}
+
+/* ── Botão importar ── */
+.dp-btn-importar {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #334155);
+  background: var(--color-surface, #1e293b);
+  color: var(--color-text, #f1f5f9);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.dp-btn-importar:hover {
+  border-color: var(--color-primary, #3b82f6);
+  color: var(--color-primary, #3b82f6);
+}
+
+/* ── Toggle Visão ── */
+.dp-toggle {
+  display: flex;
+  background: var(--color-surface, #1e293b);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.dp-toggle-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dp-toggle-btn.dp-toggle-ativo {
+  background: var(--color-primary, #3b82f6);
+  color: #fff;
+}
+
+/* ── Chips de filtro ── */
+.dp-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.dp-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border, #334155);
+  background: transparent;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.dp-chip:hover { border-color: var(--color-primary, #3b82f6); color: var(--color-primary, #3b82f6); }
+.dp-chip.dp-chip-ativo { background: var(--color-primary, #3b82f6); border-color: var(--color-primary, #3b82f6); color: #fff; }
+
+/* ── Grid de cards ── */
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
-.pd-totais-editor input {
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 13px;
-}
 
-/* ── EDITOR DE PAGAMENTOS ── */
-.pd-pag-editor {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-  margin-bottom: 8px;
-}
-.pd-pag-header,
-.pd-pag-row {
-  display: grid;
-  grid-template-columns: 1fr 80px 130px 110px 28px;
-  gap: 6px;
-  align-items: center;
-  padding: 7px 10px;
-}
-.pd-pag-header {
-  background: var(--color-surface-soft);
-  border-bottom: 1px solid var(--color-border);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--color-text-muted);
-}
-.pd-pag-row {
-  border-bottom: 1px solid var(--color-border);
-}
-.pd-pag-row:last-child { border-bottom: none; }
-.pd-pag-row input,
-.pd-pag-row select {
-  width: 100%;
-  font-size: 12px;
-  padding: 5px 7px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-/* ── BOTÃO ADICIONAR LINHA ── */
-.pd-add-linha {
-  background: none;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  width: 100%;
-  padding: 8px;
-  font-size: 12px;
-  color: var(--color-text-muted);
+/* ── Card ── */
+.dp-card {
+  background: var(--color-surface, #1e293b);
+  border: 1px solid var(--color-border, #334155);
+  border-radius: 12px;
+  padding: 18px;
   cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.pd-add-linha:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-/* ── IMPORTAR: DROPZONE ── */
-.pd-import-upload {
+.dp-card:hover { border-color: var(--color-primary, #3b82f6); box-shadow: 0 4px 16px rgba(59,130,246,0.15); }
+.dp-card.dp-card-atrasado { border-color: #ef4444; }
+.dp-card.dp-card-urgente  { border-color: #f97316; }
+.dp-card.dp-card-atencao  { border-color: #eab308; }
+
+.dp-card-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 20px 0;
-}
-.pd-import-dropzone {
-  width: 100%;
-  max-width: 480px;
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-lg, 12px);
-  padding: 48px 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  color: var(--color-text-secondary);
-}
-.pd-import-dropzone:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
-}
-.pd-import-dropzone.loading {
-  cursor: default;
-  opacity: 0.7;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
-/* ── TREE VIEW — itens vinculados no detalhe ── */
-.pd-item-filho {
-  background: rgba(0, 0, 0, 0.025);
-}
-.pd-item-filho td {
-  border-top: none;
-}
-.pd-item-indent {
-  color: var(--color-text-muted);
-  margin-right: 4px;
+.dp-numero      { font-weight: 700; font-size: 15px; color: var(--color-text, #f1f5f9); }
+.dp-consultora  { font-size: 13px; color: var(--color-text-muted, #94a3b8); flex: 1; }
+
+/* ── Badge ── */
+.dp-badge {
   font-size: 11px;
-  user-select: none;
-}
-.pd-item-vinculo-ref {
-  color: var(--color-text-muted);
-  font-size: 10px;
-  margin-left: 3px;
-  user-select: none;
-}
-
-.pd-cat-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 10px;
   font-weight: 600;
-  color: #fff;
+  padding: 3px 8px;
+  border-radius: 12px;
   white-space: nowrap;
 }
 
-/* ── EDITOR DE ITENS no PedidoModal (com Categoria + Modelo) ── */
-.pd-modal-itens.pd-itens-editor .pd-itens-editor-header,
-.pd-modal-itens.pd-itens-editor .pd-itens-editor-row {
-  /* # | Ambiente | Ref | Cor | Produto | Categoria | Modelo | Medidas | Qtde | Un | Preço Unit. | Total | Vinculado a | × */
-  grid-template-columns: 28px 100px 90px 80px 1fr 120px 110px 100px 52px 60px 90px 80px 140px 28px;
+.dp-badge-pendente       { background: #1e3a5f; color: #93c5fd; }
+.dp-badge-em_andamento   { background: #1c3354; color: #60a5fa; }
+.dp-badge-concluido      { background: #064e3b; color: #6ee7b7; }
+.dp-badge-cancelado      { background: #1f2937; color: #6b7280; }
+.dp-badge-atrasado       { background: #450a0a; color: #fca5a5; }
+.dp-badge-urgente        { background: #431407; color: #fdba74; }
+.dp-badge-atencao        { background: #422006; color: #fde68a; }
+
+/* ── Info ── */
+.dp-card-info {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
+
+.dp-cliente { font-weight: 500; color: var(--color-text, #f1f5f9); }
+.dp-valor   { color: #34d399; }
+
+/* ── Prazo alert ── */
+.dp-prazo {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+
+.dp-prazo-atrasado { background: #450a0a; color: #fca5a5; }
+.dp-prazo-urgente  { background: #431407; color: #fdba74; }
+.dp-prazo-atencao  { background: #422006; color: #fde68a; }
+
+/* ── Barra de progresso ── */
+.dp-barra {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  padding: 4px 0;
+  gap: 0;
+}
+
+.dp-etapa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 48px;
+}
+
+.dp-ponto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-border, #334155);
+  border: 2px solid var(--color-border, #475569);
+  transition: all 0.2s;
+}
+
+.dp-etapa.dp-ok     .dp-ponto { background: #10b981; border-color: #10b981; }
+.dp-etapa.dp-atual  .dp-ponto { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+.dp-etapa.dp-atrasado .dp-ponto { background: #ef4444; border-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+.dp-label {
+  font-size: 10px;
+  color: var(--color-text-muted, #64748b);
+  white-space: nowrap;
+}
+
+.dp-etapa.dp-ok    .dp-label  { color: #10b981; }
+.dp-etapa.dp-atual .dp-label  { color: #3b82f6; font-weight: 600; }
+
+.dp-linha {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border, #334155);
+  min-width: 12px;
+  margin-bottom: 16px;
+  transition: background 0.2s;
+}
+
+.dp-linha.dp-ok { background: #10b981; }
+
+.dp-etapa.dp-atrasado .dp-label { color: #ef4444; font-weight: 600; }
+
+.dp-toggle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.dp-select-consultora {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #334155);
+  background: var(--color-surface, #1e293b);
+  color: var(--color-text, #f1f5f9);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.dp-data { color: var(--color-text-muted, #64748b); font-size: 12px; }
