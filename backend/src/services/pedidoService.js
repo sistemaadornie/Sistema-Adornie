@@ -35,9 +35,14 @@ async function montarPedido(id, empresaId) {
   const p = res.rows[0];
 
   const itensRes = await db.query(
-    `SELECT pi.*, os.id AS os_id, os.status AS os_status
+    `SELECT pi.*,
+            os.id     AS os_id,
+            os.status AS os_status,
+            cat.nome  AS categoria_nome,
+            cat.cor   AS categoria_cor
      FROM pedido_itens pi
      LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
+     LEFT JOIN categorias cat   ON cat.id = pi.categoria_id
      WHERE pi.pedido_id=$1
      ORDER BY pi.ordem, pi.id`,
     [id]
@@ -151,9 +156,9 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `UPDATE pedido_itens
          SET ambiente=$1, referencia=$2, cor=$3, descricao=$4, medidas=$5,
              quantidade=$6, unidade=$7, preco_unitario=$8, valor=$9, ordem=$10,
-             modelo=$11, especificacoes=$12,
-             largura=$13, altura=$14
-         WHERE id=$15 AND pedido_id=$16`,
+             modelo=$11, especificacoes=$12, largura=$13, altura=$14,
+             categoria_id=$15
+         WHERE id=$16 AND pedido_id=$17`,
         [
           it.ambiente?.trim()    || null,
           it.referencia?.trim()  || null,
@@ -169,6 +174,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
           toDecimal(it.largura),
           toDecimal(it.altura),
+          it.categoria_id        || null,
           itemId,
           pedidoId,
         ]
@@ -180,8 +186,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
             quantidade, unidade, preco_unitario, valor, ordem,
-            modelo, especificacoes, largura, altura)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+            modelo, especificacoes, largura, altura, categoria_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
          RETURNING id`,
         [
           pedidoId,
@@ -199,6 +205,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
           (typeof it.especificacoes === 'object' && it.especificacoes !== null ? it.especificacoes : null),
           toDecimal(it.largura),
           toDecimal(it.altura),
+          it.categoria_id        || null,
         ]
       );
       insertedIds.push(ins.rows[0].id);
