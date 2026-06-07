@@ -311,7 +311,6 @@
 }
 .pf-info-grid > div { font-size: 13px; color: var(--color-text-muted, #94a3b8); }
 .pf-info-label { font-weight: 600; color: var(--color-text, #f1f5f9); margin-right: 6px; }
-.pf-valor-destaque { color: #34d399; font-weight: 700; }
 .pf-texto { font-size: 13px; color: var(--color-text-muted, #94a3b8); margin: 0; }
 
 /* Itens */
