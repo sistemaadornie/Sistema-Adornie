@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useDashboardPedidos from "./hooks/useDashboardPedidos";
 import useAuth from "../../hooks/useAuth";
@@ -12,6 +12,28 @@ const STATUS_LABELS = {
 };
 
 const ALERTA_LABELS = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
+
+function ContagemEntrega({ estagio }) {
+  if (!estagio.proximo_prazo) return null;
+
+  const dias  = estagio.dias_para_prazo;
+  const nivel = estagio.nivel_alerta || "neutro";
+
+  let texto;
+  if (dias > 0) {
+    texto = `Entrega em ${dias} dia${dias === 1 ? "" : "s"}`;
+  } else if (dias === 0) {
+    texto = "Entrega é hoje!";
+  } else {
+    const atraso = Math.abs(dias);
+    texto = `Atrasado há ${atraso} dia${atraso === 1 ? "" : "s"}`;
+  }
+
+  const comAlerta = nivel === "urgente" || nivel === "atrasado";
+  if (comAlerta) texto = `⚠ ${texto}`;
+
+  return <div className={`dp-entrega dp-entrega-${nivel}`}>{texto}</div>;
+}
 
 function BarraProgresso({ estagio }) {
   const preAgs = estagio.pre_agendamentos || [];
@@ -74,7 +96,9 @@ function CardPedido({ pedido, onVerFluxo }) {
       onKeyDown={(e) => e.key === "Enter" && onVerFluxo(pedido.id)}
     >
       <div className="dp-card-header">
-        <span className="dp-numero">#{pedido.numero_sequencial}</span>
+        <span className="dp-numero">#{pedido.numero_origem
+          ? parseInt(pedido.numero_origem.replace(/^#+/, ""), 10)
+          : pedido.numero_sequencial}</span>
         <span className="dp-consultora">{pedido.consultor_nome}</span>
         <BadgeStatus status={pedido.status} nivelAlerta={estagio.nivel_alerta} />
       </div>
@@ -92,13 +116,7 @@ function CardPedido({ pedido, onVerFluxo }) {
           </span>
         )}
       </div>
-      {estagio.proximo_prazo && (
-        <div className={`dp-prazo dp-prazo-${estagio.nivel_alerta || ""}`}>
-          {estagio.dias_para_prazo <= 0
-            ? "Prazo vencido"
-            : `Prazo em ${estagio.dias_para_prazo} dia${estagio.dias_para_prazo === 1 ? "" : "s"}`}
-        </div>
-      )}
+      <ContagemEntrega estagio={estagio} />
       <BarraProgresso estagio={estagio} />
     </div>
   );
@@ -122,14 +140,23 @@ export default function DashboardPedidos() {
 
   const temPermGeral = (user?.permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
 
-  const consultoras = useMemo(() => {
-    const map = new Map();
-    for (const p of pedidos) {
-      if (p.consultor_id && !map.has(p.consultor_id)) {
-        map.set(p.consultor_id, { id: p.consultor_id, nome: p.consultor_nome });
+  // Acumula consultoras já vistas — ao filtrar por uma específica, a lista de
+  // pedidos carregada passa a conter só aquela consultora, então não pode ser
+  // a única fonte das opções do seletor (senão as demais somem dele).
+  const [consultoras, setConsultoras] = useState([]);
+  useEffect(() => {
+    setConsultoras((prev) => {
+      const map = new Map(prev.map((c) => [c.id, c]));
+      let mudou = false;
+      for (const p of pedidos) {
+        if (p.consultor_id && !map.has(p.consultor_id)) {
+          map.set(p.consultor_id, { id: p.consultor_id, nome: p.consultor_nome });
+          mudou = true;
+        }
       }
-    }
-    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+      if (!mudou) return prev;
+      return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+    });
   }, [pedidos]);
 
   const pedidosFiltrados = useMemo(() => {
