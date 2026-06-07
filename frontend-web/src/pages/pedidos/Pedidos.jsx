@@ -15,47 +15,66 @@ const STATUS_LABELS = {
 
 const ALERTA_LABELS = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
 
-function BarraProgresso({ estagio }) {
-  const preAgs = estagio.pre_agendamentos || [];
+function ContagemEntrega({ estagio }) {
+  if (!estagio.proximo_prazo) return null;
 
+  const dias  = estagio.dias_para_prazo;
+  const nivel = estagio.nivel_alerta || "neutro";
+
+  let texto;
+  if (dias > 0) {
+    texto = `Entrega em ${dias} dia${dias === 1 ? "" : "s"}`;
+  } else if (dias === 0) {
+    texto = "Entrega é hoje!";
+  } else {
+    const atraso = Math.abs(dias);
+    texto = `Atrasado há ${atraso} dia${atraso === 1 ? "" : "s"}`;
+  }
+
+  const comAlerta = nivel === "urgente" || nivel === "atrasado";
+  if (comAlerta) texto = `⚠ ${texto}`;
+
+  return <div className={`dp-entrega dp-entrega-${nivel}`}>{texto}</div>;
+}
+
+function BarraProgresso({ estagio, status }) {
   const etapas = [
-    { key: "pdf",   label: "PDF",   ok: estagio.pdf_ok },
-    { key: "verif", label: "Verif.", ok: estagio.verificacao_ok },
-    { key: "categ", label: "Categ.", ok: estagio.categorizacao_ok },
-    ...preAgs.map((ag, i) => ({
-      key: `preag_${ag.id}`,
-      label: `Pré-ag. ${i + 1}`,
-      ok: ag.status === "concluido",
-      status: ag.status,
-    })),
-    { key: "entrega", label: "Entrega", ok: false },
+    { key: "dados",   label: "Dados do Pedido", ok: estagio.verificacao_ok },
+    { key: "entrega", label: "Entrega",         ok: status === "concluido" },
   ];
 
   let atualIdx = etapas.findIndex((e) => !e.ok);
   if (atualIdx === -1) atualIdx = etapas.length - 1;
 
+  const etapaAtual = etapas[atualIdx];
+
   return (
-    <div className="dp-barra">
-      {etapas.map((etapa, idx) => {
-        let cls = "dp-etapa";
-        if (idx < atualIdx) cls += " dp-ok";
-        else if (idx === atualIdx) {
-          cls += " dp-atual";
-          if (estagio.nivel_alerta === "atrasado") cls += " dp-atrasado";
-        }
-        return (
-          <React.Fragment key={etapa.key}>
-            <div className={cls}>
-              <div className="dp-ponto" />
-              <span className="dp-label">{etapa.label}</span>
-            </div>
-            {idx < etapas.length - 1 && (
-              <div className={`dp-linha ${idx < atualIdx ? "dp-ok" : ""}`} />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
+    <>
+      <div className="dp-barra">
+        {etapas.map((etapa, idx) => {
+          let cls = "dp-etapa";
+          if (idx < atualIdx) cls += " dp-ok";
+          else if (idx === atualIdx) {
+            cls += " dp-atual";
+            if (estagio.nivel_alerta === "atrasado") cls += " dp-atrasado";
+          }
+          return (
+            <React.Fragment key={etapa.key}>
+              <div className={cls}>
+                <div className="dp-ponto" />
+                <span className="dp-label">{etapa.label}</span>
+              </div>
+              {idx < etapas.length - 1 && (
+                <div className={`dp-linha ${idx < atualIdx ? "dp-ok" : ""}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div className={`dp-etapa-atual-label ${estagio.nivel_alerta === "atrasado" ? "dp-etapa-atual-atrasado" : ""}`}>
+        ▶ Etapa atual: <strong>{etapaAtual.label}</strong>
+      </div>
+    </>
   );
 }
 
@@ -95,14 +114,8 @@ function CardPedido({ pedido, onVerFluxo }) {
           </span>
         )}
       </div>
-      {estagio.proximo_prazo && (
-        <div className={`dp-prazo dp-prazo-${estagio.nivel_alerta || ""}`}>
-          {estagio.dias_para_prazo <= 0
-            ? "Prazo vencido"
-            : `Prazo em ${estagio.dias_para_prazo} dia${estagio.dias_para_prazo === 1 ? "" : "s"}`}
-        </div>
-      )}
-      <BarraProgresso estagio={estagio} />
+      <ContagemEntrega estagio={estagio} />
+      <BarraProgresso estagio={estagio} status={pedido.status} />
     </div>
   );
 }

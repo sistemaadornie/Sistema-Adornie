@@ -157,19 +157,52 @@
 .dp-cliente { font-weight: 500; color: var(--color-text, #f1f5f9); }
 .dp-valor   { color: #34d399; }
 
-/* ── Prazo alert ── */
-.dp-prazo {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
+/* ── Contagem regressiva de entrega ── */
+.dp-entrega {
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
   margin-bottom: 12px;
   display: inline-block;
+  transition: font-size 0.2s, color 0.2s, background 0.2s;
 }
 
-.dp-prazo-atrasado { background: #450a0a; color: #fca5a5; }
-.dp-prazo-urgente  { background: #431407; color: #fdba74; }
-.dp-prazo-atencao  { background: #422006; color: #fde68a; }
+.dp-entrega-neutro {
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.dp-entrega-atencao {
+  font-size: 14px;
+  background: #422006;
+  color: #fde68a;
+}
+
+.dp-entrega-urgente {
+  font-size: 16px;
+  background: #431407;
+  color: #fdba74;
+  animation: dp-pulso-laranja 2.4s infinite;
+}
+
+.dp-entrega-atrasado {
+  font-size: 18px;
+  background: #450a0a;
+  color: #fca5a5;
+  animation: dp-pulso-vermelho 1.4s infinite;
+}
+
+@keyframes dp-pulso-laranja {
+  0%, 100% { box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+  50%      { box-shadow: 0 0 14px rgba(249, 115, 22, 0.55); }
+}
+
+@keyframes dp-pulso-vermelho {
+  0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0); transform: scale(1); }
+  50%      { box-shadow: 0 0 20px rgba(239, 68, 68, 0.7); transform: scale(1.03); }
+}
 
 /* ── Barra de progresso ── */
 .dp-barra {
@@ -222,6 +255,25 @@
 .dp-linha.dp-ok { background: #10b981; }
 
 .dp-etapa.dp-atrasado .dp-label { color: #ef4444; font-weight: 600; }
+
+.dp-etapa-atual-label {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.dp-etapa-atual-label strong {
+  color: var(--color-text, #f1f5f9);
+  font-weight: 600;
+}
+
+.dp-etapa-atual-label.dp-etapa-atual-atrasado {
+  color: #fca5a5;
+}
+
+.dp-etapa-atual-label.dp-etapa-atual-atrasado strong {
+  color: #fca5a5;
+}
 
 .dp-toggle-section {
   display: flex;
