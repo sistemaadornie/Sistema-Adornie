@@ -55,28 +55,35 @@ function BarraProgresso({ estagio }) {
   let atualIdx = etapas.findIndex((e) => !e.ok);
   if (atualIdx === -1) atualIdx = etapas.length - 1;
 
+  const etapaAtual = etapas[atualIdx];
+
   return (
-    <div className="dp-barra">
-      {etapas.map((etapa, idx) => {
-        let cls = "dp-etapa";
-        if (idx < atualIdx) cls += " dp-ok";
-        else if (idx === atualIdx) {
-          cls += " dp-atual";
-          if (estagio.nivel_alerta === "atrasado") cls += " dp-atrasado";
-        }
-        return (
-          <React.Fragment key={etapa.key}>
-            <div className={cls}>
-              <div className="dp-ponto" />
-              <span className="dp-label">{etapa.label}</span>
-            </div>
-            {idx < etapas.length - 1 && (
-              <div className={`dp-linha ${idx < atualIdx ? "dp-ok" : ""}`} />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
+    <>
+      <div className="dp-barra">
+        {etapas.map((etapa, idx) => {
+          let cls = "dp-etapa";
+          if (idx < atualIdx) cls += " dp-ok";
+          else if (idx === atualIdx) {
+            cls += " dp-atual";
+            if (estagio.nivel_alerta === "atrasado") cls += " dp-atrasado";
+          }
+          return (
+            <React.Fragment key={etapa.key}>
+              <div className={cls}>
+                <div className="dp-ponto" />
+                <span className="dp-label">{etapa.label}</span>
+              </div>
+              {idx < etapas.length - 1 && (
+                <div className={`dp-linha ${idx < atualIdx ? "dp-ok" : ""}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div className={`dp-etapa-atual-label ${estagio.nivel_alerta === "atrasado" ? "dp-etapa-atual-atrasado" : ""}`}>
+        ▶ Etapa atual: <strong>{etapaAtual.label}</strong>
+      </div>
+    </>
   );
 }
 
