@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import "./ModalSelecionarItensInstalacao.css";
 
-export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar }) {
+export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar, itensEndpoint }) {
   const [itens, setItens]   = useState([]);
   const [sel, setSel]       = useState(() => new Set());
   const [loading, setLoading] = useState(true);
@@ -11,7 +12,8 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
     let vivo = true;
     (async () => {
       try {
-        const res = await api.get(`/pedidos/${pedido.id}/itens-disponiveis-instalacao`);
+        const endpoint = itensEndpoint || `/pedidos/${pedido.id}/itens-disponiveis-instalacao`;
+        const res = await api.get(endpoint);
         if (vivo) setItens(res.itens || []);
       } catch (e) {
         if (vivo) setErro(e.message || "Erro ao carregar itens.");
@@ -20,13 +22,16 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
       }
     })();
     return () => { vivo = false; };
-  }, [pedido.id]);
+  }, [pedido.id, itensEndpoint]);
 
   const toggle = (id) => setSel((prev) => {
     const n = new Set(prev);
     n.has(id) ? n.delete(id) : n.add(id);
     return n;
   });
+
+  const selecionarTodos = () => setSel(new Set(itens.map((it) => it.id)));
+  const limparSelecao   = () => setSel(new Set());
 
   const totalDias = (it) =>
     (it.logistica_interna_dias || 0) + (it.confeccao_dias || 0) + (it.expedicao_dias || 0) + (it.outros_dias || 0);
@@ -40,9 +45,16 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box" style={{ maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
+      <div className="modal-box msi-modal">
         <div className="modal-header">
-          <h2 className="modal-title">Agendar Instalação — {pedido.numero}</h2>
+          <div>
+            <h2 className="modal-title">Agendar Instalação — {pedido.numero}</h2>
+            {!loading && !erro && itens.length > 0 && (
+              <p className="msi-subtitle">
+                {itens.length === 1 ? "1 item disponível" : `${itens.length} itens disponíveis`} para agendamento
+              </p>
+            )}
+          </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
@@ -53,21 +65,40 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
           ) : itens.length === 0 ? (
             <p style={{ color: "var(--color-text-muted)" }}>Todos os itens deste pedido já estão agendados para instalação.</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {itens.map((it) => (
-                <label key={it.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", cursor: "pointer" }}>
-                  <input type="checkbox" checked={sel.has(it.id)} onChange={() => toggle(it.id)} />
-                  <span style={{ flex: 1 }}>
-                    <strong>{it.descricao || `Item ${it.id}`}</strong>
-                    {it.ambiente ? <span style={{ color: "var(--color-text-muted)" }}> — {it.ambiente}</span> : null}
-                    <br />
-                    <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                      {it.categoria_nome || "Sem categoria"} · prazo mínimo: {totalDias(it)} dias úteis
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
+            <>
+              <div className="msi-toolbar">
+                <div className="msi-toolbar-acoes">
+                  <button type="button" className="msi-link-btn" onClick={selecionarTodos}>Selecionar todos</button>
+                  <span className="msi-toolbar-sep">·</span>
+                  <button type="button" className="msi-link-btn" onClick={limparSelecao} disabled={sel.size === 0}>Limpar seleção</button>
+                </div>
+                <span className="msi-contador">{sel.size} de {itens.length} selecionados</span>
+              </div>
+              <div className="msi-lista">
+                {itens.map((it) => {
+                  const marcado = sel.has(it.id);
+                  return (
+                    <label key={it.id} className={`msi-card${marcado ? " is-selecionado" : ""}`}>
+                      <span className="msi-checkbox">
+                        <input type="checkbox" checked={marcado} onChange={() => toggle(it.id)} />
+                        <span className="msi-checkbox-marca" aria-hidden="true" />
+                      </span>
+                      <span className="msi-card-conteudo">
+                        <span className="msi-card-topo">
+                          <strong className="msi-card-titulo">{it.descricao || `Item ${it.id}`}</strong>
+                          {it.ambiente && <span className="msi-badge">{it.ambiente}</span>}
+                        </span>
+                        <span className="msi-card-meta">
+                          <span className="msi-meta-item">{it.categoria_nome || "Sem categoria"}</span>
+                          <span className="msi-meta-ponto">·</span>
+                          <span className="msi-meta-item">prazo mínimo: {totalDias(it)} dias úteis</span>
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
         <div className="modal-actions">
