@@ -138,6 +138,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { rows: pedidos } = await db.query(
     `SELECT p.id, p.numero_sequencial, p.numero_origem, p.status, p.verificacao_ok, p.categorizacao_ok,
             p.total, p.created_at AS criado_em,
+            p.cliente_id,
+            p.cep, p.rua, p.numero AS numero_rua, p.complemento, p.bairro, p.cidade, p.estado,
             c.nome          AS cliente_nome,
             u.nome_completo AS consultor_nome,
             u.id            AS consultor_id
@@ -162,7 +164,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     throw err;
   }
 
-  const [{ rows: anexos }, { rows: vinculos }, { rows: allItems }] = await Promise.all([
+  const [{ rows: anexos }, { rows: vinculos }, { rows: allItems }, { rows: itensRows }] = await Promise.all([
     db.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id = $1 LIMIT 1`, [pedidoId]),
     db.query(
       `SELECT 1 FROM pedido_item_vinculos piv
@@ -171,7 +173,13 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       [pedidoId]
     ),
     db.query(`SELECT 1 FROM pedido_itens WHERE pedido_id = $1 LIMIT 1`, [pedidoId]),
+    db.query(
+      `SELECT id, descricao, ambiente, quantidade, unidade, em_confeccao, confeccao_ok
+       FROM pedido_itens WHERE pedido_id = $1 ORDER BY ordem ASC, id ASC`,
+      [pedidoId]
+    ),
   ]);
+  pedido.itens = itensRows;
 
   const { rows: genitoresRaw } = await db.query(
     `SELECT a.id, a.status, a.tipo, a.data AS data_inicio
