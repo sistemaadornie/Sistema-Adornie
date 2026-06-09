@@ -35,6 +35,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     `SELECT
        p.id,
        p.numero_sequencial,
+       p.numero_origem,
        p.status,
        p.verificacao_ok,
        p.categorizacao_ok,
@@ -108,8 +109,10 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     return {
       id: p.id,
       numero_sequencial: p.numero_sequencial,
+      numero_origem: p.numero_origem,
       status: p.status,
       cliente_nome: p.cliente_nome,
+      consultor_id: p.consultor_id,
       consultor_nome: p.consultor_nome,
       total: p.total,
       itens_count: Number(p.itens_count),
@@ -133,7 +136,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
 async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { rows: pedidos } = await db.query(
-    `SELECT p.id, p.numero_sequencial, p.status, p.verificacao_ok, p.categorizacao_ok,
+    `SELECT p.id, p.numero_sequencial, p.numero_origem, p.status, p.verificacao_ok, p.categorizacao_ok,
             p.total, p.created_at AS criado_em,
             c.nome          AS cliente_nome,
             u.nome_completo AS consultor_nome,
@@ -190,9 +193,98 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     vinculos_ok,
   };
 
+  // Etapa 1 — todos os itens cobertos por algum genitor
+  const { rows: totalItensRows } = await db.query(
+    `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
+    [pedidoId]
+  );
+  const totalItens = totalItensRows[0]?.total ?? 0;
+
+  const { rows: itensCobertosRows } = await db.query(
+    `SELECT COUNT(DISTINCT ai.pedido_item_id)::int AS cobertos
+     FROM agendamento_itens ai
+     JOIN agendamentos a ON a.id = ai.agendamento_id
+     WHERE a.pedido_id = $1 AND a.empresa_id = $2
+       AND ai.pedido_item_id IS NOT NULL
+       AND a.status NOT IN ('cancelado','rejeitado')
+       AND a.agendamento_pai_id IS NULL`,
+    [pedidoId, empresaId]
+  );
+  const itensCobertos = itensCobertosRows[0]?.cobertos ?? 0;
+
+  // Etapa 1 — todos os itens com categoria
+  const { rows: itensSemCatRows } = await db.query(
+    `SELECT COUNT(*)::int AS sem_cat
+     FROM pedido_itens pi
+     LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+     LEFT JOIN produtos prod ON prod.id = oi.produto_id
+     WHERE pi.pedido_id = $1
+       AND COALESCE(pi.categoria_id, prod.categoria_id) IS NULL`,
+    [pedidoId]
+  );
+  const itensSemCategoria = itensSemCatRows[0]?.sem_cat ?? 0;
+
+  // Etapa 1 — todos os itens com vínculo
+  const { rows: itensSemVinculoRows } = await db.query(
+    `SELECT COUNT(*)::int AS sem_vinc
+     FROM pedido_itens pi
+     WHERE pi.pedido_id = $1
+       AND NOT EXISTS (
+         SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
+       )`,
+    [pedidoId]
+  );
+  const itensSemVinculo = itensSemVinculoRows[0]?.sem_vinc ?? 0;
+
+  // Etapa 2 — itens conferidos
+  const { rows: confRows } = await db.query(
+    `SELECT
+       COUNT(DISTINCT pi.id)::int AS total,
+       COUNT(DISTINCT ci.pedido_item_id) FILTER (WHERE ci.status = 'conferido')::int AS conferidos
+     FROM pedido_itens pi
+     LEFT JOIN conferencia_itens ci ON ci.pedido_item_id = pi.id AND ci.empresa_id = $2
+     WHERE pi.pedido_id = $1`,
+    [pedidoId, empresaId]
+  );
+  const { total: totalItensConf, conferidos: itensConferidos } = confRows[0] ?? { total: 0, conferidos: 0 };
+
+  // Etapa 3 — itens em confecção e concluídos
+  const { rows: prodRows } = await db.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE em_confeccao = true)::int AS em_confeccao,
+       COUNT(*) FILTER (WHERE em_confeccao = true AND confeccao_ok = true)::int AS confeccao_ok
+     FROM pedido_itens
+     WHERE pedido_id = $1`,
+    [pedidoId]
+  );
+  const { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } = prodRows[0] ?? { em_confeccao: 0, confeccao_ok: 0 };
+
+  // Etapa 4 — genitor agendado com equipe
+  const { rows: agendadoRows } = await db.query(
+    `SELECT COUNT(*)::int AS agendados
+     FROM agendamentos a
+     WHERE a.pedido_id = $1 AND a.empresa_id = $2
+       AND a.status = 'agendado'
+       AND a.agendamento_pai_id IS NULL
+       AND EXISTS (
+         SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id = a.id
+       )`,
+    [pedidoId, empresaId]
+  );
+  const genitoresAgendados = agendadoRows[0]?.agendados ?? 0;
+
   if (!genitoresRaw.length) {
+    const etapa3_ok_no_gen = totalEmConf === 0;
     return {
       pedido,
+      etapa_atual: 1,
+      etapas: [
+        { numero: 1, concluida: false, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: 0 } },
+        { numero: 2, concluida: false, progresso: { total: totalItensConf, conferidos: itensConferidos } },
+        { numero: 3, concluida: etapa3_ok_no_gen, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
+        { numero: 4, concluida: false, progresso: { genitores_agendados: 0 } },
+        { numero: 5, concluida: false, progresso: { status: pedido.status } },
+      ],
       estagio: { ...estagio_base, pre_agendamentos: [], proximo_prazo: null, dias_para_prazo: null, nivel_alerta: null },
       pre_agendamentos: [],
     };
@@ -246,8 +338,66 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
     : null;
 
+  const etapa1_ok = pedido.verificacao_ok &&
+                    itensSemCategoria === 0 &&
+                    itensSemVinculo === 0 &&
+                    totalItens > 0 &&
+                    itensCobertos >= totalItens;
+
+  const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;
+
+  const etapa3_ok = totalEmConf === 0 || totalConfOk >= totalEmConf;
+
+  const etapa4_ok = genitoresAgendados > 0;
+
+  const etapa5_ok = pedido.status === "concluido";
+
+  let etapa_atual = 1;
+  if (etapa1_ok) etapa_atual = 2;
+  if (etapa1_ok && etapa2_ok) etapa_atual = 3;
+  if (etapa1_ok && etapa2_ok && etapa3_ok) etapa_atual = 4;
+  if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok) etapa_atual = 5;
+  if (etapa5_ok) etapa_atual = 5;
+
+  const etapas = [
+    {
+      numero: 1,
+      concluida: etapa1_ok,
+      progresso: {
+        tem_anexo: anexos.length > 0,
+        verificacao_ok: pedido.verificacao_ok,
+        itens_sem_categoria: itensSemCategoria,
+        itens_sem_vinculo: itensSemVinculo,
+        total_itens: totalItens,
+        itens_cobertos: itensCobertos,
+      },
+    },
+    {
+      numero: 2,
+      concluida: etapa2_ok,
+      progresso: { total: totalItensConf, conferidos: itensConferidos },
+    },
+    {
+      numero: 3,
+      concluida: etapa3_ok,
+      progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk },
+    },
+    {
+      numero: 4,
+      concluida: etapa4_ok,
+      progresso: { genitores_agendados: genitoresAgendados },
+    },
+    {
+      numero: 5,
+      concluida: etapa5_ok,
+      progresso: { status: pedido.status },
+    },
+  ];
+
   return {
     pedido,
+    etapa_atual,
+    etapas,
     estagio: {
       ...estagio_base,
       pre_agendamentos: pre_agendamentos.map((a) => ({
