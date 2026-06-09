@@ -95,7 +95,7 @@ function parsearCamposSimples(texto) {
   const linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
 
   const mNum = texto.match(/#(\d+)/);
-  const numero_origem = mNum ? `#${mNum[1].replace(/^0+/, "").padStart(8, "0")}` : null;
+  const numero_origem = mNum ? `#${parseInt(mNum[1], 10)}` : null;
 
   const datas = [...texto.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)].map((m) => m[1]);
   const data_pedido = parsearData(datas[0] || null);
@@ -394,10 +394,20 @@ const CATEGORIA_KEYWORDS_PEDIDO = [
 function detectarNomeCategoriaPedido(descricao) {
   if (!descricao) return null;
   const lower = descricao.toLowerCase();
+  // Usa a palavra-chave que aparece primeiro na descrição — assim
+  // "TRILHO MOTORIZADO PARA CORTINAS" cai em Trilhos, não em Cortinas
+  let melhorNome = null;
+  let melhorPos = Infinity;
   for (const { keywords, nome } of CATEGORIA_KEYWORDS_PEDIDO) {
-    if (keywords.some((k) => lower.includes(k))) return nome;
+    for (const k of keywords) {
+      const pos = lower.indexOf(k);
+      if (pos !== -1 && pos < melhorPos) {
+        melhorPos = pos;
+        melhorNome = nome;
+      }
+    }
   }
-  return null;
+  return melhorNome;
 }
 
 // ─── rotas ──────────────────────────────────────────────────────────────────
@@ -475,6 +485,110 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
   }
 });
 
+// GET /pedidos/:id/itens-disponiveis-conferencia
+router.get("/:id/itens-disponiveis-conferencia", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const empresaId = req.user.empresa_id;
+    const genitorId = req.query.genitor_id ? Number(req.query.genitor_id) : null;
+
+    const pedCheck = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (!pedCheck.rows.length) return res.status(404).json({ message: "Pedido não encontrado." });
+
+    if (!genitorId) return res.status(400).json({ message: "Parâmetro genitor_id obrigatório." });
+
+    // Retorna os itens do genitor específico que ainda não têm conferência 'conferido'
+    const { rows } = await db.query(
+      `SELECT pi.id, pi.descricao, pi.ambiente, pi.quantidade, pi.unidade
+       FROM agendamento_itens ai
+       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       WHERE ai.agendamento_id = $1
+         AND ai.pedido_item_id IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM conferencia_itens ci
+           WHERE ci.pedido_item_id = pi.id
+             AND ci.empresa_id = $2
+             AND ci.status = 'conferido'
+         )
+       ORDER BY pi.ordem ASC, pi.id ASC`,
+      [genitorId, empresaId]
+    );
+    return res.json({ itens: rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar itens para conferência." });
+  }
+});
+
+// PATCH /pedidos/:id/producao-itens
+router.patch("/:id/producao-itens", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const empresaId = req.user.empresa_id;
+    const { pedido_item_id, em_confeccao, confeccao_ok } = req.body;
+
+    if (!pedido_item_id) return res.status(400).json({ message: "pedido_item_id obrigatório." });
+
+    // Verificar que o item pertence ao pedido e à empresa
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [pedido_item_id, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    const updates = [];
+    const params = [];
+    let i = 1;
+    if (em_confeccao !== undefined) { updates.push(`em_confeccao = $${i++}`); params.push(em_confeccao); }
+    if (confeccao_ok !== undefined) { updates.push(`confeccao_ok = $${i++}`); params.push(confeccao_ok); }
+    if (!updates.length) return res.status(400).json({ message: "Nenhum campo para atualizar." });
+
+    params.push(pedido_item_id);
+    const { rows } = await db.query(
+      `UPDATE pedido_itens SET ${updates.join(", ")} WHERE id = $${i} RETURNING id, em_confeccao, confeccao_ok`,
+      params
+    );
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar produção." });
+  }
+});
+
+// POST /pedidos/:id/pesquisa-satisfacao
+router.post("/:id/pesquisa-satisfacao", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const empresaId = req.user.empresa_id;
+    const { texto } = req.body;
+
+    if (!texto || !texto.trim()) return res.status(400).json({ message: "Campo 'texto' obrigatório." });
+
+    const { rows: check } = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Pedido não encontrado." });
+
+    const { rows } = await db.query(
+      `UPDATE pedidos
+       SET status = 'concluido',
+           pesquisa_satisfacao = $1
+       WHERE id = $2 AND empresa_id = $3
+       RETURNING id, status`,
+      [texto.trim(), pedidoId, empresaId]
+    );
+    return res.json({ pedido: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao encerrar pedido." });
+  }
+});
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
