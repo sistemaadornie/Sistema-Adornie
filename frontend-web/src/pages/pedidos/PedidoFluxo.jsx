@@ -26,7 +26,7 @@ const ETAPA_COMPONENTES = {
 export default function PedidoFluxo() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
