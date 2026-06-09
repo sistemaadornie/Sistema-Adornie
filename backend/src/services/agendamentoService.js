@@ -91,7 +91,13 @@ async function montarAgendamento(id, empresaId) {
         po.nome_completo AS pessoa_obrigatoria_nome,
         po.foto_url      AS pessoa_obrigatoria_foto,
         CASE WHEN ped.id IS NOT NULL
-          THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
+          THEN COALESCE(
+            CASE WHEN ped.numero_origem ~ '^#[0-9]+$'
+                 THEN '#' || regexp_replace(ped.numero_origem, '^#0*', '')
+                 ELSE ped.numero_origem
+            END,
+            'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0')
+          )
           ELSE NULL
         END AS pedido_numero
       FROM agendamentos a
@@ -264,7 +270,13 @@ async function listar(empresaId, userId, permissoes, filtros) {
          WHERE l.agendamento_id=a.id AND l.acao='editado'
          ORDER BY l.criado_em DESC LIMIT 1) AS editado_em,
       CASE WHEN ped.id IS NOT NULL
-        THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
+        THEN COALESCE(
+            CASE WHEN ped.numero_origem ~ '^#[0-9]+$'
+                 THEN '#' || regexp_replace(ped.numero_origem, '^#0*', '')
+                 ELSE ped.numero_origem
+            END,
+            'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0')
+          )
         ELSE NULL
       END AS pedido_numero
     FROM agendamentos a
@@ -1144,7 +1156,13 @@ async function listarPendentesAprovacao(empresaId) {
             a.aprovacao_dias_faltantes,
             a.criado_por, u.nome_completo AS criado_por_nome,
             CASE WHEN ped.id IS NOT NULL
-              THEN COALESCE(ped.numero_origem, 'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0'))
+              THEN COALESCE(
+            CASE WHEN ped.numero_origem ~ '^#[0-9]+$'
+                 THEN '#' || regexp_replace(ped.numero_origem, '^#0*', '')
+                 ELSE ped.numero_origem
+            END,
+            'SIS-' || LPAD(COALESCE(ped.numero_sequencial, ped.id)::TEXT, 8, '0')
+          )
               ELSE NULL END AS pedido_numero
      FROM agendamentos a
      LEFT JOIN usuarios u   ON u.id = a.criado_por
@@ -1207,10 +1225,104 @@ async function decidirAprovacao(id, empresaId, adminUser, { aprovado, motivo }) 
   return montarAgendamento(id, empresaId);
 }
 
+async function listarConferenciaItens(agendamentoId, empresaId) {
+  const { rows: agCheck } = await db.query(
+    `SELECT id FROM agendamentos WHERE id = $1 AND empresa_id = $2`,
+    [agendamentoId, empresaId]
+  );
+  if (!agCheck.length) {
+    const err = new Error("Agendamento não encontrado");
+    err.status = 404;
+    throw err;
+  }
+
+  const { rows } = await db.query(
+    `SELECT
+       pi.id AS pedido_item_id,
+       pi.descricao,
+       pi.ambiente,
+       COALESCE(ci.status, 'pendente') AS status,
+       ci.observacoes,
+       ci.dados,
+       ci.conferido_em,
+       u.nome_completo AS conferido_por_nome
+     FROM agendamento_itens ai
+     JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+     LEFT JOIN conferencia_itens ci
+       ON ci.agendamento_id = $1 AND ci.pedido_item_id = pi.id
+     LEFT JOIN usuarios u ON u.id = ci.conferido_por
+     WHERE ai.agendamento_id = $1
+       AND ai.pedido_item_id IS NOT NULL
+     ORDER BY pi.ordem ASC, pi.id ASC`,
+    [agendamentoId]
+  );
+  return rows;
+}
+
+async function upsertConferenciaItem(agendamentoId, empresaId, usuarioId, { pedido_item_id, status, observacoes, dados }) {
+  if (!pedido_item_id) {
+    const err = new Error("pedido_item_id obrigatório");
+    err.status = 400;
+    throw err;
+  }
+  if (!["pendente", "conferido", "reprovado"].includes(status)) {
+    const err = new Error("status inválido");
+    err.status = 400;
+    throw err;
+  }
+
+  const { rows: agCheck } = await db.query(
+    `SELECT id FROM agendamentos WHERE id = $1 AND empresa_id = $2`,
+    [agendamentoId, empresaId]
+  );
+  if (!agCheck.length) {
+    const err = new Error("Agendamento não encontrado");
+    err.status = 404;
+    throw err;
+  }
+
+  const conferido_em = status !== "pendente" ? new Date() : null;
+
+  const { rows } = await db.query(
+    `INSERT INTO conferencia_itens
+       (agendamento_id, pedido_item_id, empresa_id, status, observacoes, dados, conferido_por, conferido_em)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     ON CONFLICT (agendamento_id, pedido_item_id) DO UPDATE SET
+       status        = EXCLUDED.status,
+       observacoes   = EXCLUDED.observacoes,
+       dados         = EXCLUDED.dados,
+       conferido_por = EXCLUDED.conferido_por,
+       conferido_em  = EXCLUDED.conferido_em
+     RETURNING *`,
+    [agendamentoId, pedido_item_id, empresaId, status, observacoes || null,
+     dados ? JSON.stringify(dados) : null, usuarioId, conferido_em]
+  );
+  return rows[0];
+}
+
+async function confirmarCliente(agendamentoId, empresaId, usuarioId) {
+  const { rows } = await db.query(
+    `UPDATE agendamentos SET status = 'agendado'
+     WHERE id = $1 AND empresa_id = $2 AND status = 'pre_agendado'
+     RETURNING id, status`,
+    [agendamentoId, empresaId]
+  );
+  if (!rows.length) {
+    const err = new Error("Agendamento não encontrado ou já confirmado");
+    err.status = 404;
+    throw err;
+  }
+  await gravarLog(agendamentoId, empresaId, usuarioId, null, "confirmar_cliente", { status: "agendado" });
+  return rows[0];
+}
+
 module.exports = {
   getEquipe, listar, buscar, criar, atualizar, reagendar,
   alterarStatus, adicionarAnexos, excluir,
   getLogs, criarSugestao, listarSugestoes, responderSugestao,
   geocodificarTodos,
   decidirAprovacao, listarPendentesAprovacao, notificarAdminsAprovacao,
+  listarConferenciaItens,
+  upsertConferenciaItem,
+  confirmarCliente,
 };

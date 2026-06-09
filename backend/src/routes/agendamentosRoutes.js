@@ -332,6 +332,48 @@ router.put("/sugestoes/:sid", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/:id/conferencia-itens", authMiddleware, async (req, res) => {
+  try {
+    const itens = await svc.listarConferenciaItens(
+      Number(req.params.id),
+      req.user.empresa_id
+    );
+    return res.json({ itens });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro" });
+  }
+});
+
+router.post("/:id/conferencia-itens", authMiddleware, async (req, res) => {
+  try {
+    const item = await svc.upsertConferenciaItem(
+      Number(req.params.id),
+      req.user.empresa_id,
+      req.user.id,
+      req.body
+    );
+    return res.json({ item });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro" });
+  }
+});
+
+router.patch("/:id/confirmar-cliente", authMiddleware, async (req, res) => {
+  try {
+    const ag = await svc.confirmarCliente(
+      Number(req.params.id),
+      req.user.empresa_id,
+      req.user.id
+    );
+    return res.json({ agendamento: ag });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro" });
+  }
+});
+
 /* Error handler para erros do multer (tipo/tamanho de arquivo) que escapam do try/catch */
 // eslint-disable-next-line no-unused-vars
 router.use((err, req, res, _next) => {
