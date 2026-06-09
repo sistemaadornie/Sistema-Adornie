@@ -1,13 +1,107 @@
-import React from "react";
-export default function EtapaProducao({ onClose }) {
+import React, { useState, useEffect, useCallback } from "react";
+import { api } from "../../../../services/api";
+
+export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamentos, onClose, onRecarregar }) {
+  const [itens, setItens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [salvando, setSalvando] = useState({});
+
+  const carregarItens = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/pedidos/${pedidoId}/itens`);
+      setItens(res.itens || []);
+    } finally {
+      setLoading(false);
+    }
+  }, [pedidoId]);
+
+  useEffect(() => { carregarItens(); }, [carregarItens]);
+
+  async function toggleCampo(itemId, campo, valor) {
+    setSalvando((s) => ({ ...s, [itemId]: true }));
+    try {
+      await api.patch(`/pedidos/${pedidoId}/producao-itens`, {
+        pedido_item_id: itemId,
+        [campo]: valor,
+      });
+      await carregarItens();
+      onRecarregar();
+    } finally {
+      setSalvando((s) => ({ ...s, [itemId]: false }));
+    }
+  }
+
+  const etapa3 = etapas.find((e) => e.numero === 3) || {};
+  const p = etapa3.progresso || {};
+
   return (
     <div className="pf-modal-overlay">
       <div className="pf-modal">
         <div className="pf-modal-header">
-          <div className="pf-modal-titulo">⚙️ Produção</div>
+          <div>
+            <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 3</div>
+            <div className="pf-modal-titulo">⚙️ Produção</div>
+          </div>
           <button className="pf-modal-fechar" onClick={onClose}>×</button>
         </div>
-        <div className="pf-modal-body" style={{color:"var(--pf-card-sub)"}}>Em implementação...</div>
+
+        <div className="pf-modal-body">
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1, padding: "12px 16px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{p.em_confeccao ?? 0}</div>
+              <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Em confecção</div>
+            </div>
+            <div style={{ flex: 1, padding: "12px 16px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{p.confeccao_ok ?? 0}</div>
+              <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Concluídos</div>
+            </div>
+          </div>
+
+          <hr className="pf-separador" />
+
+          {loading ? (
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13 }}>Carregando itens...</div>
+          ) : (
+            itens.map((item) => (
+              <div key={item.id} className="pf-item-row">
+                <div style={{ flex: 1 }}>
+                  <div className="pf-item-descricao">{item.descricao}</div>
+                  {item.ambiente && <div className="pf-item-ambiente">{item.ambiente}</div>}
+                </div>
+
+                {!item.em_confeccao && (
+                  <>
+                    <span className="pf-badge pf-badge-ok" style={{ fontSize: 11 }}>Fornecedor</span>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={false}
+                        onChange={() => toggleCampo(item.id, "em_confeccao", true)}
+                        disabled={!!salvando[item.id]} />
+                      Em confecção
+                    </label>
+                  </>
+                )}
+
+                {item.em_confeccao && (
+                  <>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={true}
+                        onChange={() => toggleCampo(item.id, "em_confeccao", false)}
+                        disabled={!!salvando[item.id]} />
+                      Em confecção
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={!!item.confeccao_ok}
+                        onChange={() => toggleCampo(item.id, "confeccao_ok", !item.confeccao_ok)}
+                        disabled={!!salvando[item.id]} />
+                      Produção concluída
+                    </label>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
