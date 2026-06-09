@@ -1,22 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { api } from "../../../../services/api";
 
-export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamentos, onClose, onRecarregar }) {
-  const [itens, setItens] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRecarregar }) {
+  const [itens, setItens] = useState(pedido?.itens || []);
   const [salvando, setSalvando] = useState({});
 
-  const carregarItens = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/pedidos/${pedidoId}/itens`);
-      setItens(res.itens || []);
-    } finally {
-      setLoading(false);
-    }
-  }, [pedidoId]);
-
-  useEffect(() => { carregarItens(); }, [carregarItens]);
+  useEffect(() => { setItens(pedido?.itens || []); }, [pedido]);
 
   async function toggleCampo(itemId, campo, valor) {
     setSalvando((s) => ({ ...s, [itemId]: true }));
@@ -25,7 +14,6 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamento
         pedido_item_id: itemId,
         [campo]: valor,
       });
-      await carregarItens();
       onRecarregar();
     } finally {
       setSalvando((s) => ({ ...s, [itemId]: false }));
@@ -60,47 +48,43 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamento
 
           <hr className="pf-separador" />
 
-          {loading ? (
-            <div style={{ color: "var(--pf-card-sub)", fontSize: 13 }}>Carregando itens...</div>
-          ) : (
-            itens.map((item) => (
-              <div key={item.id} className="pf-item-row">
-                <div style={{ flex: 1 }}>
-                  <div className="pf-item-descricao">{item.descricao}</div>
-                  {item.ambiente && <div className="pf-item-ambiente">{item.ambiente}</div>}
-                </div>
-
-                {!item.em_confeccao && (
-                  <>
-                    <span className="pf-badge pf-badge-ok" style={{ fontSize: 11 }}>Fornecedor</span>
-                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                      <input type="checkbox" checked={false}
-                        onChange={() => toggleCampo(item.id, "em_confeccao", true)}
-                        disabled={!!salvando[item.id]} />
-                      Em confecção
-                    </label>
-                  </>
-                )}
-
-                {item.em_confeccao && (
-                  <>
-                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                      <input type="checkbox" checked={true}
-                        onChange={() => toggleCampo(item.id, "em_confeccao", false)}
-                        disabled={!!salvando[item.id]} />
-                      Em confecção
-                    </label>
-                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                      <input type="checkbox" checked={!!item.confeccao_ok}
-                        onChange={() => toggleCampo(item.id, "confeccao_ok", !item.confeccao_ok)}
-                        disabled={!!salvando[item.id]} />
-                      Produção concluída
-                    </label>
-                  </>
-                )}
+          {itens.map((item) => (
+            <div key={item.id} className="pf-item-row">
+              <div style={{ flex: 1 }}>
+                <div className="pf-item-descricao">{item.descricao}</div>
+                {item.ambiente && <div className="pf-item-ambiente">{item.ambiente}</div>}
               </div>
-            ))
-          )}
+
+              {!item.em_confeccao && (
+                <>
+                  <span className="pf-badge pf-badge-ok" style={{ fontSize: 11 }}>Fornecedor</span>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                    <input type="checkbox" checked={false}
+                      onChange={() => toggleCampo(item.id, "em_confeccao", true)}
+                      disabled={!!salvando[item.id]} />
+                    Em confecção
+                  </label>
+                </>
+              )}
+
+              {item.em_confeccao && (
+                <>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                    <input type="checkbox" checked={true}
+                      onChange={() => toggleCampo(item.id, "em_confeccao", false)}
+                      disabled={!!salvando[item.id]} />
+                    Em confecção
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                    <input type="checkbox" checked={!!item.confeccao_ok}
+                      onChange={() => toggleCampo(item.id, "confeccao_ok", !item.confeccao_ok)}
+                      disabled={!!salvando[item.id]} />
+                    Produção concluída
+                  </label>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
