@@ -146,6 +146,7 @@ export default function Pedidos() {
   const [consultoraFiltro, setConsultoraFiltro] = useState("");
   const [importarAberto, setImportarAberto] = useState(false);
   const [salvando,       setSalvando]       = useState(false);
+  const [etapaFiltro, setEtapaFiltro] = useState(null); // null = todas as etapas
 
   const temPermGeral = (user?.permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
 
@@ -160,16 +161,31 @@ export default function Pedidos() {
   }, [pedidos]);
 
   const pedidosFiltrados = useMemo(() => {
-    if (filtroAtivo === "todos")    return pedidos;
-    if (filtroAtivo === "atrasados") return pedidos.filter((p) => p.estagio.nivel_alerta === "atrasado");
-    return pedidos.filter((p) => p.status === filtroAtivo);
-  }, [pedidos, filtroAtivo]);
+    let lista = pedidos;
+    if (filtroAtivo === "atrasados") lista = lista.filter((p) => p.estagio.nivel_alerta === "atrasado");
+    else if (filtroAtivo !== "todos") lista = lista.filter((p) => p.status === filtroAtivo);
+
+    if (etapaFiltro) lista = lista.filter((p) => p.estagio.etapa_atual === etapaFiltro);
+    return lista;
+  }, [pedidos, filtroAtivo, etapaFiltro]);
 
   function handleFiltro(key) {
     setFiltroAtivo(key);
-    if (key === "atrasados") carregar({ alerta: "atrasado" });
-    else if (key === "todos") carregar({});
-    else carregar({ status: key });
+    setEtapaFiltro(null);
+    const f = consultoraFiltro ? { consultora_id: consultoraFiltro } : {};
+    if (key === "atrasados") carregar({ ...f, alerta: "atrasado" });
+    else if (key === "todos") carregar(f);
+    else carregar({ ...f, status: key });
+  }
+
+  function handleEtapaFiltro(numero) {
+    const proximo = etapaFiltro === numero ? null : numero;
+    setEtapaFiltro(proximo);
+    if (filtroAtivo !== "todos") {
+      setFiltroAtivo("todos");
+      const f = consultoraFiltro ? { consultora_id: consultoraFiltro } : {};
+      carregar(f);
+    }
   }
 
   function handleToggleVisao(geral) {
@@ -257,6 +273,18 @@ export default function Pedidos() {
             onClick={() => handleFiltro(f.key)}
           >
             {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="dp-chips dp-chips-etapas">
+        {ETAPA_CONFIG.map((etapa) => (
+          <button
+            key={etapa.numero}
+            className={`dp-chip ${etapaFiltro === etapa.numero ? "dp-chip-ativo" : ""}`}
+            onClick={() => handleEtapaFiltro(etapa.numero)}
+          >
+            {etapa.icone} {etapa.label}
           </button>
         ))}
       </div>

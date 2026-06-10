@@ -80,6 +80,10 @@
   margin-bottom: 24px;
 }
 
+.dp-chips-etapas {
+  margin-top: -10px;
+}
+
 .dp-chip {
   padding: 6px 14px;
   border-radius: 20px;
