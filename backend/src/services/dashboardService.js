@@ -109,15 +109,103 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
   const pedidoIds = pedidos.map((p) => p.id);
 
-  // Genitores: agendamentos com pedido_id + itens de pedido vinculados
-  const { rows: preAgs } = await db.query(
-    `SELECT a.id, a.pedido_id, a.status, a.data AS data_inicio, COUNT(ai.id) AS itens_count
-     FROM agendamentos a
-     JOIN agendamento_itens ai ON ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
-     WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
-     GROUP BY a.id`,
-    [pedidoIds, empresaId]
-  );
+  const [
+    { rows: preAgs },
+    { rows: totalItensRows },
+    { rows: itensCobertosRows },
+    { rows: itensSemCatRows },
+    { rows: itensSemVincRows },
+    { rows: confRows },
+    { rows: prodRows },
+    { rows: agendadoRows },
+  ] = await Promise.all([
+    // Genitores: agendamentos com pedido_id + itens de pedido vinculados
+    db.query(
+      `SELECT a.id, a.pedido_id, a.status, a.data AS data_inicio, COUNT(ai.id) AS itens_count
+       FROM agendamentos a
+       JOIN agendamento_itens ai ON ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
+       WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
+       GROUP BY a.id`,
+      [pedidoIds, empresaId]
+    ),
+    // Etapa 1: total de itens por pedido
+    db.query(
+      `SELECT pedido_id, COUNT(*)::int AS total
+       FROM pedido_itens
+       WHERE pedido_id = ANY($1)
+       GROUP BY pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 1: itens cobertos por agendamento (genitor) por pedido
+    db.query(
+      `SELECT a.pedido_id, COUNT(DISTINCT ai.pedido_item_id)::int AS cobertos
+       FROM agendamento_itens ai
+       JOIN agendamentos a ON a.id = ai.agendamento_id
+       WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
+         AND ai.pedido_item_id IS NOT NULL
+         AND a.status NOT IN ('cancelado','rejeitado')
+         AND a.agendamento_pai_id IS NULL
+       GROUP BY a.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
+    // Etapa 1: itens sem categoria por pedido
+    db.query(
+      `SELECT pi.pedido_id, COUNT(*)::int AS sem_cat
+       FROM pedido_itens pi
+       LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+       LEFT JOIN produtos prod ON prod.id = oi.produto_id
+       WHERE pi.pedido_id = ANY($1)
+         AND COALESCE(pi.categoria_id, prod.categoria_id) IS NULL
+       GROUP BY pi.pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 1: itens sem vinculo por pedido
+    db.query(
+      `SELECT pi.pedido_id, COUNT(*)::int AS sem_vinc
+       FROM pedido_itens pi
+       WHERE pi.pedido_id = ANY($1)
+         AND pi.sem_vinculo = false
+         AND NOT EXISTS (
+           SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
+         )
+       GROUP BY pi.pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 2: conferencia por pedido
+    db.query(
+      `SELECT pi.pedido_id,
+              COUNT(DISTINCT pi.id)::int AS total,
+              COUNT(DISTINCT ci.pedido_item_id) FILTER (WHERE ci.status = 'conferido')::int AS conferidos
+       FROM pedido_itens pi
+       LEFT JOIN conferencia_itens ci ON ci.pedido_item_id = pi.id AND ci.empresa_id = $2
+       WHERE pi.pedido_id = ANY($1)
+       GROUP BY pi.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
+    // Etapa 3: confeccao por pedido
+    db.query(
+      `SELECT pedido_id,
+              COUNT(*) FILTER (WHERE em_confeccao = true)::int AS em_confeccao,
+              COUNT(*) FILTER (WHERE em_confeccao = true AND confeccao_ok = true)::int AS confeccao_ok
+       FROM pedido_itens
+       WHERE pedido_id = ANY($1)
+       GROUP BY pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 4: genitores agendados por pedido
+    db.query(
+      `SELECT a.pedido_id, COUNT(*)::int AS agendados
+       FROM agendamentos a
+       WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
+         AND a.status = 'agendado'
+         AND a.agendamento_pai_id IS NULL
+         AND EXISTS (
+           SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id = a.id
+         )
+       GROUP BY a.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
+  ]);
 
   const preAgsPorPedido = {};
   for (const ag of preAgs) {
@@ -129,6 +217,27 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       itens_count: Number(ag.itens_count),
     });
   }
+
+  const totalItensPorPedido = {};
+  for (const r of totalItensRows) totalItensPorPedido[r.pedido_id] = Number(r.total);
+
+  const itensCobertosPorPedido = {};
+  for (const r of itensCobertosRows) itensCobertosPorPedido[r.pedido_id] = Number(r.cobertos);
+
+  const itensSemCatPorPedido = {};
+  for (const r of itensSemCatRows) itensSemCatPorPedido[r.pedido_id] = Number(r.sem_cat);
+
+  const itensSemVincPorPedido = {};
+  for (const r of itensSemVincRows) itensSemVincPorPedido[r.pedido_id] = Number(r.sem_vinc);
+
+  const confPorPedido = {};
+  for (const r of confRows) confPorPedido[r.pedido_id] = { total: Number(r.total), conferidos: Number(r.conferidos) };
+
+  const prodPorPedido = {};
+  for (const r of prodRows) prodPorPedido[r.pedido_id] = { em_confeccao: Number(r.em_confeccao), confeccao_ok: Number(r.confeccao_ok) };
+
+  const agendadosPorPedido = {};
+  for (const r of agendadoRows) agendadosPorPedido[r.pedido_id] = Number(r.agendados);
 
   const hoje = new Date();
 
@@ -142,6 +251,23 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     const diasParaPrazo = proximoPrazo
       ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
       : null;
+
+    const conf = confPorPedido[p.id] || { total: 0, conferidos: 0 };
+    const prod = prodPorPedido[p.id] || { em_confeccao: 0, confeccao_ok: 0 };
+
+    const { etapa_atual } = calcularEtapaAtual({
+      verificacaoOk: p.verificacao_ok,
+      itensSemCategoria: itensSemCatPorPedido[p.id] || 0,
+      itensSemVinculo: itensSemVincPorPedido[p.id] || 0,
+      totalItens: totalItensPorPedido[p.id] || 0,
+      itensCobertos: itensCobertosPorPedido[p.id] || 0,
+      totalItensConf: conf.total,
+      itensConferidos: conf.conferidos,
+      totalEmConf: prod.em_confeccao,
+      totalConfOk: prod.confeccao_ok,
+      genitoresAgendados: agendadosPorPedido[p.id] || 0,
+      status: p.status,
+    });
 
     return {
       id: p.id,
@@ -159,6 +285,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
         verificacao_ok: p.verificacao_ok,
         categorizacao_ok: p.categorizacao_ok,
         vinculos_ok: p.vinculos_ok,
+        etapa_atual,
         pre_agendamentos: preAgendamentos,
         proximo_prazo: proximoPrazo,
         dias_para_prazo: diasParaPrazo,
