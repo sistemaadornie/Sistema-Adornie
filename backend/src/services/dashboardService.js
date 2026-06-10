@@ -388,26 +388,19 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
     : null;
 
-  const etapa1_ok = pedido.verificacao_ok &&
-                    itensSemCategoria === 0 &&
-                    itensSemVinculo === 0 &&
-                    totalItens > 0 &&
-                    itensCobertos >= totalItens;
-
-  const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;
-
-  const etapa3_ok = totalEmConf === 0 || totalConfOk >= totalEmConf;
-
-  const etapa4_ok = genitoresAgendados > 0;
-
-  const etapa5_ok = pedido.status === "concluido";
-
-  let etapa_atual = 1;
-  if (etapa1_ok) etapa_atual = 2;
-  if (etapa1_ok && etapa2_ok) etapa_atual = 3;
-  if (etapa1_ok && etapa2_ok && etapa3_ok) etapa_atual = 4;
-  if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok) etapa_atual = 5;
-  if (etapa5_ok) etapa_atual = 5;
+  const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok, etapa5_ok } = calcularEtapaAtual({
+    verificacaoOk: pedido.verificacao_ok,
+    itensSemCategoria,
+    itensSemVinculo,
+    totalItens,
+    itensCobertos,
+    totalItensConf,
+    itensConferidos,
+    totalEmConf,
+    totalConfOk,
+    genitoresAgendados,
+    status: pedido.status,
+  });
 
   const etapas = [
     {
