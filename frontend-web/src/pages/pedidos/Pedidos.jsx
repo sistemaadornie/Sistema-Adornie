@@ -15,6 +15,14 @@ const STATUS_LABELS = {
 
 const ALERTA_LABELS = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
 
+const ETAPA_CONFIG = [
+  { numero: 1, label: "Dados do Pedido",          labelCurto: "Pedido",      icone: "📋" },
+  { numero: 2, label: "Conferência de Medidas",   labelCurto: "Medidas",     icone: "📐" },
+  { numero: 3, label: "Produção",                 labelCurto: "Produção",    icone: "⚙️" },
+  { numero: 4, label: "Agendamento",              labelCurto: "Agendamento", icone: "📅" },
+  { numero: 5, label: "Pós-venda",                labelCurto: "Pós-venda",   icone: "⭐" },
+];
+
 function ContagemEntrega({ estagio }) {
   if (!estagio.proximo_prazo) return null;
 
@@ -38,41 +46,42 @@ function ContagemEntrega({ estagio }) {
 }
 
 function BarraProgresso({ estagio, status }) {
-  const etapas = [
-    { key: "dados",   label: "Dados do Pedido", ok: estagio.verificacao_ok },
-    { key: "entrega", label: "Entrega",         ok: status === "concluido" },
-  ];
-
-  let atualIdx = etapas.findIndex((e) => !e.ok);
-  if (atualIdx === -1) atualIdx = etapas.length - 1;
-
-  const etapaAtual = etapas[atualIdx];
+  const etapaAtual = estagio.etapa_atual || 1;
+  const concluido = status === "concluido";
 
   return (
     <>
       <div className="dp-barra">
-        {etapas.map((etapa, idx) => {
+        {ETAPA_CONFIG.map((etapa, idx) => {
+          const ok = etapa.numero < etapaAtual || (etapa.numero === 5 && concluido);
+          const atual = !ok && etapa.numero === etapaAtual;
+
           let cls = "dp-etapa";
-          if (idx < atualIdx) cls += " dp-ok";
-          else if (idx === atualIdx) {
+          if (ok) cls += " dp-ok";
+          else if (atual) {
             cls += " dp-atual";
             if (estagio.nivel_alerta === "atrasado") cls += " dp-atrasado";
           }
+
           return (
-            <React.Fragment key={etapa.key}>
+            <React.Fragment key={etapa.numero}>
               <div className={cls}>
                 <div className="dp-ponto" />
-                <span className="dp-label">{etapa.label}</span>
+                <span className="dp-label">{etapa.labelCurto}</span>
               </div>
-              {idx < etapas.length - 1 && (
-                <div className={`dp-linha ${idx < atualIdx ? "dp-ok" : ""}`} />
+              {idx < ETAPA_CONFIG.length - 1 && (
+                <div className={`dp-linha ${ok ? "dp-ok" : ""}`} />
               )}
             </React.Fragment>
           );
         })}
       </div>
       <div className={`dp-etapa-atual-label ${estagio.nivel_alerta === "atrasado" ? "dp-etapa-atual-atrasado" : ""}`}>
-        ▶ Etapa atual: <strong>{etapaAtual.label}</strong>
+        {concluido ? (
+          "✓ Pedido concluído"
+        ) : (
+          <>▶ Etapa atual: <strong>{ETAPA_CONFIG[etapaAtual - 1].label}</strong></>
+        )}
       </div>
     </>
   );
