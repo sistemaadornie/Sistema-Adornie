@@ -46,32 +46,6 @@
   color: var(--color-primary, #3b82f6);
 }
 
-/* ── Toggle Visão ── */
-.dp-toggle {
-  display: flex;
-  background: var(--color-surface, #1e293b);
-  border-radius: 8px;
-  padding: 3px;
-  gap: 2px;
-}
-
-.dp-toggle-btn {
-  padding: 7px 16px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-muted, #94a3b8);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: background 0.15s, color 0.15s;
-}
-
-.dp-toggle-btn.dp-toggle-ativo {
-  background: var(--color-primary, #3b82f6);
-  color: #fff;
-}
-
 /* ── Chips de filtro ── */
 .dp-chips {
   display: flex;
@@ -277,13 +251,6 @@
 
 .dp-etapa-atual-label.dp-etapa-atual-atrasado strong {
   color: #fca5a5;
-}
-
-.dp-toggle-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
 }
 
 .dp-select-consultora {

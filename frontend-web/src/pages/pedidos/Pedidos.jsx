@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import usePedidos from "./hooks/usePedidos";
 import useAuth from "../../hooks/useAuth";
@@ -142,7 +142,6 @@ export default function Pedidos() {
   const { user }  = useAuth();
   const { pedidos, loading, erro, carregar } = usePedidos();
   const [filtroAtivo,    setFiltroAtivo]    = useState("todos");
-  const [visaoGeral,     setVisaoGeral]     = useState(false);
   const [consultoraFiltro, setConsultoraFiltro] = useState("");
   const [importarAberto, setImportarAberto] = useState(false);
   const [salvando,       setSalvando]       = useState(false);
@@ -150,15 +149,20 @@ export default function Pedidos() {
 
   const temPermGeral = (user?.permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
 
-  const consultoras = useMemo(() => {
+  const [consultoras, setConsultoras] = useState([]);
+
+  useEffect(() => {
+    if (consultoraFiltro || filtroAtivo !== "todos") return;
     const map = new Map();
     for (const p of pedidos) {
       if (p.consultor_id && !map.has(p.consultor_id)) {
         map.set(p.consultor_id, { id: p.consultor_id, nome: p.consultor_nome });
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [pedidos]);
+    if (map.size > 0) {
+      setConsultoras(Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome)));
+    }
+  }, [pedidos, consultoraFiltro, filtroAtivo]);
 
   const pedidosFiltrados = useMemo(() => {
     let lista = pedidos;
@@ -186,12 +190,6 @@ export default function Pedidos() {
       const f = consultoraFiltro ? { consultora_id: consultoraFiltro } : {};
       carregar(f);
     }
-  }
-
-  function handleToggleVisao(geral) {
-    setVisaoGeral(geral);
-    setConsultoraFiltro("");
-    carregar({});
   }
 
   async function handleImportarSalvar(dados, pdfFile) {
@@ -229,38 +227,24 @@ export default function Pedidos() {
           <button className="dp-btn-importar" onClick={() => setImportarAberto(true)}>
             ↑ Importar pedido
           </button>
-          {temPermGeral && (
-            <div className="dp-toggle-section">
-              <div className="dp-toggle">
-                <button
-                  className={`dp-toggle-btn ${!visaoGeral ? "dp-toggle-ativo" : ""}`}
-                  onClick={() => handleToggleVisao(false)}
-                >
-                  Visão Geral
-                </button>
-                <button
-                  className={`dp-toggle-btn ${visaoGeral ? "dp-toggle-ativo" : ""}`}
-                  onClick={() => handleToggleVisao(true)}
-                >
-                  Por Consultora
-                </button>
-              </div>
-              {visaoGeral && consultoras.length > 0 && (
-                <select
-                  className="dp-select-consultora"
-                  value={consultoraFiltro}
-                  onChange={(e) => {
-                    setConsultoraFiltro(e.target.value);
-                    carregar(e.target.value ? { consultora_id: e.target.value } : {});
-                  }}
-                >
-                  <option value="">Todas as consultoras</option>
-                  {consultoras.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+          {temPermGeral && consultoras.length > 0 && (
+            <select
+              className="dp-select-consultora"
+              value={consultoraFiltro}
+              onChange={(e) => {
+                const novaConsultora = e.target.value;
+                setConsultoraFiltro(novaConsultora);
+                const f = novaConsultora ? { consultora_id: novaConsultora } : {};
+                if (filtroAtivo === "atrasados") f.alerta = "atrasado";
+                else if (filtroAtivo !== "todos") f.status = filtroAtivo;
+                carregar(f);
+              }}
+            >
+              <option value="">Todas as consultoras</option>
+              {consultoras.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
           )}
         </div>
       </div>
