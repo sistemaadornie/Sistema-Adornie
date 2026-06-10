@@ -1,0 +1,126 @@
+<h2>Como resolver a usabilidade na seleção de itens?</h2>
+<p class="subtitle">Três abordagens — escolha a que mais faz sentido para o sistema</p>
+
+<div class="cards" style="gap: 24px;">
+
+  <!-- Opção A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: var(--surface-secondary); border-radius: 8px;">
+      <!-- Mockup: dual scroll -->
+      <div style="height: 170px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column;">
+        <!-- Toolbar -->
+        <div style="height: 28px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 8px; gap: 6px; flex-shrink: 0;">
+          <div style="width: 60px; height: 12px; background: var(--border); border-radius: 3px;"></div>
+          <div style="width: 40px; height: 12px; background: var(--border); border-radius: 3px;"></div>
+        </div>
+        <!-- Two columns -->
+        <div style="flex: 1; display: grid; grid-template-columns: 110px 1fr; gap: 1px; min-height: 0;">
+          <!-- Lista coluna -->
+          <div style="background: var(--surface); padding: 6px; overflow-y: auto; border-right: 1px solid var(--border);">
+            <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">LISTA</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px; margin-bottom: 3px; font-size: 8px; color: var(--text-secondary);">Pedido #001</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px; margin-bottom: 3px; font-size: 8px; color: var(--text-secondary);">Pedido #002</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px; margin-bottom: 3px; font-size: 8px; color: var(--text-secondary);">Pedido #003</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px; margin-bottom: 3px; font-size: 8px; color: var(--text-secondary);">Pedido #004</div>
+            <div style="background: #f59e0b22; border: 1px solid #f59e0b44; border-radius: 3px; padding: 4px; margin-bottom: 3px; font-size: 8px; color: #f59e0b; font-weight: 700;">← clica aqui ↓</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px; font-size: 8px; color: var(--text-secondary);">Pedido #006</div>
+          </div>
+          <!-- Detalhe coluna -->
+          <div style="background: var(--surface); padding: 6px; overflow-y: auto;">
+            <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">DETALHE — visível imediatamente</div>
+            <div style="font-size: 9px; color: var(--text); font-weight: 700; margin-bottom: 3px;">#005 — Maria Santos</div>
+            <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 2px;">Status: Em andamento</div>
+            <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 2px;">Total: R$ 1.240,00</div>
+            <div style="background: #22c55e22; border-radius: 3px; padding: 3px 5px; font-size: 8px; color: #22c55e; margin-top: 6px;">✓ sem precisar rolar</div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: center;">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary);">
+          <span style="font-size: 12px;">↕</span> lista rola sozinha
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary);">
+          <span style="font-size: 12px;">↕</span> detalhe rola sozinho
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Painéis independentes</h3>
+      <p>Lista e detalhe ficam lado a lado com <strong>altura fixa</strong>, cada um com seu próprio scroll. A página inteira não rola mais — só as colunas. Ao clicar qualquer item, o detalhe aparece <em>imediatamente</em> na mesma posição na tela, sem nenhum deslocamento.</p>
+    </div>
+    <div class="pros-cons" style="margin: 0 16px 16px;">
+      <div class="pros"><h4>Prós</h4><ul><li>Detalhe sempre visível</li><li>UX profissional (padrão Gmail, Notion)</li><li>Sem saltos na tela</li></ul></div>
+      <div class="cons"><h4>Contras</h4><ul><li>Layout fixo — menos espaço vertical</li><li>Mais mudança no CSS</li></ul></div>
+    </div>
+  </div>
+
+  <!-- Opção B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: var(--surface-secondary); border-radius: 8px;">
+      <div style="height: 170px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+        <!-- Antes da seleção -->
+        <div style="font-size: 9px; color: var(--text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--surface); font-weight: 600;">ANTES: usuário rolou para baixo</div>
+        <div style="flex: 1; display: grid; grid-template-columns: 110px 1fr; min-height: 0;">
+          <div style="padding: 6px; background: var(--surface); overflow: hidden; border-right: 1px solid var(--border);">
+            <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 3px;">...mais itens...</div>
+            <div style="background: var(--surface-secondary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: var(--text-secondary);">Pedido #020</div>
+            <div style="background: var(--primary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: white; font-weight: 700;">← clica #021</div>
+          </div>
+          <div style="padding: 6px; background: var(--surface); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="font-size: 22px; margin-bottom: 4px;">⬆</div>
+            <div style="font-size: 8px; color: var(--text-secondary); text-align: center;">página rola suavemente<br>até o painel de detalhe</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px;">
+        <div style="font-size: 9px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px;">DEPOIS: detalhe visível automaticamente</div>
+        <div style="font-size: 8px; color: var(--text); font-weight: 700;">#021 — Carlos Lima · R$ 890,00</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Scroll automático ao selecionar</h3>
+      <p>Mantém o layout atual. Ao clicar num item, a página rola suavemente até o painel de detalhe (usando <code>scrollIntoView</code>). Mudança mínima — só comportamento JavaScript.</p>
+    </div>
+    <div class="pros-cons" style="margin: 0 16px 16px;">
+      <div class="pros"><h4>Prós</h4><ul><li>Mudança pequena</li><li>Preserva o layout atual</li></ul></div>
+      <div class="cons"><h4>Contras</h4><ul><li>Página "salta" a cada clique</li><li>Não resolve o problema ao clicar rápido</li></ul></div>
+    </div>
+  </div>
+
+  <!-- Opção C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: var(--surface-secondary); border-radius: 8px;">
+      <div style="height: 170px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; position: relative;">
+        <!-- Lista normal -->
+        <div style="width: 130px; background: var(--surface); padding: 6px; border-right: 1px solid var(--border); overflow: hidden;">
+          <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">LISTA (rola livremente)</div>
+          <div style="background: var(--surface-secondary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: var(--text-secondary);">Pedido #001</div>
+          <div style="background: var(--surface-secondary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: var(--text-secondary);">Pedido #002</div>
+          <div style="background: var(--surface-secondary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: var(--text-secondary);">...</div>
+          <div style="background: var(--primary); border-radius: 3px; padding: 3px; margin-bottom: 2px; font-size: 8px; color: white; font-weight: 700;">← #015 clicado</div>
+          <div style="background: var(--surface-secondary); border-radius: 3px; padding: 3px; font-size: 8px; color: var(--text-secondary);">Pedido #016</div>
+        </div>
+        <!-- Drawer fixo -->
+        <div style="flex: 1; background: var(--surface); padding: 8px; border-left: 2px solid var(--primary); position: relative;">
+          <div style="font-size: 8px; color: var(--primary); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <span>◀</span> DETALHE FIXO (position: sticky)
+          </div>
+          <div style="font-size: 9px; color: var(--text); font-weight: 700; margin-bottom: 3px;">#015 — Ana Costa</div>
+          <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 2px;">Status: Pendente</div>
+          <div style="font-size: 8px; color: var(--text-secondary); margin-bottom: 2px;">Total: R$ 3.200,00</div>
+          <div style="font-size: 8px; color: var(--text-secondary);">Itens: 4 peças</div>
+          <div style="background: #3b82f622; border-radius: 3px; padding: 3px 5px; font-size: 8px; color: #3b82f6; margin-top: 6px;">✓ sempre visível</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Sticky corrigido + botão "ver detalhe"</h3>
+      <p>Corrige o sticky atual e adiciona um botão no card da lista que <strong>ancora o scroll ao detalhe</strong>. O detalhe fica sempre à direita e visível. A lista rola livremente pela página.</p>
+    </div>
+    <div class="pros-cons" style="margin: 0 16px 16px;">
+      <div class="pros"><h4>Prós</h4><ul><li>Mantém a estrutura atual</li><li>Corrige o comportamento do sticky</li></ul></div>
+      <div class="cons"><h4>Contras</h4><ul><li>Pode não resolver em todas situações</li><li>Depende do sticky funcionar corretamente</li></ul></div>
+    </div>
+  </div>
+
+</div>

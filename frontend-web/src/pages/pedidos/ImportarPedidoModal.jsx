@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
+import "./ImportarPedidoModal.css";
 
 const FORMAS_PAGAMENTO = ["PIX / DEPÓSITO", "CONTRA ENTREGA", "CARTÃO DE CRÉDITO", "BOLETO", "DINHEIRO", "CHEQUE"];
 const UNIDADES = ["M2", "ML", "UN", "PÇ"];
@@ -453,7 +454,6 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                   <div className="pd-itens-editor-header">
                     <span>#</span>
                     <span>Ambiente</span>
-                    <span>Referência</span>
                     <span>Cor</span>
                     <span>Produto</span>
                     <span>Categoria</span>
@@ -470,7 +470,6 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                     <div key={i} className="pd-itens-editor-row">
                       <span className="pd-item-num">{i + 1}</span>
                       <input placeholder="Sala"    value={it.ambiente   || ""} onChange={(e) => setItem(i, "ambiente",   e.target.value)} />
-                      <input placeholder="ADO500"  value={it.referencia || ""} onChange={(e) => setItem(i, "referencia", e.target.value)} />
                       <input placeholder="Cor"     value={it.cor        || ""} onChange={(e) => setItem(i, "cor",        e.target.value)} />
                       <input placeholder="Produto" value={it.descricao  || ""} onChange={(e) => setItem(i, "descricao",  e.target.value)} className="pd-item-desc" />
                       <select
@@ -482,8 +481,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                           <option key={c.id} value={c.id}>{c.nome}</option>
                         ))}
                       </select>
-                      <input placeholder="2,00" value={it.largura || ""} onChange={(e) => setItem(i, "largura", e.target.value)} />
-                      <input placeholder="3,00" value={it.altura  || ""} onChange={(e) => setItem(i, "altura",  e.target.value)} />
+                      <input placeholder="2,00" title="Largura (m)" value={it.largura || ""} onChange={(e) => setItem(i, "largura", e.target.value)} />
+                      <input placeholder="3,00" title="Altura (m)"  value={it.altura  || ""} onChange={(e) => setItem(i, "altura",  e.target.value)} />
                       <input type="number" min="0" step="0.01" value={it.quantidade || 1} onChange={(e) => setItem(i, "quantidade",     e.target.value)} />
                       <select value={it.unidade || "UN"} onChange={(e) => setItem(i, "unidade", e.target.value)}>
                         {UNIDADES.map((u) => <option key={u}>{u}</option>)}

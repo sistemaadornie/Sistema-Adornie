@@ -349,6 +349,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     `SELECT a.id, a.status, a.tipo, a.data AS data_inicio
      FROM agendamentos a
      WHERE a.pedido_id = $1 AND a.empresa_id = $2
+       AND a.agendamento_pai_id IS NULL
        AND EXISTS (
          SELECT 1 FROM agendamento_itens ai
          WHERE ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
@@ -402,6 +403,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       `SELECT COUNT(*)::int AS sem_vinc
        FROM pedido_itens pi
        WHERE pi.pedido_id = $1
+         AND pi.sem_vinculo = false
          AND NOT EXISTS (
            SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
          )`,
@@ -471,9 +473,12 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
 
   const [{ rows: itensPorGenitor }, { rows: herdeirosRaw }] = await Promise.all([
     db.query(
-      `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao
+      `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao,
+              os.id AS ordem_servico_id,
+              (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
        FROM agendamento_itens ai
        JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE ai.agendamento_id = ANY($1) AND ai.pedido_item_id IS NOT NULL`,
       [genitoreIds]
     ),
@@ -489,7 +494,12 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const itensPorAg = {};
   for (const item of itensPorGenitor) {
     if (!itensPorAg[item.agendamento_id]) itensPorAg[item.agendamento_id] = [];
-    itensPorAg[item.agendamento_id].push({ pedido_item_id: item.pedido_item_id, descricao: item.descricao });
+    itensPorAg[item.agendamento_id].push({
+      pedido_item_id: item.pedido_item_id,
+      descricao: item.descricao,
+      ordem_servico_id: item.ordem_servico_id,
+      ficha_preenchida: item.ficha_preenchida,
+    });
   }
 
   const herdeirosporPai = {};

@@ -74,7 +74,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
 
           <hr className="pf-separador" />
 
-          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>Pré-agendamentos (genitores)</div>
+          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE ENTREGA (PRÉ AGENDAMENTO)</div>
 
           {(!preAgendamentos || preAgendamentos.length === 0) && (
             <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 16 }}>

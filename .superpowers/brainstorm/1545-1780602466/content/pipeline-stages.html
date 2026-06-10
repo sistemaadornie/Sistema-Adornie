@@ -1,0 +1,85 @@
+<h2>Como o pedido avança pelas etapas do fluxo?</h2>
+<p class="subtitle">Cada etapa pode ser detectada automaticamente pelo sistema ou avançada manualmente por alguém</p>
+
+<div style="margin-bottom:24px">
+  <div style="background:#1e293b;border-radius:8px;padding:16px;font-family:monospace;font-size:12px">
+    <div style="color:#94a3b8;font-size:10px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Fluxo descrito — como detectar cada etapa?</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#22c55e20;border:1px solid #22c55e;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#22c55e">✓</div>
+        <div style="flex:1;color:#f1f5f9">1. Importar PDF</div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — existe pedido_anexos</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#94a3b820;border:1px solid #475569;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8">?</div>
+        <div style="flex:1;color:#f1f5f9">2. Verificar importação</div>
+        <div style="background:#f59e0b20;color:#f59e0b;font-size:9px;padding:2px 8px;border-radius:10px">MANUAL — alguém confirma</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#94a3b820;border:1px solid #475569;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8">?</div>
+        <div style="flex:1;color:#f1f5f9">3. Categorizar cada item</div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — todos os itens têm categoria?</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#94a3b820;border:1px solid #475569;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8">?</div>
+        <div style="flex:1;color:#f1f5f9">4. Vincular itens uns aos outros</div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — existe pedido_item_vinculos?</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#f59e0b20;border:1px solid #f59e0b;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#f59e0b">⏸</div>
+        <div style="flex:1;color:#f59e0b;font-weight:bold">— PENDENTE / STAND-BY —</div>
+        <div style="background:#94a3b820;color:#94a3b8;font-size:9px;padding:2px 8px;border-radius:10px">status = pendente</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#3b82f620;border:1px solid #3b82f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#3b82f6">●</div>
+        <div style="flex:1;color:#3b82f6;font-weight:bold">— EM ANDAMENTO —</div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — 1º genitor criado</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#8b5cf620;border:1px solid #8b5cf6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#8b5cf6">G</div>
+        <div style="flex:1;color:#f1f5f9">5. Pré-agendamento com itens <span style="color:#8b5cf6">(GENITOR)</span></div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — agendamento tem itens</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;background:#06b6d420;border:1px solid #06b6d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#06b6d4">H</div>
+        <div style="flex:1;color:#f1f5f9">6. Conferência de itens <span style="color:#06b6d4">(HERDEIROS)</span></div>
+        <div style="background:#22c55e20;color:#22c55e;font-size:9px;padding:2px 8px;border-radius:10px">AUTO — agendamento com genitor_id</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="tudo-auto" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Tudo automático</h3>
+      <p>O sistema detecta cada etapa pelos dados existentes. Ninguém clica em "avançar" — a etapa acende sozinha quando a condição é satisfeita. Etapas 2 e 3 precisam de critérios claros.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="hibrido" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Híbrido — automático onde possível, manual onde não dá</h3>
+      <p>PDF, genitores e herdeiros são detectados automaticamente. "Verificar importação" e "Categorizar" são checkboxes que alguém marca. Mais controle, menos surpresa.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tudo-manual" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Etapas manuais com atalhos automáticos</h3>
+      <p>Cada etapa tem um botão "concluir". O sistema pode sugerir "parece que você já fez isso" baseado em dados, mas quem decide é o usuário.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Olhe para o diagrama acima — as marcações AUTO e MANUAL estão corretas para o seu fluxo?</p>

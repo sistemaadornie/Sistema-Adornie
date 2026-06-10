@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalhe do Fluxo — Opções</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; }
+  h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #f8fafc; }
+  .subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+
+  .option-block { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 2px solid #2d3748; cursor: pointer; transition: border-color 0.2s; }
+  .option-block:hover { border-color: #3b82f660; }
+  .option-block.selected { border-color: #3b82f6; }
+  .option-label { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 4px; }
+  .option-desc  { font-size: 11px; color: #64748b; margin-bottom: 14px; line-height: 1.5; }
+
+  /* ─── OPÇÃO A — Fluxograma horizontal ─── */
+  .flow-h { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding-bottom: 8px; }
+  .flow-node { display: flex; flex-direction: column; align-items: center; }
+  .fn-box { background: #0f172a; border: 1.5px solid #334155; border-radius: 8px; padding: 8px 10px; min-width: 72px; text-align: center; font-size: 10px; }
+  .fn-box.done    { border-color: #22c55e; background: #052e16; }
+  .fn-box.active  { border-color: #3b82f6; background: #172554; box-shadow: 0 0 10px #3b82f620; }
+  .fn-box.pending { border-color: #334155; opacity: 0.5; }
+  .fn-box.branch  { border-color: #8b5cf6; background: #2e1065; }
+  .fn-title  { font-size: 10px; font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+  .fn-sub    { font-size: 9px; color: #64748b; }
+  .fn-sub.green  { color: #22c55e; }
+  .fn-sub.blue   { color: #60a5fa; }
+  .fn-sub.purple { color: #a78bfa; }
+  .fn-arrow { display: flex; align-items: center; padding: 0 4px; padding-top: 20px; }
+  .fn-arrow svg { color: #475569; }
+  .fn-children { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .fn-child { background: #0f172a; border: 1px solid #8b5cf640; border-radius: 6px; padding: 5px 8px; font-size: 9px; color: #a78bfa; min-width: 70px; text-align: center; }
+
+  /* ─── OPÇÃO B — Timeline vertical ─── */
+  .flow-v { display: flex; flex-direction: column; gap: 0; }
+  .tv-row  { display: flex; gap: 10px; align-items: flex-start; }
+  .tv-line { display: flex; flex-direction: column; align-items: center; width: 24px; flex-shrink: 0; }
+  .tv-dot  { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #0f172a; flex-shrink: 0; }
+  .tv-connector { flex: 1; width: 2px; background: #334155; min-height: 16px; }
+  .tv-content { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+  .tv-title  { font-size: 11px; font-weight: 600; color: #f1f5f9; }
+  .tv-detail { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+  /* ─── OPÇÃO C — Misto ─── */
+  .flow-mixed { display: flex; gap: 10px; }
+  .flow-mixed-left  { flex: 1; }
+  .flow-mixed-right { width: 160px; background: #0f172a; border-radius: 8px; padding: 10px; border: 1px solid #334155; }
+  .mr-title { font-size: 10px; color: #60a5fa; font-weight: 600; margin-bottom: 8px; }
+  .mr-item  { font-size: 10px; color: #94a3b8; margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .mr-item span { color: #f1f5f9; }
+
+  .rec-badge { display: inline-block; background: #22c55e20; color: #22c55e; border: 1px solid #22c55e40; border-radius: 4px; font-size: 10px; padding: 1px 7px; margin-left: 6px; }
+</style>
+<script>
+  function pick(el) {
+    document.querySelectorAll('.option-block').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    if (window.recordChoice) recordChoice(el.dataset.choice, el.querySelector('.option-label').textContent);
+  }
+</script>
+</head>
+<body>
+
+<h2>Como organizar a tela de detalhe do pedido? <code style="font-size:12px;color:#64748b">/pedidos/:id/fluxo</code></h2>
+<p class="subtitle">A tela mostra todo o fluxo de um pedido — do PDF à entrega, com pré-agendamentos e conferências</p>
+
+<!-- OPÇÃO A -->
+<div class="option-block" data-choice="horizontal" onclick="pick(this)">
+  <div class="option-label">A — Fluxograma horizontal (estilo schema visualizer) <span class="rec-badge">Recomendado</span></div>
+  <div class="option-desc">Cards conectados da esquerda para direita. Ramificações para baixo quando há pré-agendamentos filhos (conferências). Visual de grafo, parecido com o schema visualizer do Supabase.</div>
+
+  <div class="flow-h">
+    <div class="flow-node">
+      <div class="fn-box done">
+        <div class="fn-title">📄 PDF</div>
+        <div class="fn-sub green">✓ importado</div>
+      </div>
+    </div>
+    <div class="fn-arrow"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box done">
+        <div class="fn-title">🔍 Verificar</div>
+        <div class="fn-sub green">✓ ok</div>
+      </div>
+    </div>
+    <div class="fn-arrow"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box done">
+        <div class="fn-title">🏷️ Categorizar</div>
+        <div class="fn-sub green">✓ 3/3</div>
+      </div>
+    </div>
+    <div class="fn-arrow"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box done">
+        <div class="fn-title">🔗 Vincular</div>
+        <div class="fn-sub green">✓ ok</div>
+      </div>
+    </div>
+    <div class="fn-arrow"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box active">
+        <div class="fn-title">📅 Pré-ag. 1</div>
+        <div class="fn-sub blue">15 Jun · 2 itens</div>
+      </div>
+      <div class="fn-children">
+        <div class="fn-child">Conferência<br/><span style="color:#64748b">20 Jun</span></div>
+      </div>
+    </div>
+    <div class="fn-arrow" style="padding-top:20px"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box pending">
+        <div class="fn-title">📅 Pré-ag. 2</div>
+        <div class="fn-sub">1 item · a def.</div>
+      </div>
+      <div class="fn-children" style="opacity:0.4">
+        <div class="fn-child">Conferência<br/><span style="color:#64748b">—</span></div>
+      </div>
+    </div>
+    <div class="fn-arrow" style="padding-top:20px"><svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="flow-node">
+      <div class="fn-box pending">
+        <div class="fn-title">✅ Entrega</div>
+        <div class="fn-sub">todos os lotes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPÇÃO B -->
+<div class="option-block" data-choice="vertical" onclick="pick(this)">
+  <div class="option-label">B — Timeline vertical</div>
+  <div class="option-desc">Cada etapa empilhada de cima para baixo com uma linha conectora. Mais fácil de rolar em mobile, texto mais legível, mas perde a visão de ramificação.</div>
+
+  <div class="flow-v">
+    <div class="tv-row">
+      <div class="tv-line"><div class="tv-dot" style="background:#22c55e;border-color:#052e16"></div><div class="tv-connector"></div></div>
+      <div class="tv-content" style="border-color:#22c55e40;background:#052e1640">
+        <div class="tv-title" style="color:#22c55e">✓ PDF importado</div>
+        <div class="tv-detail">pedido_anexos · arquivo_original.pdf</div>
+      </div>
+    </div>
+    <div class="tv-row">
+      <div class="tv-line"><div class="tv-dot" style="background:#22c55e;border-color:#052e16"></div><div class="tv-connector"></div></div>
+      <div class="tv-content" style="border-color:#22c55e40;background:#052e1640">
+        <div class="tv-title" style="color:#22c55e">✓ Importação verificada</div>
+        <div class="tv-detail">Verificado por Fernanda · 22 Nov</div>
+      </div>
+    </div>
+    <div class="tv-row">
+      <div class="tv-line"><div class="tv-dot" style="background:#3b82f6;border-color:#172554"></div><div class="tv-connector" style="background:#3b82f640"></div></div>
+      <div class="tv-content" style="border-color:#3b82f640;background:#17255440">
+        <div class="tv-title" style="color:#60a5fa">● Pré-agendamento 1 — 15 Jun</div>
+        <div class="tv-detail">2 itens · Cortina Voil + Persiana Rolô</div>
+      </div>
+    </div>
+    <div class="tv-row" style="padding-left:20px">
+      <div class="tv-line"><div class="tv-dot" style="background:#8b5cf6;border-color:#2e1065"></div><div class="tv-connector"></div></div>
+      <div class="tv-content" style="border-color:#8b5cf640">
+        <div class="tv-title" style="color:#a78bfa">↳ Conferência — 20 Jun</div>
+        <div class="tv-detail">Herdeiro do Pré-ag. 1</div>
+      </div>
+    </div>
+    <div class="tv-row">
+      <div class="tv-line"><div class="tv-dot" style="background:#334155"></div><div class="tv-connector"></div></div>
+      <div class="tv-content">
+        <div class="tv-title">○ Pré-agendamento 2 — a definir</div>
+        <div class="tv-detail">1 item pendente de agendamento</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPÇÃO C -->
+<div class="option-block" data-choice="misto" onclick="pick(this)">
+  <div class="option-label">C — Fluxograma + painel de detalhes</div>
+  <div class="option-desc">Fluxograma horizontal à esquerda para navegação rápida. Clique em qualquer card do fluxo abre detalhes (itens, datas, conferências) no painel direito.</div>
+
+  <div class="flow-mixed">
+    <div class="flow-mixed-left">
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        <div class="fn-box done" style="min-width:56px"><div class="fn-title" style="font-size:9px">✓ PDF</div></div>
+        <svg width="12" height="10" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="fn-box done" style="min-width:56px"><div class="fn-title" style="font-size:9px">✓ Verif.</div></div>
+        <svg width="12" height="10" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="fn-box done" style="min-width:56px"><div class="fn-title" style="font-size:9px">✓ Categ.</div></div>
+        <svg width="12" height="10" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="fn-box active" style="min-width:64px;border-color:#3b82f6"><div class="fn-title" style="font-size:9px;color:#60a5fa">● Pré-ag.1</div></div>
+        <svg width="12" height="10" viewBox="0 0 16 12" fill="none"><path d="M0 6h12M8 2l6 4-6 4" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="fn-box pending" style="min-width:56px"><div class="fn-title" style="font-size:9px">Pré-ag.2</div></div>
+      </div>
+    </div>
+    <div class="flow-mixed-right">
+      <div class="mr-title">● Pré-ag. 1 — detalhes</div>
+      <div class="mr-item">Data <span style="color:#60a5fa">15 Jun</span></div>
+      <div class="mr-item">Itens <span>2 produtos</span></div>
+      <div class="mr-item">Status <span style="color:#a78bfa">Agendado</span></div>
+      <div style="border-top:1px solid #334155;margin:6px 0"></div>
+      <div class="mr-title" style="color:#a78bfa">Conferências</div>
+      <div class="mr-item">Conf. 1 <span>20 Jun</span></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

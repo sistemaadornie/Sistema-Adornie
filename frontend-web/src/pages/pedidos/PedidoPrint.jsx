@@ -96,7 +96,8 @@ export default function PedidoPrint({ pedido, onClose }) {
               <th>Referencia</th>
               <th>Cor</th>
               <th>Produto</th>
-              <th>Medidas</th>
+              <th>Largura</th>
+              <th>Altura</th>
               <th>Qtde</th>
               <th>Un</th>
               <th>Preço</th>
@@ -111,7 +112,8 @@ export default function PedidoPrint({ pedido, onClose }) {
                 <td>{it.referencia || ""}</td>
                 <td>{it.cor || ""}</td>
                 <td>{it.descricao}</td>
-                <td>{it.medidas || ""}</td>
+                <td>{it.largura != null ? fmtMoeda(it.largura) : (it.medidas?.split(/[xX×]/)[0]?.trim() || "")}</td>
+                <td>{it.altura  != null ? fmtMoeda(it.altura)  : (it.medidas?.split(/[xX×]/)[1]?.trim() || "")}</td>
                 <td>{it.quantidade}</td>
                 <td>{it.unidade || ""}</td>
                 <td>{it.preco_unitario != null ? fmtMoeda(it.preco_unitario) : ""}</td>

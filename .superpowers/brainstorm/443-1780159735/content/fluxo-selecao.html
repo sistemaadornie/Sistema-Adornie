@@ -1,0 +1,95 @@
+<h2>Onde a seleção de modelos deve aparecer no fluxo?</h2>
+<p class="subtitle">Quando o sistema detecta "cortina", "forro" ou "persiana" na coluna produto, em que momento o usuário escolhe o modelo?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Etapa intermediária — passo 1.5</h3>
+      <p>Após fazer o upload/colar o texto, antes de chegar na tela de revisão, abre uma nova etapa exclusiva para resolver os itens detectados. O usuário seleciona modelos e especificações de todos os itens de uma vez, depois vai para a revisão.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Fluxo</div>
+        <div class="mockup-body" style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap">
+          <span style="padding:4px 10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:4px">1. Upload / Colar</span>
+          <span>→</span>
+          <span style="padding:4px 10px;background:#fff3e0;border:2px solid #ff9800;border-radius:4px;font-weight:bold">⭐ 1.5 Selecionar Modelos</span>
+          <span>→</span>
+          <span style="padding:4px 10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:4px">2. Revisão</span>
+          <span>→</span>
+          <span style="padding:4px 10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:4px">3. Confirmar</span>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Fluxo limpo e focado</li><li>Fácil de entender</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Mais cliques para chegar à revisão</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Na tela de revisão — botão por linha</h3>
+      <p>Na etapa 2 (revisão dos itens), linhas que tiveram palavra-chave detectada mostram um botão "Selecionar modelo" na coluna produto. O usuário clica e abre um painel lateral ou mini-modal para escolher o modelo daquele item.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Tabela de itens na revisão</div>
+        <div class="mockup-body" style="font-size:12px">
+          <table style="width:100%;border-collapse:collapse">
+            <tr style="background:#f5f5f5">
+              <th style="padding:4px;border:1px solid #ddd;text-align:left">#</th>
+              <th style="padding:4px;border:1px solid #ddd;text-align:left">Ambiente</th>
+              <th style="padding:4px;border:1px solid #ddd;text-align:left">Produto</th>
+              <th style="padding:4px;border:1px solid #ddd;text-align:left">Medidas</th>
+            </tr>
+            <tr style="background:#fff8e1">
+              <td style="padding:4px;border:1px solid #ddd">1</td>
+              <td style="padding:4px;border:1px solid #ddd">Sala</td>
+              <td style="padding:4px;border:1px solid #ddd">
+                <span style="color:#888">CORTINA LINHO</span><br>
+                <button style="margin-top:4px;padding:2px 8px;background:#ff9800;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">⭐ Selecionar modelo</button>
+              </td>
+              <td style="padding:4px;border:1px solid #ddd">3,00 × 2,80</td>
+            </tr>
+            <tr>
+              <td style="padding:4px;border:1px solid #ddd">2</td>
+              <td style="padding:4px;border:1px solid #ddd">Quarto</td>
+              <td style="padding:4px;border:1px solid #ddd">TRILHO MOTORIZADO</td>
+              <td style="padding:4px;border:1px solid #ddd">3,00</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Tudo em um lugar</li><li>Contexto visual dos outros itens</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Tela pode ficar carregada</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Modal automático sequencial</h3>
+      <p>Ao chegar na etapa de revisão, o sistema detecta os itens e abre automaticamente um modal para cada um, em sequência. O usuário resolve item a item antes de ver a tabela de revisão.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Modal automático — item 1 de 2</div>
+        <div class="mockup-body" style="font-size:12px;text-align:center">
+          <div style="padding:8px;background:#fff3e0;border-radius:4px;margin-bottom:8px">
+            🎯 Detectamos <strong>"CORTINA LINHO"</strong> no item 1 (Sala)
+          </div>
+          <p style="margin:0;color:#666">Selecione o modelo de cortina:</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">
+            <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Wave</button>
+            <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Prega Macho</button>
+            <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Prega Americana</button>
+            <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Franzida</button>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Guia o usuário passo a passo</li><li>Não pode pular um item</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Pode ser chato com muitos itens</li><li>Difícil voltar e corrigir</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,5 @@
 const db = require('../database/db');
+const { fmtNumeroOrigem } = require('./pedidoService');
 
 async function criar({ pedidoItemId, responsavelId }) {
   const { rows } = await db.query(
@@ -76,7 +77,7 @@ async function buscar(id) {
   const os = rows[0];
   return {
     ...os,
-    pedido_numero: os.pedido_numero_origem || `SIS-${String(os.pedido_numero_sequencial || os.pedido_id).padStart(8, '0')}`
+    pedido_numero: fmtNumeroOrigem(os.pedido_numero_origem) || `SIS-${String(os.pedido_numero_sequencial || os.pedido_id).padStart(8, '0')}`
   };
 }
 

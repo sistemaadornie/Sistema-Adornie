@@ -1,0 +1,205 @@
+/* ── Modal "Agendar Instalação" — seleção de itens ── */
+.msi-modal {
+  width: min(94vw, 760px);
+  max-height: 86vh;
+}
+
+.msi-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ── Toolbar (ações em massa + contador) ── */
+.msi-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.msi-toolbar-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msi-link-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: color var(--transition-fast, 0.15s ease);
+}
+
+.msi-link-btn:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.msi-link-btn:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.msi-toolbar-sep {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.msi-contador {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+
+/* ── Lista de itens ── */
+.msi-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msi-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-soft);
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 0.15s ease),
+              background var(--transition-fast, 0.15s ease),
+              transform var(--transition-fast, 0.15s ease);
+}
+
+.msi-card:hover {
+  border-color: var(--color-border-strong);
+  transform: translateY(-1px);
+}
+
+.msi-card.is-selecionado {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* ── Checkbox customizado ── */
+.msi-checkbox {
+  position: relative;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.msi-checkbox input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.msi-checkbox-marca {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast, 0.15s ease),
+              background var(--transition-fast, 0.15s ease);
+}
+
+.msi-checkbox-marca::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 11px;
+  border: solid var(--color-primary-btn-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.15s ease);
+}
+
+.msi-checkbox input:checked + .msi-checkbox-marca {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.msi-checkbox input:checked + .msi-checkbox-marca::after {
+  opacity: 1;
+}
+
+.msi-checkbox input:focus-visible + .msi-checkbox-marca {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Conteúdo do card ── */
+.msi-card-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.msi-card-topo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.msi-card-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.msi-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.msi-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.msi-meta-ponto {
+  color: var(--color-text-muted);
+}

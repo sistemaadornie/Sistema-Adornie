@@ -8,7 +8,7 @@ const ETAPA_CONFIG = {
   5: { icone: "⭐", titulo: "Pós-venda" },
 };
 
-export default function EtapaCard({ etapa, etapaAtual, onClick, cardRef }) {
+export default function EtapaCard({ etapa, etapaAtual, onClick }) {
   const { numero, concluida, progresso } = etapa;
   const config = ETAPA_CONFIG[numero];
   const ativa = !concluida && numero === etapaAtual;
@@ -63,7 +63,6 @@ export default function EtapaCard({ etapa, etapaAtual, onClick, cardRef }) {
   return (
     <div
       className={cls}
-      ref={cardRef}
       onClick={onClick}
       role="button"
       tabIndex={0}

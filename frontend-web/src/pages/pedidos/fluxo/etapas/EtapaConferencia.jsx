@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import FichaConferencia from "../../../agendamentos/FichaConferencia";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 
 function fmtData(iso) {
@@ -9,9 +8,8 @@ function fmtData(iso) {
   return d.toLocaleDateString("pt-BR");
 }
 
-export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendamentos, onClose, onRecarregar }) {
+export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
-  const [fichaAgId, setFichaAgId] = useState(null);
   const [agendandoConf, setAgendandoConf] = useState(null);
 
   const etapa2 = etapas.find((e) => e.numero === 2) || {};
@@ -93,13 +91,24 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
                   {g.herdeiros.filter((h) => h.tipo !== "Instalação").map((h) => (
                     <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
                       <div style={{ fontSize: 13 }}>Conferência — {fmtData(h.data_inicio)}</div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <span className={`pf-badge ${h.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>{h.status}</span>
+                      <span className={`pf-badge ${h.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>{h.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(g.itens || []).length > 0 && (
+                <div style={{ padding: "10px 14px" }}>
+                  {g.itens.map((item) => (
+                    <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
+                      <div style={{ fontSize: 13 }}>{item.descricao}</div>
+                      {item.ficha_preenchida ? (
                         <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
-                          onClick={() => setFichaAgId(h.id)}>
-                          Preencher Ficha
+                          onClick={() => navigate(`/pedidos/os/${item.ordem_servico_id}`)}>
+                          Visualizar Ficha
                         </button>
-                      </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando técnico</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -108,13 +117,6 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
           ))}
         </div>
       </div>
-
-      {fichaAgId && (
-        <FichaConferencia
-          agendamentoId={fichaAgId}
-          onClose={() => { setFichaAgId(null); onRecarregar(); }}
-        />
-      )}
 
       {agendandoConf && (
         <ModalSelecionarItensInstalacao

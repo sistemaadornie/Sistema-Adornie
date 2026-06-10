@@ -7,27 +7,6 @@ export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
   const offsetRef = useRef({ x: 0, y: 0 });
   const dragging = useRef(false);
   const startRef = useRef({ x: 0, y: 0 });
-  const cardRefs = useRef({});
-
-  // Centralizar no card ativo ao montar
-  useEffect(() => {
-    if (!wrapperRef.current || !flowRef.current) return;
-    const activeCard = cardRefs.current[etapaAtual];
-    if (!activeCard) return;
-
-    const wrapper = wrapperRef.current;
-    const flow = flowRef.current;
-    const flowRect = flow.getBoundingClientRect();
-    const cardRect = activeCard.getBoundingClientRect();
-
-    const cardCenterX = cardRect.left + cardRect.width / 2 - flowRect.left;
-    const wrapperCenterX = wrapper.clientWidth / 2;
-    const ox = wrapperCenterX - cardCenterX;
-    const oy = 0;
-
-    offsetRef.current = { x: ox, y: oy };
-    applyTransform(ox, oy);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function applyTransform(x, y) {
     if (!flowRef.current) return;
@@ -82,7 +61,6 @@ export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
               etapa={etapa}
               etapaAtual={etapaAtual}
               onClick={() => onEtapaClick(etapa.numero)}
-              cardRef={(el) => { cardRefs.current[etapa.numero] = el; }}
             />
             {idx < etapas.length - 1 && (
               <div

@@ -39,13 +39,12 @@ export default function PedidoFluxo() {
     try {
       const res = await api.get(`/pedidos/${id}/fluxo`);
       setDados(res);
-      if (etapaAberta === null) setEtapaAberta(res.etapa_atual ?? 1);
     } catch (e) {
       setErro(e?.message || "Erro ao carregar o fluxo do pedido.");
     } finally {
       setLoading(false);
     }
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => { carregar(); }, [carregar]);
 

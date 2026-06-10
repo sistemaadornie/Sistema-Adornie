@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 import "./OrdemServicoModal.css";
 
@@ -101,6 +101,16 @@ function CanvasDraw({ title, width = 360, height = 180, onSave, value }) {
 export default function OrdemServicoPage() {
   const { osId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const voltarAgendamentoId = location.state?.voltarConferenciaAgendamentoId || null;
+
+  function voltar() {
+    if (voltarAgendamentoId) {
+      navigate("/agendamentos", { state: { reabrirConferenciaAgendamentoId: voltarAgendamentoId } });
+    } else {
+      navigate("/pedidos");
+    }
+  }
 
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -237,7 +247,7 @@ export default function OrdemServicoPage() {
     try {
       await api.put(`/os/${osId}`, dadosTecnicos);
       setSucesso("Ordem de serviço salva com sucesso!");
-      setTimeout(() => navigate("/pedidos"), 1400);
+      setTimeout(voltar, 1400);
     } catch (err) {
       setErro(err.message || "Erro ao salvar ordem de serviço.");
     } finally {
@@ -264,7 +274,7 @@ export default function OrdemServicoPage() {
       {/* HEADER */}
       <div className="os-page-header">
         <div className="os-page-header-left">
-          <button className="os-back-btn" onClick={() => navigate("/pedidos")}>
+          <button className="os-back-btn" onClick={voltar}>
             ← Voltar
           </button>
           <div>
@@ -277,7 +287,7 @@ export default function OrdemServicoPage() {
           </div>
         </div>
         <div className="os-page-header-right">
-          <button className="os-btn os-btn-secondary" onClick={() => navigate("/pedidos")} disabled={salvando}>
+          <button className="os-btn os-btn-secondary" onClick={voltar} disabled={salvando}>
             Cancelar
           </button>
           <button className="os-btn os-btn-primary" onClick={salvarOS} disabled={salvando}>

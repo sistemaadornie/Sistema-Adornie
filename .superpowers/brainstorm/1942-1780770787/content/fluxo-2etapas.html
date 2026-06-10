@@ -1,0 +1,141 @@
+<h2>Como abre o detalhe ao clicar numa etapa?</h2>
+<p class="subtitle">Cards grandes horizontais — ao clicar num card, como o detalhe aparece?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Expande abaixo dos cards (accordion)</h3>
+      <p>O detalhe aparece logo abaixo dos 2 cards na mesma página, empurrando o conteúdo para baixo.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Fluxo do Pedido #2099</div>
+        <div class="mockup-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+
+          <!-- cards -->
+          <div style="display:flex;gap:0;align-items:center">
+            <div style="background:#0f2d1f;border:3px solid #10b981;border-radius:16px;padding:18px 24px;width:200px;text-align:center;cursor:pointer">
+              <div style="font-size:12px;font-weight:800;color:#6ee7b7;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">DADOS DO PEDIDO</div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#064e3b;border:2px solid #10b981;display:flex;align-items:center;justify-content:center;font-size:16px;margin:0 auto 8px">✓</div>
+              <div style="font-size:10px;color:#64748b">Leonardo · 06/06</div>
+              <div style="margin-top:8px;font-size:10px;color:#34d399;background:#064e3b;border-radius:4px;padding:2px 6px">▼ aberto</div>
+            </div>
+            <div style="height:2px;width:40px;background:#334155"></div>
+            <div style="background:#1e293b;border:3px dashed #334155;border-radius:16px;padding:18px 24px;width:200px;text-align:center">
+              <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">ENTREGA</div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#1e293b;border:2px dashed #475569;display:flex;align-items:center;justify-content:center;font-size:14px;color:#475569;margin:0 auto 8px">?</div>
+              <div style="font-size:10px;color:#475569">aguardando etapa 1</div>
+            </div>
+          </div>
+
+          <!-- detalhe expandido -->
+          <div style="border:2px solid #10b981;border-radius:12px;padding:14px;background:#0a1f14">
+            <div style="font-size:11px;font-weight:700;color:#6ee7b7;margin-bottom:10px;text-transform:uppercase">Dados do Pedido — Detalhe</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:#94a3b8">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Consultora:</strong> Leonardo</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">📄 Vinculado</span></div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:6px">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:6px;padding:4px 10px;font-size:10px;color:#93c5fd;cursor:pointer">✏ Editar</div>
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:4px 10px;font-size:10px;color:#6ee7b7;cursor:pointer">📄 PDF</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;color:#94a3b8;cursor:pointer">🖨 Imprimir</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Painel lateral deslizante</h3>
+      <p>Os cards ficam à esquerda. Clicar num card abre um painel fixo à direita com o detalhe completo da etapa.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Fluxo do Pedido #2099</div>
+        <div class="mockup-body" style="padding:0;display:flex;height:200px">
+
+          <!-- lado esquerdo: cards verticais -->
+          <div style="padding:16px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #334155;width:160px;flex-shrink:0">
+            <div style="background:#0f2d1f;border:2px solid #10b981;border-radius:12px;padding:12px;text-align:center;cursor:pointer">
+              <div style="font-size:10px;font-weight:800;color:#6ee7b7;text-transform:uppercase;margin-bottom:5px">DADOS DO PEDIDO</div>
+              <div style="font-size:16px">✓</div>
+              <div style="font-size:9px;color:#64748b">Leonardo · 06/06</div>
+            </div>
+            <div style="color:#475569;text-align:center;font-size:18px">↓</div>
+            <div style="background:#1e293b;border:2px dashed #334155;border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;margin-bottom:5px">ENTREGA</div>
+              <div style="font-size:14px;color:#475569">?</div>
+              <div style="font-size:9px;color:#475569">pendente</div>
+            </div>
+          </div>
+
+          <!-- lado direito: detalhe -->
+          <div style="flex:1;padding:14px;overflow:hidden">
+            <div style="font-size:11px;font-weight:700;color:#6ee7b7;margin-bottom:8px;text-transform:uppercase">Dados do Pedido</div>
+            <div style="font-size:11px;color:#94a3b8;display:flex;flex-direction:column;gap:4px">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">📄 Vinculado</span></div>
+              <div><strong style="color:#e2e8f0">Categ.:</strong> <span style="color:#34d399">✓ Concluída</span></div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:4px">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:5px;padding:3px 8px;font-size:9px;color:#93c5fd">✏ Editar</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:9px;color:#94a3b8">🖨 Imprimir</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Modal por cima (como hoje)</h3>
+      <p>Clicar num card abre um modal grande com scroll, com todo o detalhe da etapa. Fecha com X.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Fluxo do Pedido #2099</div>
+        <div class="mockup-body" style="padding:16px;position:relative">
+
+          <!-- cards atrás (desfocados) -->
+          <div style="display:flex;gap:8px;align-items:center;filter:brightness(0.4)">
+            <div style="background:#0f2d1f;border:3px solid #10b981;border-radius:16px;padding:16px 20px;text-align:center;width:140px">
+              <div style="font-size:10px;font-weight:800;color:#6ee7b7;text-transform:uppercase;margin-bottom:6px">DADOS DO PEDIDO</div>
+              <div style="font-size:18px">✓</div>
+            </div>
+            <div style="height:2px;width:30px;background:#334155"></div>
+            <div style="background:#1e293b;border:3px dashed #334155;border-radius:16px;padding:16px 20px;text-align:center;width:140px">
+              <div style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;margin-bottom:6px">ENTREGA</div>
+              <div style="font-size:14px;color:#475569">?</div>
+            </div>
+          </div>
+
+          <!-- modal por cima -->
+          <div style="position:absolute;top:8px;left:30px;right:30px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:#f1f5f9">Dados do Pedido — #2099</div>
+              <div style="font-size:14px;color:#64748b;cursor:pointer">✕</div>
+            </div>
+            <div style="font-size:11px;color:#94a3b8;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">✓</span></div>
+              <div><strong style="color:#e2e8f0">Categ.:</strong> <span style="color:#34d399">✓</span></div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:5px;padding:3px 8px;font-size:10px;color:#93c5fd">✏ Editar</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:10px;color:#94a3b8">🖨 Imprimir</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

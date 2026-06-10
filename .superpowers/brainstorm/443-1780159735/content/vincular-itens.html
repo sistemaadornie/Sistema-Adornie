@@ -1,0 +1,92 @@
+<h2>Como vincular itens entre si?</h2>
+<p class="subtitle">Ex: "TRILHO MOTORIZADO" (item 2) precisa ser vinculado à "CORTINA WAVE" (item 1). Como o usuário faz essa associação?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Dropdown na linha do item</h3>
+      <p>Na tabela de revisão, cada item que pode ser vinculado (trilho, forro, etc.) tem uma coluna "Vinculado a" com um dropdown listando os outros itens do pedido.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Tabela de itens — revisão</div>
+        <div class="mockup-body" style="font-size:11px;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:420px">
+            <tr style="background:#f5f5f5">
+              <th style="padding:4px 6px;border:1px solid #ddd">#</th>
+              <th style="padding:4px 6px;border:1px solid #ddd">Produto</th>
+              <th style="padding:4px 6px;border:1px solid #ddd">Modelo</th>
+              <th style="padding:4px 6px;border:1px solid #ddd;background:#fff8e1">🔗 Vinculado a</th>
+            </tr>
+            <tr>
+              <td style="padding:4px 6px;border:1px solid #ddd">1</td>
+              <td style="padding:4px 6px;border:1px solid #ddd">CORTINA LINHO</td>
+              <td style="padding:4px 6px;border:1px solid #ddd"><span style="color:green">✓ Wave</span></td>
+              <td style="padding:4px 6px;border:1px solid #ddd;background:#fafafa;color:#999">—</td>
+            </tr>
+            <tr style="background:#fff8e1">
+              <td style="padding:4px 6px;border:1px solid #ddd">2</td>
+              <td style="padding:4px 6px;border:1px solid #ddd">TRILHO MOTORIZADO</td>
+              <td style="padding:4px 6px;border:1px solid #ddd;color:#999">—</td>
+              <td style="padding:4px 6px;border:1px solid #ddd">
+                <select style="width:100%;padding:3px;border:1px solid #ffa000;border-radius:3px;font-size:11px">
+                  <option>— selecionar —</option>
+                  <option selected>Item 1 · CORTINA WAVE</option>
+                  <option>Item 3 · PERSIANA ROLO</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:4px 6px;border:1px solid #ddd">3</td>
+              <td style="padding:4px 6px;border:1px solid #ddd">PERSIANA ROLO</td>
+              <td style="padding:4px 6px;border:1px solid #ddd"><span style="color:green">✓ Rolo·45mm·Bandô 38mm</span></td>
+              <td style="padding:4px 6px;border:1px solid #ddd;background:#fafafa;color:#999">—</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Compacto, tudo na tabela</li><li>Rápido de operar</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Tabela fica mais larga</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Botão "Vincular" no painel lateral</h3>
+      <p>Ao clicar em "Selecionar modelo" em um item do tipo trilho, o painel lateral mostra também a opção de vincular a outro item do pedido.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Painel lateral — TRILHO MOTORIZADO</div>
+        <div class="mockup-body" style="font-size:12px">
+          <div style="padding:6px;background:#e3f2fd;border-radius:4px;margin-bottom:10px">
+            <strong>TRILHO MOTORIZADO</strong><br>
+            <span style="color:#666;font-size:11px">Item 2 · Sala · 3,00m</span>
+          </div>
+          <div style="border-top:1px solid #eee;padding-top:8px">
+            <span class="label">🔗 Vincular a outro item</span>
+            <p style="font-size:11px;color:#666;margin:4px 0 8px">Este trilho pertence a qual produto do pedido?</p>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #1976d2;border-radius:4px;background:#e3f2fd;cursor:pointer">
+                <input type="radio" name="vincular" checked style="margin:0">
+                <span><strong>Item 1</strong> · CORTINA WAVE · Sala</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+                <input type="radio" name="vincular" style="margin:0">
+                <span><strong>Item 3</strong> · PERSIANA ROLO · Sala</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #ddd;border-radius:4px;cursor:pointer;color:#999">
+                <input type="radio" name="vincular" style="margin:0">
+                <span>Não vincular</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Prós</h4><ul><li>Contexto claro no painel</li><li>Tabela não fica sobrecarregada</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Exige abrir o painel para vincular</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<h2>Como funciona a seleção de Persianas?</h2>
+<p class="subtitle">As persianas têm múltiplos níveis: modelo → tubo → bandô. Qual formato de seleção parece mais natural?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Painel em etapas (wizard inline)</h3>
+      <p>O painel lateral abre em etapas. Primeiro escolhe o modelo, depois as especificações disponíveis para aquele modelo aparecem logo abaixo.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Painel lateral — Persiana detectada</div>
+        <div class="mockup-body" style="font-size:12px">
+          <div style="margin-bottom:10px">
+            <span class="label">1. Modelo</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+              <button style="padding:4px 10px;background:#1976d2;color:#fff;border:none;border-radius:4px">Rolo / Rollo ✓</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Meliade</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Illumine</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Lumiere/Diamond</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Stilo/Shadow...</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid #eee;padding-top:8px;margin-bottom:10px">
+            <span class="label">2. Tubo</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">30mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">38mm</button>
+              <button style="padding:4px 10px;background:#1976d2;color:#fff;border:none;border-radius:4px">45mm ✓</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">53mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">65mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">70mm</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid #eee;padding-top:8px">
+            <span class="label">3. Caixa / Bandô <small style="color:#999">(opcional)</small></span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Bandô 32mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Bandô 38mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Bandô 53mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Caixa Box 90mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Caixa Box 70mm</button>
+              <button style="padding:4px 10px;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px">Caixa Box Grande</button>
+              <button style="padding:4px 10px;background:#eeeeee;border:1px solid #bdbdbd;border-radius:4px;color:#888">Nenhum</button>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:6px;background:#f1f8e9;border-radius:4px;font-size:11px">
+            ✅ Resultado: <strong>Rolo/Rollo · Tubo 45mm · Bandô 38mm</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dropdowns em cascata</h3>
+      <p>Três dropdowns (selects) em sequência. Selecionar o modelo carrega as opções de tubo; selecionar o tubo libera as opções de caixa/bandô.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Painel lateral — Persiana detectada</div>
+        <div class="mockup-body" style="font-size:12px">
+          <div style="margin-bottom:8px">
+            <label style="display:block;margin-bottom:3px;color:#555">Modelo</label>
+            <select style="width:100%;padding:5px;border:1px solid #ccc;border-radius:4px">
+              <option>Rolo / Rollo</option>
+            </select>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="display:block;margin-bottom:3px;color:#555">Tubo</label>
+            <select style="width:100%;padding:5px;border:1px solid #ccc;border-radius:4px">
+              <option>30mm</option>
+              <option>38mm</option>
+              <option selected>45mm</option>
+              <option>53mm</option>
+              <option>65mm</option>
+              <option>70mm</option>
+              <option>88mm</option>
+              <option>110mm</option>
+            </select>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="display:block;margin-bottom:3px;color:#555">Caixa / Bandô <span style="color:#999">(opcional)</span></label>
+            <select style="width:100%;padding:5px;border:1px solid #ccc;border-radius:4px">
+              <option value="">— Nenhum —</option>
+              <option>Bandô 32mm</option>
+              <option>Bandô 38mm</option>
+              <option>Bandô 53mm</option>
+              <option>Caixa Box 90mm</option>
+              <option>Caixa Box 70mm</option>
+              <option>Caixa Box Grande</option>
+            </select>
+          </div>
+          <div style="padding:6px;background:#f1f8e9;border-radius:4px;font-size:11px">
+            ✅ Resultado: <strong>Rolo/Rollo · Tubo 45mm · sem bandô</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

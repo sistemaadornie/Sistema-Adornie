@@ -1,0 +1,98 @@
+<h2>Ao clicar num pedido no dashboard, como abre o fluxo?</h2>
+<p class="subtitle">Escolha o modelo de abertura do histórico/fluxo do pedido</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Página completa (como hoje)</h3>
+      <p>Navega para <code>/pedidos/:id/fluxo</code> — ocupa a tela inteira. Botão "Voltar" retorna ao dashboard.</p>
+      <div class="mockup" style="margin-top:12px;font-size:12px">
+        <div class="mockup-header">Pedido #2099 — Página completa</div>
+        <div class="mockup-body" style="display:flex;flex-direction:column;gap:8px;padding:12px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <div style="background:#1e3a5f;border:2px solid #3b82f6;border-radius:8px;padding:8px 14px;font-size:11px;color:#93c5fd;white-space:nowrap">IMPORT. PED.<br/><span style="color:#64748b;font-size:10px">Leonardo · 06/06</span></div>
+            <div style="color:#475569;font-size:16px">→</div>
+            <div style="background:#064e3b;border:2px solid #10b981;border-radius:8px;padding:8px 14px;font-size:11px;color:#6ee7b7;white-space:nowrap">CATEG. E VINC.<br/><span style="color:#64748b;font-size:10px">Leonardo · 06/06</span></div>
+            <div style="color:#475569;font-size:16px">→</div>
+            <div style="background:#1e293b;border:2px dashed #475569;border-radius:8px;padding:8px 14px;font-size:11px;color:#475569;white-space:nowrap">PRÉ-AGENDA.<br/><span style="font-size:10px">pendente</span></div>
+            <div style="color:#475569;font-size:16px">→</div>
+            <div style="background:#1e293b;border:2px dashed #475569;border-radius:8px;padding:8px 14px;font-size:11px;color:#475569;white-space:nowrap">ENTREGA<br/><span style="font-size:10px">pendente</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><ul><li>Tela inteira para o fluxo</li><li>Igual ao que já existe</li></ul></div>
+        <div class="cons"><ul><li>Perde contexto do dashboard</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Painel lateral (side panel)</h3>
+      <p>O fluxo abre à direita do dashboard, sem sair da página. Os cards do pedido ficam visíveis à esquerda.</p>
+      <div class="mockup" style="margin-top:12px;font-size:12px">
+        <div class="mockup-header">Dashboard + Painel lateral</div>
+        <div class="mockup-body" style="display:flex;gap:0;padding:0;height:120px">
+          <div style="flex:1;padding:10px;border-right:1px solid #334155">
+            <div style="font-size:10px;color:#64748b;margin-bottom:6px">PEDIDOS</div>
+            <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:6px;padding:6px 8px;font-size:10px;color:#93c5fd;margin-bottom:4px">📦 #2099 — Vitória · R$ 8.500</div>
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 8px;font-size:10px;color:#64748b;margin-bottom:4px">#2098 — João · R$ 2.100</div>
+          </div>
+          <div style="flex:1.4;padding:10px;background:#0f172a">
+            <div style="font-size:10px;color:#93c5fd;font-weight:700;margin-bottom:8px">Fluxo do Pedido #2099</div>
+            <div style="display:flex;gap:4px;align-items:center;overflow:hidden">
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:5px 8px;font-size:9px;color:#6ee7b7;white-space:nowrap">✓ Import.</div>
+              <div style="color:#475569;font-size:12px">→</div>
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:5px 8px;font-size:9px;color:#6ee7b7;white-space:nowrap">✓ Categ.</div>
+              <div style="color:#475569;font-size:12px">→</div>
+              <div style="background:#1e293b;border:1px dashed #475569;border-radius:6px;padding:5px 8px;font-size:9px;color:#475569;white-space:nowrap">Pré-ag.</div>
+            </div>
+            <div style="margin-top:8px;font-size:9px;color:#64748b;border-top:1px solid #1e293b;padding-top:6px">Histórico de alterações abaixo...</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><ul><li>Mantém contexto da lista</li><li>Navega entre pedidos sem recarregar</li></ul></div>
+        <div class="cons"><ul><li>Espaço limitado em telas pequenas</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Modal grande (fullscreen modal)</h3>
+      <p>Abre um modal que ocupa ~90% da tela, com o fluxo e histórico completos. Fecha com X ou Esc.</p>
+      <div class="mockup" style="margin-top:12px;font-size:12px">
+        <div class="mockup-header">Modal do Pedido #2099</div>
+        <div class="mockup-body" style="padding:12px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:11px;font-weight:700;color:#f1f5f9">Pedido #2099 · Vitória · R$ 8.500</div>
+            <div style="font-size:10px;color:#475569;background:#1e293b;border:1px solid #334155;border-radius:4px;padding:3px 8px">✕ fechar</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center">
+            <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:6px 10px;font-size:10px;color:#6ee7b7">✓ Import.<br/><span style="color:#64748b;font-size:9px">Leonardo</span></div>
+            <div style="color:#475569;font-size:14px">→</div>
+            <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:6px 10px;font-size:10px;color:#6ee7b7">✓ Categ.<br/><span style="color:#64748b;font-size:9px">Leonardo</span></div>
+            <div style="color:#475569;font-size:14px">→</div>
+            <div style="background:#1e293b;border:1px dashed #475569;border-radius:6px;padding:6px 10px;font-size:10px;color:#475569">Pré-ag.<br/><span style="font-size:9px">pendente</span></div>
+          </div>
+          <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:8px;font-size:10px;color:#64748b">
+            <div style="color:#94a3b8;font-weight:600;margin-bottom:4px">Histórico de alterações</div>
+            <div>• 06/06 Leonardo importou o pedido</div>
+            <div>• 06/06 Leonardo categorizou os itens</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><ul><li>Espaço generoso para o fluxo e histórico</li><li>Fácil de fechar e voltar</li></ul></div>
+        <div class="cons"><ul><li>URL não muda (não dá pra compartilhar link)</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

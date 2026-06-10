@@ -1,0 +1,149 @@
+<h2>Design: Painéis independentes (Opção A)</h2>
+<p class="subtitle">Como as telas de Pedidos e Clientes ficarão após a mudança</p>
+
+<!-- Seção 1: Estrutura visual -->
+<div class="section">
+  <h3>1. Estrutura visual</h3>
+  <p class="subtitle">Toolbar e título da página ficam fixos acima. Abaixo, as duas colunas preenchem o restante do viewport e rolam de forma independente.</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Pedidos — layout após a mudança</div>
+    <div class="mockup-body" style="padding: 0;">
+      <!-- App header (fixed) -->
+      <div style="height: 32px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 12px; gap: 8px;">
+        <div style="width: 6px; height: 6px; border-radius: 50%; background: #555;"></div>
+        <div style="font-size: 9px; color: #666; flex: 1;">ADORNIE SISTEMA</div>
+        <div style="width: 50px; height: 18px; background: #333; border-radius: 3px;"></div>
+      </div>
+      <div style="display: flex; min-height: 300px;">
+        <!-- Sidebar (fixed) -->
+        <div style="width: 36px; background: #111; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; padding: 8px 0; gap: 6px; flex-shrink: 0;">
+          <div style="width: 20px; height: 3px; background: #444; border-radius: 2px;"></div>
+          <div style="width: 20px; height: 3px; background: #444; border-radius: 2px;"></div>
+          <div style="width: 20px; height: 3px; background: #666; border-radius: 2px;"></div>
+          <div style="width: 20px; height: 3px; background: #444; border-radius: 2px;"></div>
+        </div>
+        <!-- Main content -->
+        <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+          <!-- Page header + toolbar (does NOT scroll away) -->
+          <div style="background: var(--surface); padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="font-size: 13px; font-weight: 800; color: var(--text);">Pedidos de Venda</div>
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 55px; height: 18px; background: var(--primary); border-radius: 3px; opacity: 0.8;"></div>
+                <div style="width: 65px; height: 18px; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 3px;"></div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <div style="flex: 1; height: 24px; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 4px;"></div>
+              <div style="width: 90px; height: 24px; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 4px;"></div>
+            </div>
+          </div>
+
+          <!-- TWO COLUMNS — each scrolls independently -->
+          <div style="flex: 1; display: grid; grid-template-columns: 140px 1fr; gap: 8px; padding: 8px; min-height: 0; overflow: hidden;">
+
+            <!-- Lista com scroll próprio -->
+            <div style="overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--surface);">
+              <div style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/001</div>
+                  <div style="color: var(--text-secondary);">Maria Costa</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px; border: 1.5px solid var(--primary); background: var(--primary)22;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/002 ✓</div>
+                  <div style="color: var(--text-secondary);">João Silva</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/003</div>
+                  <div style="color: var(--text-secondary);">Ana Pereira</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/004</div>
+                  <div style="color: var(--text-secondary);">Carlos Lima</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/005</div>
+                  <div style="color: var(--text-secondary);">Fernanda Rocha</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/006</div>
+                  <div style="color: var(--text-secondary);">Roberto Mendes</div>
+                </div>
+                <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; font-size: 8px;">
+                  <div style="font-weight: 700; color: var(--text);">PV-2025/007</div>
+                  <div style="color: var(--text-secondary);">Patricia Souza</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detalhe com scroll próprio -->
+            <div style="overflow-y: auto; border: 1px solid var(--primary); border-radius: 6px; background: var(--surface);">
+              <div style="padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface);">
+                <div style="font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 2px;">PV-2025/002</div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <span style="font-size: 8px; background: #3b82f622; color: #3b82f6; padding: 2px 6px; border-radius: 10px; border: 1px solid #3b82f644;">Em andamento</span>
+                  <span style="font-size: 8px; color: var(--text-secondary);">João Silva</span>
+                </div>
+              </div>
+              <div style="padding: 8px 12px; font-size: 8px; color: var(--text-secondary);">
+                <div style="font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: 9px;">Itens do Pedido</div>
+                <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px 6px; margin-bottom: 3px;">Cortina Blackout · 2,40m × 1,80m · R$ 680,00</div>
+                <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px 6px; margin-bottom: 3px;">Trilho Alumínio · 3,00m · R$ 180,00</div>
+                <div style="background: var(--surface-secondary); border-radius: 3px; padding: 4px 6px; margin-bottom: 8px;">Persiana Horizontal · 1,20m × 1,60m · R$ 320,00</div>
+                <div style="font-weight: 600; color: var(--text); font-size: 9px;">Total: R$ 1.180,00</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Seção 2: Mudanças técnicas -->
+<div class="section">
+  <h3>2. O que muda no código</h3>
+  <div class="split" style="gap: 16px;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+      <div class="label" style="color: #ef4444; margin-bottom: 8px;">Antes (comportamento atual)</div>
+      <ul style="font-size: 13px; color: var(--text-secondary); padding-left: 18px; line-height: 1.8;">
+        <li>Página inteira rola (scroll global)</li>
+        <li>Detalhe usa <code>position: sticky</code></li>
+        <li>Lista cresce infinitamente para baixo</li>
+        <li>Clicar item no fundo → detalhe no topo</li>
+      </ul>
+    </div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+      <div class="label" style="color: #22c55e; margin-bottom: 8px;">Depois (novo comportamento)</div>
+      <ul style="font-size: 13px; color: var(--text-secondary); padding-left: 18px; line-height: 1.8;">
+        <li>Só as colunas rolam (scroll interno)</li>
+        <li>Detalhe usa <code>height: 100%; overflow-y: auto</code></li>
+        <li>Layout ocupa altura do viewport fixo</li>
+        <li>Clicar qualquer item → detalhe sempre visível</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Seção 3: Mobile -->
+<div class="section">
+  <h3>3. Comportamento mobile (< 900px)</h3>
+  <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Em telas pequenas, as colunas ficam empilhadas. Ao clicar um item, a página rola automaticamente para mostrar o detalhe (<code>scrollIntoView</code>). Sem mudança visual no mobile.</p>
+  <div style="display: flex; gap: 16px; align-items: flex-start;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex: 1;">
+      <div class="label" style="margin-bottom: 8px;">Desktop (≥ 900px)</div>
+      <div style="font-size: 12px; color: var(--text-secondary);">Painéis independentes lado a lado — sem mudança de posição ao selecionar</div>
+    </div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex: 1;">
+      <div class="label" style="margin-bottom: 8px;">Mobile (< 900px)</div>
+      <div style="font-size: 12px; color: var(--text-secondary);">Lista empilhada, ao clicar: scroll automático suave até o detalhe</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 14px 18px; background: var(--surface-secondary); border-radius: 8px; border-left: 3px solid var(--primary);">
+  <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;">Escopo da mudança</div>
+  <div style="font-size: 12px; color: var(--text-secondary);">CSS de <code>Pedidos.css</code> e <code>Clientes.css</code> — nenhum outro arquivo de estilo global é alterado. O JSX das páginas recebe o <code>ref</code> para scroll no mobile.</div>
+</div>

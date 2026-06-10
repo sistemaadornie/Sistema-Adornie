@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import "./Agendamentos.css";
 import useAgendamentos from "./hooks/useAgendamentos";
 import { api } from "../../services/api";
@@ -100,6 +100,7 @@ function detectarAtrasado(ag) {
   if (ag.status === "concluido" || ag.status === "nao_concluido" || ag.status === "cancelado" || ag.status === "atrasado" || ag.status === "pre_agendado") {
     return ag;
   }
+  if (!ag.hora) return ag;
   const agora   = new Date();
   const dataAg  = isoParaDate(ag.data);
   const [h, mi] = ag.hora.split(":").map(Number);
@@ -269,10 +270,12 @@ function AgendamentosOperador() {
   const [filtroEquipe, setFiltroEquipe] = useState("todos");
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [prefillInstalacao, setPrefillInstalacao] = useState(null);
 
   const [modalNovo,           setModalNovo]           = useState(false);
   const [modalStatus,         setModalStatus]         = useState(null);
+  const [conferenciaItensAg,  setConferenciaItensAg]  = useState(null);
   const [agDetalhe,           setAgDetalhe]           = useState(null);
   const [agEditar,            setAgEditar]            = useState(null);
   const [salvando,            setSalvando]            = useState(false);
@@ -315,6 +318,15 @@ function AgendamentosOperador() {
       setPrefillInstalacao(pre);
       setModalNovo(true);
       window.history.replaceState({}, document.title); // limpa o state p/ não reabrir
+    }
+  }, [location.state]); // eslint-disable-line
+
+  /* Reabrir lista de itens de conferência ao voltar da Ordem de Serviço */
+  useEffect(() => {
+    const agId = location.state?.reabrirConferenciaAgendamentoId;
+    if (agId) {
+      setConferenciaItensAg({ id: agId });
+      window.history.replaceState({}, document.title);
     }
   }, [location.state]); // eslint-disable-line
 
@@ -795,8 +807,10 @@ function AgendamentosOperador() {
     try {
       await alterarStatusAPI(id, novoStatus, arquivos, motivo);
       mostrarToast("Status atualizado!");
+      return true;
     } catch (e) {
       mostrarToast(e.message || "Erro ao alterar status.", "error");
+      return false;
     } finally {
       setSalvando(false);
       setModalStatus(null);
@@ -1118,6 +1132,7 @@ function AgendamentosOperador() {
           user={user}
           onClose={() => setAgDetalhe(null)}
           onEditar={() => setAgEditar(agDetalhe)}
+          onVerItensConferencia={(ag) => { setConferenciaItensAg(ag); setAgDetalhe(null); }}
           onAlterarStatus={(novoStatus) => {
             const requerFoto = ["andamento","concluido","nao_concluido"].includes(novoStatus);
             if (requerFoto) {
@@ -1152,9 +1167,24 @@ function AgendamentosOperador() {
           novoStatus={modalStatus.novoStatus}
           onClose={() => setModalStatus(null)}
           salvando={salvando}
-          onConfirmar={(arquivos, motivo) =>
-            alterarStatus(modalStatus.ag.id, modalStatus.novoStatus, arquivos, motivo)
-          }
+          onConfirmar={async (arquivos, motivo) => {
+            const { ag, novoStatus } = modalStatus;
+            const ok = await alterarStatus(ag.id, novoStatus, arquivos, motivo);
+            if (ok && novoStatus === "andamento" && ag.tipo === "Conferência") {
+              setConferenciaItensAg(ag);
+            }
+          }}
+        />
+      )}
+
+      {/* ── MODAL: ITENS PARA CONFERÊNCIA (abre Ordem de Serviço) ── */}
+      {conferenciaItensAg && (
+        <ConferenciaItensModal
+          ag={conferenciaItensAg}
+          onClose={() => setConferenciaItensAg(null)}
+          onAbrirOS={(osId, agendamentoId) => {
+            navigate(`/pedidos/os/${osId}`, { state: { voltarConferenciaAgendamentoId: agendamentoId } });
+          }}
         />
       )}
 
@@ -1336,7 +1366,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [form, setForm] = useState({
     titulo:      agEditar?.titulo      ?? (prefill ? `Instalação — ${prefill.pedido_numero || ""}`.trim() : ""),
     cliente:     agEditar?.cliente     ?? prefill?.cliente    ?? "",
-    tipo:        agEditar?.tipo        ?? "Instalação",
+    tipo:        agEditar?.tipo        ?? prefill?.tipo ?? "Instalação",
     data:        agEditar?.data        ?? dataInicial ?? "",
     hora:        agEditar?.hora        ?? "",
     hora_fim:    horaFimFromDuracao(agEditar?.hora, agEditar?.duracao_minutos),
@@ -1369,7 +1399,9 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
   const [clientesSug,  setClientesSug]  = useState([]);
   const [mostrarSug,   setMostrarSug]   = useState(false);
   const [clienteSel,   setClienteSel]   = useState(
-    agEditar?.cliente_id ? { id: agEditar.cliente_id, nome: agEditar.cliente } : null
+    agEditar?.cliente_id ? { id: agEditar.cliente_id, nome: agEditar.cliente }
+      : prefill?.cliente_id ? { id: prefill.cliente_id, nome: prefill.cliente }
+      : null
   );
   const [enderecoSel,  setEnderecoSel]  = useState("");
   const buscarTimerRef = useRef(null);
@@ -1528,6 +1560,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
       duracao_minutos: duracaoMinutos,
       pessoa_obrigatoria_id: pessoaObrigatoria,
       pedido_id: form.pedido_id ? Number(form.pedido_id) : null,
+      agendamento_pai_id: agEditar?.agendamento_pai_id ?? prefill?.agendamento_pai_id ?? null,
       status: preAgendado ? "pre_agendado" : "agendado",
       cliente_novo: !clienteSel,
       cliente_telefone: clienteTel || undefined,
@@ -2035,7 +2068,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
 }
 
 /* ── MODAL: DETALHE ──────────────────────────────── */
-function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, criarSugestao, listarSugestoes, responderSugestao }) {
+function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, onVerItensConferencia, criarSugestao, listarSugestoes, responderSugestao }) {
   const meta = metaEvento(ag);
   const instaladorPuro = isInstaladorPuro(user);
 
@@ -2048,6 +2081,18 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
   }, [ag.id]);
 
   const anexos = detalhe?.anexos || ag.anexos || [];
+
+  /* Pendências de conferência (para liberar/bloquear conclusão) */
+  const [conferenciaPendentes, setConferenciaPendentes] = useState(0);
+  useEffect(() => {
+    if (ag.tipo !== "Conferência") return;
+    api.get(`/agendamentos/${ag.id}/conferencia-itens`)
+      .then((r) => {
+        const itens = r.itens || [];
+        setConferenciaPendentes(itens.filter((i) => !i.ficha_preenchida).length);
+      })
+      .catch(() => {});
+  }, [ag.id, ag.tipo]);
 
   /* Sugestões */
   const [sugestoes, setSugestoes] = useState([]);
@@ -2124,7 +2169,8 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
   } else {
     acoesBase = STATUS_ACOES_GESTOR[ag.status] || [];
   }
-  const acoes = acoesBase;
+  const bloqueiaConclusao = ag.tipo === "Conferência" && conferenciaPendentes > 0;
+  const acoes = bloqueiaConclusao ? acoesBase.filter((s) => s !== "concluido") : acoesBase;
 
   const ACAO_META = {
     andamento:     { label: "Iniciar agendamento",     icon: "▶", bg: "#6366f1" },
@@ -2521,6 +2567,30 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, cr
             </div>
           )}
 
+          {/* Itens para conferência (enquanto em andamento) */}
+          {ag.tipo === "Conferência" && ag.status === "andamento" && (
+            <div style={{ paddingTop: 4 }}>
+              <button
+                style={{
+                  width: "100%", padding: "11px 16px",
+                  background: "var(--pf-btn-secondary-bg, #6366f1)", color: "var(--color-text-primary, #fff)",
+                  border: "1px solid var(--pf-separador, transparent)",
+                  borderRadius: "var(--radius-md)", cursor: "pointer",
+                  fontSize: 13, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 7, justifyContent: "center",
+                }}
+                onClick={() => onVerItensConferencia(ag)}
+              >
+                📋 Ver itens para conferência
+              </button>
+              {bloqueiaConclusao && (
+                <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 6, textAlign: "center" }}>
+                  ⏳ {conferenciaPendentes} item(ns) pendente(s) — confira todos para liberar a conclusão.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Ações de status */}
           {acoes.length > 0 && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
@@ -2643,6 +2713,72 @@ function AnexosSecoes({ anexos, tipoArquivo, TIPO_ANEXO_LABEL, statusAg }) {
           <GradeAnexos items={outros} cor="var(--color-text-muted)" />
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── MODAL: ITENS PARA CONFERÊNCIA (abre Ordem de Serviço) ──────────── */
+function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
+  const [itens,   setItens]   = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/agendamentos/${ag.id}/conferencia-itens`);
+      setItens(res.itens || []);
+    } finally {
+      setLoading(false);
+    }
+  }, [ag.id]);
+
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const totalConferidos = itens.filter((i) => i.ficha_preenchida).length;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <h2>📐 Itens para conferência</h2>
+            <p>{totalConferidos} de {itens.length} conferidos — selecione um item para preencher/visualizar a Ordem de Serviço</p>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 20 }}>Carregando itens...</div>
+          ) : itens.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 20, color: "var(--color-text-muted)" }}>
+              Nenhum item vinculado a este agendamento.
+            </div>
+          ) : (
+            itens.map((item) => (
+              <button
+                key={item.pedido_item_id}
+                onClick={() => item.ordem_servico_id && onAbrirOS(item.ordem_servico_id, ag.id)}
+                disabled={!item.ordem_servico_id}
+                style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  width: "100%", textAlign: "left", padding: "12px 14px",
+                  background: "var(--color-surface-soft)", border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)", cursor: item.ordem_servico_id ? "pointer" : "not-allowed",
+                  opacity: item.ordem_servico_id ? 1 : 0.6,
+                }}
+              >
+                <span>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{item.descricao}</div>
+                  {item.ambiente && <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.ambiente}</div>}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: item.ficha_preenchida ? "#22c55e" : "#94a3b8" }}>
+                  {item.ficha_preenchida ? "Conferido" : "Pendente"}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

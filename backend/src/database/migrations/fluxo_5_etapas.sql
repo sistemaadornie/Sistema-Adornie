@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS conferencia_itens (
   -- 'pendente' | 'conferido' | 'reprovado'
   observacoes    TEXT,
   dados          JSONB,
-  conferido_por  INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+  conferido_por  UUID REFERENCES usuarios(id) ON DELETE SET NULL,
   conferido_em   TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (agendamento_id, pedido_item_id)

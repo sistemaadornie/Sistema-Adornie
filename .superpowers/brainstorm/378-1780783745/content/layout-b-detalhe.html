@@ -1,0 +1,67 @@
+<h2>Boa escolha — vamos detalhar a opção B</h2>
+<p class="subtitle">A coluna lateral fixa resolve "destacar o essencial". Mas falta decidir: o painel da <b>direita</b> ainda fica com tudo empilhado (itens, pagamentos, observações, mídias) rolando junto, ou também ganha sub-navegação?</p>
+
+<div class="cards">
+  <div class="card" data-choice="b1" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px; font-size:11px; line-height:1.4; display:flex; gap:10px;">
+        <div style="width:32%; display:flex; flex-direction:column; gap:6px;">
+          <div style="background:#1e3a5f; border:1px solid #3b82f6; border-radius:8px; padding:8px;">
+            <div><b>Cliente X</b></div>
+            <div style="color:#94a3b8;">Em andamento</div>
+            <div style="color:#34d399; font-weight:700; margin-top:4px;">R$ 12.450,00</div>
+          </div>
+          <div class="mock-button" style="text-align:center;">✏ Editar</div>
+          <div class="mock-button" style="text-align:center;">🖨 Imprimir</div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:5px; max-height:140px; overflow:hidden; position:relative;">
+          <div class="placeholder" style="height:26px;">Informações</div>
+          <div class="placeholder" style="height:26px;">Endereço</div>
+          <div class="placeholder" style="height:50px;">Itens (tabela)</div>
+          <div class="placeholder" style="height:30px;">Pagamentos</div>
+          <div class="placeholder" style="height:26px;">Observações</div>
+          <div class="placeholder" style="height:26px;">Mídias</div>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:30px; background:linear-gradient(transparent, #1e293b);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B1 — Painel direito com rolagem única</h3>
+      <p>Mais simples de implementar. Todas as seções continuam empilhadas, só que dentro de uma área que rola sozinha — a identidade do pedido na esquerda nunca se move. Reduz menos o "empilhamento" em si, mas já tira o problema de perder o contexto ao rolar.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b2" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px; font-size:11px; line-height:1.4; display:flex; gap:10px;">
+        <div style="width:32%; display:flex; flex-direction:column; gap:6px;">
+          <div style="background:#1e3a5f; border:1px solid #3b82f6; border-radius:8px; padding:8px;">
+            <div><b>Cliente X</b></div>
+            <div style="color:#94a3b8;">Em andamento</div>
+            <div style="color:#34d399; font-weight:700; margin-top:4px;">R$ 12.450,00</div>
+          </div>
+          <div class="mock-button" style="text-align:center;">✏ Editar</div>
+          <div class="mock-button" style="text-align:center;">🖨 Imprimir</div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; gap:4px;">
+            <div style="flex:1; text-align:center; background:#3b82f6; color:#fff; border-radius:5px; padding:4px;">Geral</div>
+            <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:5px; padding:4px;">Itens (8)</div>
+            <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:5px; padding:4px;">Pagtos.</div>
+            <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:5px; padding:4px;">Mídias</div>
+          </div>
+          <div class="placeholder" style="height:108px;">conteúdo da sub-aba "Geral": informações + endereço + observações</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B2 — Painel direito também com sub-abas</h3>
+      <p>Combina a coluna fixa com a navegação por sub-abas (Geral / Itens / Pagamentos / Mídias) dentro do conteúdo. Resolve o "empilhamento" de forma mais completa — cada sub-aba mostra só uma fatia focada — ao custo de uma navegação com mais cliques.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Minha recomendação</p>
+  <p>Vou de <b>B2</b>: ela resolve as três queixas ao mesmo tempo — identidade/ações sempre visíveis na esquerda, navegação por sub-abas elimina a rolagem longa, e cada sub-aba pode ter sua própria hierarquia visual sem competir com as outras (ex: "Itens" pode dar mais espaço pra tabela, "Geral" pode focar em destacar status/pendências). B1 é mais rápida de implementar, mas mantém boa parte do problema original — só "esconde" a rolagem em vez de eliminá-la.</p>
+</div>

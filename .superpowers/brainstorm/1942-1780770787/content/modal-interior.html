@@ -1,0 +1,154 @@
+<h2>Como organizar o interior do modal de cada etapa?</h2>
+<p class="subtitle">O modal abre ao clicar em "Dados do Pedido" ou "Entrega". Como organizar o conteúdo interno?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Abas dentro do modal</h3>
+      <p>O modal tem abas: <strong>Detalhes</strong> (dados, PDF, botões) e <strong>Histórico</strong> (log de alterações). Alterna entre elas.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Modal — Dados do Pedido #2099</div>
+        <div class="mockup-body" style="padding:0">
+          <!-- abas -->
+          <div style="display:flex;border-bottom:1px solid #334155">
+            <div style="padding:8px 16px;font-size:11px;font-weight:700;color:#3b82f6;border-bottom:2px solid #3b82f6;cursor:pointer">Detalhes</div>
+            <div style="padding:8px 16px;font-size:11px;color:#64748b;cursor:pointer">Histórico</div>
+          </div>
+          <!-- conteúdo da aba ativa -->
+          <div style="padding:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:#94a3b8;margin-bottom:10px">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Consultora:</strong> Leonardo</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">📄 Vinculado</span></div>
+              <div><strong style="color:#e2e8f0">Categ.:</strong> <span style="color:#34d399">✓ Concluída</span></div>
+              <div><strong style="color:#e2e8f0">Verif.:</strong> <span style="color:#34d399">✓ OK</span></div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:6px;padding:5px 10px;font-size:10px;color:#93c5fd">✏ Editar pedido</div>
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:5px 10px;font-size:10px;color:#6ee7b7">📄 Abrir PDF</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:5px 10px;font-size:10px;color:#94a3b8">🖨 Imprimir</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Seções com scroll — tudo em uma página</h3>
+      <p>Sem abas. O modal tem scroll: primeiro os detalhes e ações, depois o histórico logo abaixo numa seção separada.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Modal — Dados do Pedido #2099</div>
+        <div class="mockup-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto">
+
+          <!-- seção detalhes -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Informações do Pedido</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#94a3b8">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Consultora:</strong> Leonardo</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">📄 Vinculado</span></div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:6px;padding:4px 10px;font-size:10px;color:#93c5fd">✏ Editar</div>
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:6px;padding:4px 10px;font-size:10px;color:#6ee7b7">📄 PDF</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:4px 10px;font-size:10px;color:#94a3b8">🖨 Imprimir</div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:#1e293b"></div>
+
+          <!-- seção itens -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Itens do Pedido (12)</div>
+            <div style="font-size:11px;color:#94a3b8;background:#0f172a;border-radius:6px;padding:6px 10px">
+              1 · Cortina Wave Offwhite — Sala — 2,00×3,00m · R$ 650,00
+            </div>
+            <div style="font-size:10px;color:#475569;margin-top:4px">+ 11 itens...</div>
+          </div>
+
+          <div style="height:1px;background:#1e293b"></div>
+
+          <!-- seção histórico -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Histórico de Alterações</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;margin-top:3px"></div>
+                <div style="font-size:11px;color:#94a3b8"><strong style="color:#e2e8f0">Leonardo</strong> importou o pedido · <span style="color:#475569">06/06 14:23</span></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;margin-top:3px"></div>
+                <div style="font-size:11px;color:#94a3b8"><strong style="color:#e2e8f0">Leonardo</strong> editou o pedido · <span style="color:#475569">06/06 14:31</span></div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;margin-top:3px"></div>
+                <div style="font-size:11px;color:#94a3b8"><strong style="color:#e2e8f0">Leonardo</strong> concluiu categorização · <span style="color:#475569">06/06 15:10</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Layout 2 colunas no modal</h3>
+      <p>Esquerda: detalhes, itens e ações. Direita: histórico de alterações sempre visível ao lado.</p>
+      <div class="mockup" style="margin-top:10px">
+        <div class="mockup-header">Modal — Dados do Pedido #2099</div>
+        <div class="mockup-body" style="padding:0;display:flex;height:220px">
+
+          <!-- esquerda -->
+          <div style="flex:1.4;padding:12px;border-right:1px solid #1e293b;overflow-y:auto">
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">Informações</div>
+            <div style="font-size:11px;color:#94a3b8;display:flex;flex-direction:column;gap:4px;margin-bottom:8px">
+              <div><strong style="color:#e2e8f0">Cliente:</strong> Vitória Almeida</div>
+              <div><strong style="color:#e2e8f0">Total:</strong> R$ 8.500,00</div>
+              <div><strong style="color:#e2e8f0">PDF:</strong> <span style="color:#34d399">✓</span></div>
+              <div><strong style="color:#e2e8f0">Categ.:</strong> <span style="color:#34d399">✓</span></div>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:5px;padding:3px 8px;font-size:9px;color:#93c5fd">✏ Editar</div>
+              <div style="background:#064e3b;border:1px solid #10b981;border-radius:5px;padding:3px 8px;font-size:9px;color:#6ee7b7">📄 PDF</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:9px;color:#94a3b8">🖨</div>
+            </div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Itens (12)</div>
+            <div style="font-size:10px;color:#64748b;background:#0f172a;border-radius:4px;padding:5px 8px">Cortina Wave · Sala · R$ 650</div>
+            <div style="font-size:9px;color:#475569;margin-top:3px">+ 11 itens...</div>
+          </div>
+
+          <!-- direita: histórico -->
+          <div style="flex:1;padding:12px;overflow-y:auto;background:#0a0f1a">
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Histórico</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="border-left:2px solid #10b981;padding-left:8px">
+                <div style="font-size:10px;font-weight:600;color:#6ee7b7">Importação</div>
+                <div style="font-size:10px;color:#64748b">Leonardo · 06/06 14:23</div>
+              </div>
+              <div style="border-left:2px solid #f59e0b;padding-left:8px">
+                <div style="font-size:10px;font-weight:600;color:#fcd34d">Edição</div>
+                <div style="font-size:10px;color:#64748b">Leonardo · 06/06 14:31</div>
+              </div>
+              <div style="border-left:2px solid #10b981;padding-left:8px">
+                <div style="font-size:10px;font-weight:600;color:#6ee7b7">Categorização OK</div>
+                <div style="font-size:10px;color:#64748b">Leonardo · 06/06 15:10</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

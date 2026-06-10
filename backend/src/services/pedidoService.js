@@ -9,11 +9,21 @@ function fmtNumero(seq) {
   return `SIS-${String(seq).padStart(8, "0")}`;
 }
 
+// Normaliza "#00002304" -> "#2304", removendo zeros à esquerda do número de origem
+function fmtNumeroOrigem(numeroOrigem) {
+  if (!numeroOrigem) return null;
+  const n = parseInt(String(numeroOrigem).replace(/^#+/, ""), 10);
+  return Number.isNaN(n) ? numeroOrigem : `#${n}`;
+}
+
 function toDecimal(v) {
   if (v == null || v === "") return null;
   if (typeof v === "number") return isNaN(v) ? null : v;
-  // String em formato brasileiro: "1.309,18" → 1309.18
-  return parseFloat(String(v).replace(/\./g, "").replace(",", ".")) || null;
+  const s = String(v).trim();
+  // Com vírgula: formato BR ("1.234,56") — ponto é milhar, vírgula é decimal
+  if (s.includes(",")) return parseFloat(s.replace(/\./g, "").replace(",", ".")) || null;
+  // Sem vírgula: ponto é decimal ("1234.56" vindo de input type=number)
+  return parseFloat(s) || null;
 }
 
 async function _verificarEtapa1(client, pedidoId) {
@@ -98,7 +108,7 @@ async function montarPedido(id, empresaId) {
   return {
     ...p,
     numero_rua: p.numero,
-    numero: p.numero_origem || fmtNumero(p.numero_sequencial || p.id),
+    numero: fmtNumeroOrigem(p.numero_origem) || fmtNumero(p.numero_sequencial || p.id),
     itens: itensRes.rows.map(it => ({
       ...it,
       vinculos: vinculosPorItem[it.id] || [],
@@ -146,7 +156,7 @@ async function listar(empresaId, { q, status, cliente_id } = {}) {
   return res.rows.map((p) => ({
     ...p,
     numero_rua: p.numero,
-    numero: p.numero_origem || fmtNumero(p.numero_sequencial || p.id),
+    numero: fmtNumeroOrigem(p.numero_origem) || fmtNumero(p.numero_sequencial || p.id),
   }));
 }
 
@@ -632,4 +642,4 @@ async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, va
   return { [campo]: valor };
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa };
+module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa, fmtNumeroOrigem };

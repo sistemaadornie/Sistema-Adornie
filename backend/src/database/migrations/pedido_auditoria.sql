@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS pedido_auditoria (
   id           SERIAL PRIMARY KEY,
   pedido_id    INTEGER      NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
   empresa_id   INTEGER      NOT NULL,
-  usuario_id   INTEGER      REFERENCES usuarios(id) ON DELETE SET NULL,
+  usuario_id   UUID         REFERENCES usuarios(id) ON DELETE SET NULL,
   etapa        VARCHAR(30)  NOT NULL,
   acao         VARCHAR(60)  NOT NULL,
   descricao    TEXT,

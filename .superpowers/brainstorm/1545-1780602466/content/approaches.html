@@ -1,0 +1,108 @@
+<h2>3 abordagens arquiteturais para o Dashboard + Fluxo de Pedidos</h2>
+<p class="subtitle">Diferem principalmente em onde o fluxo detalhado aparece e como os dados de etapa são armazenados</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="painel-lateral" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:10px;border-radius:6px;font-family:monospace;font-size:10px">
+      <div style="display:flex;gap:6px;height:130px">
+        <div style="width:48%;background:#1e293b;border-radius:4px;padding:8px;overflow:hidden">
+          <div style="color:#94a3b8;font-size:9px;margin-bottom:4px">PEDIDOS ATIVOS</div>
+          <div style="background:#0f172a;border-radius:3px;padding:5px;margin-bottom:3px;border-left:2px solid #3b82f6">
+            <div style="color:#f1f5f9">#1035 Fernanda</div>
+            <div style="display:flex;gap:2px;margin-top:3px">
+              <div style="flex:1;height:4px;background:#22c55e;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#22c55e;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#22c55e;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#3b82f6;border-radius:1px;box-shadow:0 0 4px #3b82f6"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+            </div>
+          </div>
+          <div style="background:#0f172a;border-radius:3px;padding:5px;margin-bottom:3px;border-left:2px solid #f59e0b;opacity:0.6">
+            <div style="color:#f1f5f9">#1042 Roberto</div>
+            <div style="display:flex;gap:2px;margin-top:3px">
+              <div style="flex:1;height:4px;background:#22c55e;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#22c55e;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+              <div style="flex:1;height:4px;background:#334155;border-radius:1px"></div>
+            </div>
+          </div>
+        </div>
+        <div style="width:52%;background:#1e293b;border-radius:4px;padding:8px;border:1px solid #3b82f640">
+          <div style="color:#3b82f6;font-size:9px;margin-bottom:6px">#1035 — FLUXO</div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;gap:4px;align-items:center"><div style="width:6px;height:6px;background:#22c55e;border-radius:50%"></div><span style="color:#22c55e;font-size:9px">✓ PDF importado</span></div>
+            <div style="margin-left:3px;width:1px;height:4px;background:#334155"></div>
+            <div style="display:flex;gap:4px;align-items:center"><div style="width:6px;height:6px;background:#22c55e;border-radius:50%"></div><span style="color:#22c55e;font-size:9px">✓ Verificado</span></div>
+            <div style="margin-left:3px;width:1px;height:4px;background:#334155"></div>
+            <div style="display:flex;gap:4px;align-items:center"><div style="width:6px;height:6px;background:#3b82f6;border-radius:50%;box-shadow:0 0 4px #3b82f6"></div><span style="color:#3b82f6;font-size:9px">● Genitor — 15/06</span></div>
+            <div style="margin-left:3px;width:1px;height:4px;background:#334155"></div>
+            <div style="display:flex;gap:4px;align-items:center"><div style="width:6px;height:6px;background:#334155;border-radius:50%"></div><span style="color:#475569;font-size:9px">○ Conferência</span></div>
+          </div>
+          <div style="margin-top:6px;background:#f59e0b20;border-radius:3px;padding:3px 5px;border:1px solid #f59e0b30">
+            <span style="color:#f59e0b;font-size:9px">⚠️ 5 dias p/ próx. entrega</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Dashboard com painel lateral deslizante <span style="color:#22c55e;font-size:11px">(Recomendado)</span></h3>
+      <p>Rota nova <code>/dashboard-pedidos</code>. Lista à esquerda com barra de progresso, clique no pedido abre painel lateral com fluxo detalhado. Sem mudar a tela de Pedidos atual. Etapas manuais salvas em colunas JSONB no pedido.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pagina-fluxo" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:10px;border-radius:6px;font-family:monospace;font-size:10px">
+      <div style="height:130px;background:#1e293b;border-radius:4px;padding:10px">
+        <div style="color:#8b5cf6;font-size:9px;margin-bottom:8px">FLUXO — PEDIDO #1035 — FERNANDA LIMA</div>
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">
+          <div style="background:#22c55e20;border:1px solid #22c55e;border-radius:4px;padding:4px 6px;color:#22c55e;font-size:9px">✓ PDF</div>
+          <div style="color:#334155">→</div>
+          <div style="background:#22c55e20;border:1px solid #22c55e;border-radius:4px;padding:4px 6px;color:#22c55e;font-size:9px">✓ Verificado</div>
+          <div style="color:#334155">→</div>
+          <div style="background:#22c55e20;border:1px solid #22c55e;border-radius:4px;padding:4px 6px;color:#22c55e;font-size:9px">✓ Categorizado</div>
+          <div style="color:#334155">→</div>
+          <div style="background:#3b82f620;border:1px solid #3b82f6;border-radius:4px;padding:4px 6px;color:#3b82f6;font-size:9px;box-shadow:0 0 6px #3b82f620">● GENITOR<br/>15/06</div>
+          <div style="color:#334155">→</div>
+          <div style="background:#334155;border-radius:4px;padding:4px 6px;color:#475569;font-size:9px">○ Conferência</div>
+        </div>
+        <div style="margin-top:8px;color:#94a3b8;font-size:9px;text-align:center">← voltar ao dashboard</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Dashboard + Página de fluxo separada por pedido</h3>
+      <p>Dashboard em <code>/dashboard-pedidos</code>, clique em um pedido vai para <code>/pedidos/:id/fluxo</code> com o diagrama expandido em tela cheia — estilo "schema visualizer". Mais espaço para mostrar múltiplos genitores e herdeiros ramificados.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="aba-pedidos" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:10px;border-radius:6px;font-family:monospace;font-size:10px">
+      <div style="height:130px;background:#1e293b;border-radius:4px;overflow:hidden">
+        <div style="display:flex;border-bottom:1px solid #334155">
+          <div style="padding:5px 10px;color:#94a3b8;font-size:9px;border-bottom:2px solid transparent">Lista</div>
+          <div style="padding:5px 10px;color:#3b82f6;font-size:9px;border-bottom:2px solid #3b82f6">Dashboard</div>
+          <div style="padding:5px 10px;color:#94a3b8;font-size:9px">Etiquetas</div>
+        </div>
+        <div style="padding:8px">
+          <div style="color:#94a3b8;font-size:9px;margin-bottom:4px">MODO: <span style="color:#f1f5f9">Visão Geral</span> / <span style="color:#3b82f6;cursor:pointer">Por Consultora ▾</span></div>
+          <div style="background:#0f172a;border-radius:3px;padding:5px;margin-bottom:3px;border-left:2px solid #3b82f6">
+            <div style="color:#f1f5f9">#1035 Fernanda <span style="color:#3b82f6;font-size:9px">●●●●○○</span></div>
+          </div>
+          <div style="background:#0f172a;border-radius:3px;padding:5px;border-left:2px solid #f59e0b;opacity:0.7">
+            <div style="color:#f1f5f9">#1042 Roberto <span style="color:#f59e0b;font-size:9px">●●○○○○</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Aba Dashboard dentro da tela de Pedidos</h3>
+      <p>Adiciona uma aba "Dashboard" na tela de Pedidos já existente. Menos impacto no menu de navegação. Reutiliza contexto da tela atual, mas fica mais apertado e mistura duas responsabilidades.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">A abordagem A e B podem ser combinadas: A para o dia a dia, B como "tela expandida" para pedidos complexos com múltiplos genitores.</p>

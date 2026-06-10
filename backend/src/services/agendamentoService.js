@@ -402,19 +402,17 @@ async function criar(empresaId, userId, dados) {
       INSERT INTO agendamentos
         (empresa_id, titulo, cliente, tipo, data, hora, endereco, cep, rua, numero, complemento,
          bairro, cidade, estado, descricao, observacoes, status, criado_por, duracao_minutos,
-         pessoa_obrigatoria_id, agendamento_pai_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19,$21)
+         pessoa_obrigatoria_id, agendamento_pai_id, cliente_id, pedido_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$20,$17,$18,$19,$21,$22,$23)
       RETURNING id
       `,
       [empresaId, titulo, cliente, tipo||"Instalação", data, hora||null,
        endereco||null, cep||null, rua||null, numero||null, complemento||null,
        bairro||null, cidade||null, estado||null, descricao||null, observacoes||null,
        userId, duracao_minutos||null, pessoa_obrigatoria_id||null, statusFinal,
-       agendamento_pai_id||null]
+       agendamento_pai_id||null, clienteId, pedidoIdFinal]
     );
     const agId = result.rows[0].id;
-    db.query(`UPDATE agendamentos SET cliente_id=$1 WHERE id=$2`, [clienteId, agId]).catch(() => {});
-    db.query(`UPDATE agendamentos SET pedido_id=$1 WHERE id=$2`, [pedidoIdFinal, agId]).catch(() => {});
 
     if (aprovacao) {
       await client.query(
@@ -679,6 +677,23 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     [id, empresaId]
   );
   if (existe.rows.length === 0) { const e = new Error("Agendamento não encontrado."); e.status = 404; throw e; }
+
+  if (status === "concluido" && existe.rows[0]?.tipo === "Conferência") {
+    const pendentesCheck = await db.query(
+      `SELECT COUNT(*) FILTER (WHERE os.dados_tecnicos IS NULL) AS pendentes, COUNT(*) AS total
+       FROM agendamento_itens ai
+       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
+       WHERE ai.agendamento_id = $1 AND ai.pedido_item_id IS NOT NULL`,
+      [id]
+    );
+    const { pendentes, total } = pendentesCheck.rows[0];
+    if (Number(pendentes) > 0) {
+      const e = new Error(`Ainda há ${pendentes} de ${total} item(ns) pendente(s) de conferência. Confira todos os itens antes de concluir o agendamento.`);
+      e.status = 400;
+      throw e;
+    }
+  }
 
   /* uploads Cloudinary ANTES da transação (não pode ser dentro — operação externa) */
   const anexosParaInserir = [];
@@ -1245,12 +1260,15 @@ async function listarConferenciaItens(agendamentoId, empresaId) {
        ci.observacoes,
        ci.dados,
        ci.conferido_em,
-       u.nome_completo AS conferido_por_nome
+       u.nome_completo AS conferido_por_nome,
+       os.id AS ordem_servico_id,
+       (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
      FROM agendamento_itens ai
      JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
      LEFT JOIN conferencia_itens ci
        ON ci.agendamento_id = $1 AND ci.pedido_item_id = pi.id
      LEFT JOIN usuarios u ON u.id = ci.conferido_por
+     LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
      WHERE ai.agendamento_id = $1
        AND ai.pedido_item_id IS NOT NULL
      ORDER BY pi.ordem ASC, pi.id ASC`,

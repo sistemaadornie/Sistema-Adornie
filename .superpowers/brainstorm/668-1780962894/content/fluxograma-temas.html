@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluxograma — Temas</title>
+<style>
+  :root[data-theme="dark"] {
+    --bg-canvas:     #0d0d0d;
+    --bg-page:       #0d0d0d;
+    --bg-card:       #111827;
+    --bg-card-done:  #0d1f1e;
+    --bg-card-act:   #1a1200;
+    --bg-header:     #0f172a;
+    --dot-color:     #1e293b;
+    --border-base:   #1e293b;
+    --border-done:   #0d9488;
+    --border-act:    #f59e0b;
+    --text-main:     #f1f5f9;
+    --text-sub:      #64748b;
+    --text-item:     #94a3b8;
+    --text-item-done:#6ee7b7;
+    --text-item-pend:#fbbf24;
+    --conn-base:     #334155;
+    --conn-act:      #0d9488;
+    --status-done:   #2dd4bf;
+    --status-act:    #fbbf24;
+    --status-pend:   #475569;
+    --header-bg:     rgba(15,23,42,0.95);
+    --legend-bg:     #1e293b;
+    --legend-border: #334155;
+    --btn-bg:        #1e293b;
+    --btn-color:     #94a3b8;
+    --glow-act:      rgba(245,158,11,.25);
+    --glow-done:     rgba(13,148,136,.1);
+    --card-opacity-pend: 0.55;
+    --shadow-done:   0 4px 20px rgba(13,148,136,.15);
+  }
+
+  :root[data-theme="light"] {
+    --bg-canvas:     #f0f4f8;
+    --bg-page:       #f0f4f8;
+    --bg-card:       #ffffff;
+    --bg-card-done:  #f0fdf9;
+    --bg-card-act:   #fffbeb;
+    --bg-header:     #ffffff;
+    --dot-color:     #cbd5e1;
+    --border-base:   #e2e8f0;
+    --border-done:   #0d9488;
+    --border-act:    #d97706;
+    --text-main:     #0f172a;
+    --text-sub:      #64748b;
+    --text-item:     #475569;
+    --text-item-done:#0f766e;
+    --text-item-pend:#b45309;
+    --conn-base:     #cbd5e1;
+    --conn-act:      #0d9488;
+    --status-done:   #0f766e;
+    --status-act:    #b45309;
+    --status-pend:   #94a3b8;
+    --header-bg:     rgba(255,255,255,0.97);
+    --legend-bg:     #ffffff;
+    --legend-border: #e2e8f0;
+    --btn-bg:        #f1f5f9;
+    --btn-color:     #64748b;
+    --glow-act:      rgba(217,119,6,.12);
+    --glow-done:     rgba(13,148,136,.08);
+    --card-opacity-pend: 0.6;
+    --shadow-done:   0 4px 20px rgba(13,148,136,.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg-canvas); color: var(--text-main); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; transition: background .3s, color .3s; }
+
+  /* PAGE HEADER */
+  .page-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-base);
+    display: flex; align-items: center; gap: 16px;
+    background: var(--header-bg);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .back-btn {
+    background: var(--btn-bg); border: 1px solid var(--border-base);
+    color: var(--btn-color); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+  }
+  .pedido-num { font-size: 17px; font-weight: 700; color: var(--text-main); }
+  .pedido-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+  .theme-toggle {
+    margin-left: auto;
+    background: var(--btn-bg); border: 1px solid var(--border-base);
+    color: var(--btn-color); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all .2s;
+  }
+  .theme-toggle:hover { background: var(--border-done); color: #fff; border-color: var(--border-done); }
+
+  /* CANVAS */
+  .canvas-wrap {
+    width: 100%; height: calc(100vh - 57px);
+    overflow: hidden; position: relative; cursor: grab;
+  }
+  .canvas-wrap:active { cursor: grabbing; }
+
+  .dot-grid {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  /* FLOW */
+  .flow {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: flex-start; gap: 0;
+    will-change: transform;
+  }
+
+  /* CONNECTOR */
+  .conn {
+    width: 44px; height: 2px;
+    background: var(--conn-base);
+    align-self: center; margin-top: -24px; flex-shrink: 0;
+    position: relative;
+    transition: background .3s;
+  }
+  .conn::after {
+    content: '▶'; position: absolute; right: -7px; top: 50%;
+    transform: translateY(-50%); font-size: 9px; color: var(--conn-base);
+  }
+  .conn.done  { background: var(--conn-act); }
+  .conn.done::after { color: var(--conn-act); }
+
+  /* CARD */
+  .card {
+    width: 196px; border-radius: 12px;
+    border: 2px solid var(--border-base);
+    background: var(--bg-card);
+    overflow: hidden; cursor: pointer; flex-shrink: 0;
+    transition: transform .2s, box-shadow .2s, border-color .3s, background .3s;
+  }
+  .card:hover { transform: translateY(-4px); }
+
+  /* DONE */
+  .card.done {
+    border-color: var(--border-done);
+    background: var(--bg-card-done);
+    box-shadow: var(--shadow-done);
+  }
+  .card.done .ch { background: linear-gradient(135deg, #0d9488, #0f766e); }
+  .card.done .cnum { background: rgba(255,255,255,.25); }
+
+  /* ACTIVE */
+  .card.act {
+    border-color: var(--border-act);
+    background: var(--bg-card-act);
+    box-shadow: 0 0 28px var(--glow-act);
+    animation: glow 2.5s infinite;
+  }
+  .card.act .ch { background: linear-gradient(135deg, #d97706, #f59e0b); }
+  .card.act .cnum { background: rgba(255,255,255,.2); }
+
+  /* PENDING */
+  .card.pend { opacity: var(--card-opacity-pend); }
+  .card.pend .ch { background: linear-gradient(135deg, #334155, #475569); }
+
+  @keyframes glow {
+    0%,100% { box-shadow: 0 0 16px var(--glow-act); }
+    50% { box-shadow: 0 0 36px var(--glow-act); }
+  }
+
+  .ch { padding: 12px 14px 10px; display: flex; align-items: center; gap: 10px; }
+  .cnum {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .ctitle { font-size: 10.5px; font-weight: 700; color: #fff; letter-spacing: .4px; line-height: 1.25; text-transform: uppercase; }
+
+  .cicon { text-align: center; padding: 14px 0 8px; font-size: 26px; }
+
+  .cstatus {
+    text-align: center; padding: 0 14px 8px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: .3px;
+  }
+  .done .cstatus { color: var(--status-done); }
+  .act .cstatus  { color: var(--status-act); }
+  .pend .cstatus { color: var(--status-pend); }
+
+  .citems {
+    margin: 0; padding: 8px 14px 14px;
+    border-top: 1px solid var(--border-base);
+    list-style: none; display: flex; flex-direction: column; gap: 5px;
+  }
+  .citems li {
+    font-size: 10.5px; color: var(--text-item);
+    display: flex; align-items: flex-start; gap: 6px; line-height: 1.35;
+  }
+  .citems li .b { flex-shrink: 0; margin-top: 1px; }
+
+  .done .citems li .b  { color: var(--status-done); }
+  .act .citems li.ok .b { color: var(--status-done); }
+  .act .citems li.ng .b { color: var(--status-act); }
+  .pend .citems li .b { color: var(--status-pend); }
+
+  /* PROGRESS bar dentro do card ativo */
+  .cprog {
+    margin: 0 14px 12px;
+    background: var(--border-base); border-radius: 99px; height: 4px; overflow: hidden;
+  }
+  .cprog-fill { height: 100%; border-radius: 99px; background: var(--border-act); transition: width .4s; }
+
+  /* LEGENDA */
+  .legend {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--legend-bg); border: 1px solid var(--legend-border);
+    border-radius: 10px; padding: 8px 18px;
+    display: flex; gap: 18px; align-items: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-sub); }
+  .ld { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* HINT */
+  .hint {
+    position: fixed; top: 72px; right: 16px;
+    background: var(--legend-bg); border: 1px solid var(--legend-border);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 11px; color: var(--text-sub); max-width: 170px;
+    text-align: center; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <button class="back-btn">← Voltar</button>
+  <div>
+    <div class="pedido-num">Pedido #2131</div>
+    <div class="pedido-sub">IURANT CVINTAL · Mariane · R$ 43.980,00</div>
+  </div>
+  <button class="theme-toggle" id="themeBtn">☀️ Tema Claro</button>
+</div>
+
+<div class="canvas-wrap" id="canvas">
+  <div class="dot-grid"></div>
+
+  <div class="flow" id="flow">
+
+    <!-- 1 — DADOS DO PEDIDO (ativa com 2/4 itens ok) -->
+    <div class="card act">
+      <div class="ch"><div class="cnum">1</div><div class="ctitle">Dados do Pedido</div></div>
+      <div class="cicon">📋</div>
+      <div class="cstatus">Em andamento · 2 de 4</div>
+      <div class="cprog"><div class="cprog-fill" style="width:50%"></div></div>
+      <ul class="citems">
+        <li class="ok"><span class="b">✓</span><span>Importação do Pedido</span></li>
+        <li class="ok"><span class="b">✓</span><span>Anexo do PDF original</span></li>
+        <li class="ng"><span class="b">○</span><span>Data de entrega definida</span></li>
+        <li class="ng"><span class="b">○</span><span>Todos os itens agendados</span></li>
+      </ul>
+    </div>
+
+    <div class="conn"></div>
+
+    <!-- 2 — CONFERÊNCIA (pendente) -->
+    <div class="card pend">
+      <div class="ch"><div class="cnum">2</div><div class="ctitle">Conferência de Medidas</div></div>
+      <div class="cicon">📐</div>
+      <div class="cstatus">Aguardando</div>
+      <ul class="citems">
+        <li><span class="b">·</span><span>Atribuição de equipe</span></li>
+        <li><span class="b">·</span><span>Agendamento técnico</span></li>
+        <li><span class="b">·</span><span>Medições no local</span></li>
+        <li><span class="b">·</span><span>Todos os itens conferidos</span></li>
+      </ul>
+    </div>
+
+    <div class="conn"></div>
+
+    <!-- 3 — PRODUÇÃO (pendente) -->
+    <div class="card pend">
+      <div class="ch"><div class="cnum">3</div><div class="ctitle">Produção</div></div>
+      <div class="cicon">⚙️</div>
+      <div class="cstatus">Aguardando</div>
+      <ul class="citems">
+        <li><span class="b">·</span><span>Itens em confecção marcados</span></li>
+        <li><span class="b">·</span><span>Em produção</span></li>
+        <li><span class="b">·</span><span>Produção concluída</span></li>
+      </ul>
+    </div>
+
+    <div class="conn"></div>
+
+    <!-- 4 — AGENDAMENTO (pendente) -->
+    <div class="card pend">
+      <div class="ch"><div class="cnum">4</div><div class="ctitle">Agendamento</div></div>
+      <div class="cicon">📅</div>
+      <div class="cstatus">Aguardando</div>
+      <ul class="citems">
+        <li><span class="b">·</span><span>Cliente contatado e confirmado</span></li>
+        <li><span class="b">·</span><span>Data confirmada</span></li>
+        <li><span class="b">·</span><span>Equipe e veículos atribuídos</span></li>
+      </ul>
+    </div>
+
+    <div class="conn"></div>
+
+    <!-- 5 — PÓS-VENDA (pendente) -->
+    <div class="card pend">
+      <div class="ch"><div class="cnum">5</div><div class="ctitle">Pós-venda</div></div>
+      <div class="cicon">⭐</div>
+      <div class="cstatus">Aguardando</div>
+      <ul class="citems">
+        <li><span class="b">·</span><span>Pesquisa de satisfação</span></li>
+        <li><span class="b">·</span><span>Encerramento do pedido</span></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div class="hint">🖱️ Arraste para navegar<br>Clique numa etapa para ver detalhes</div>
+
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#0d9488"></div> Concluída</div>
+  <div class="li"><div class="ld" style="background:#f59e0b"></div> Ativa</div>
+  <div class="li"><div class="ld" style="background:#475569"></div> Pendente</div>
+</div>
+
+<script>
+  // Theme toggle
+  const html = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', () => {
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    btn.textContent = isDark ? '🌙 Tema Escuro' : '☀️ Tema Claro';
+  });
+
+  // Pan
+  const canvas = document.getElementById('canvas');
+  const flow = document.getElementById('flow');
+  let down = false, sx, sy, ox = 0, oy = 0;
+  canvas.addEventListener('mousedown', e => { down=true; sx=e.clientX-ox; sy=e.clientY-oy; });
+  window.addEventListener('mousemove', e => {
+    if (!down) return;
+    ox = e.clientX-sx; oy = e.clientY-sy;
+    flow.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px))`;
+  });
+  window.addEventListener('mouseup', () => down=false);
+</script>
+</body>
+</html>

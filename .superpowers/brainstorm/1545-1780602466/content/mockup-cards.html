@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Pedidos — Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: gap; gap: 12px; }
+  .page-title { font-size: 18px; font-weight: 700; color: #f8fafc; }
+  .view-toggle { display: flex; gap: 6px; background: #1e293b; padding: 4px; border-radius: 8px; }
+  .view-btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; border: none; color: #94a3b8; background: transparent; transition: all 0.2s; }
+  .view-btn.active { background: #3b82f6; color: white; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid #334155; color: #94a3b8; cursor: pointer; background: #1e293b; transition: all 0.2s; }
+  .filter-chip.active { border-color: #3b82f6; color: #3b82f6; background: #3b82f620; }
+
+  .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1.5px solid #2d3748; transition: border-color 0.2s; cursor: pointer; }
+  .card:hover { border-color: #3b82f6; }
+  .card.ativo { border-color: #3b82f6; background: #1e3a5f; }
+  .card.atrasado { border-color: #ef4444; }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .card-id { font-size: 15px; font-weight: 700; color: #f8fafc; }
+  .card-date { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-verificado { background: #3b82f620; color: #60a5fa; border: 1px solid #3b82f640; }
+  .badge-aguardando { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+  .badge-andamento { background: #8b5cf620; color: #a78bfa; border: 1px solid #8b5cf640; }
+  .badge-atrasado { background: #ef444420; color: #f87171; border: 1px solid #ef444440; }
+
+  .card-meta { display: flex; gap: 24px; margin-bottom: 14px; flex-wrap: wrap; }
+  .meta-item label { display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .meta-item span { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+
+  .progress-section { margin-bottom: 12px; }
+  .progress-label { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+  .progress-track { position: relative; height: 6px; background: #334155; border-radius: 3px; margin-bottom: 8px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #22c55e, #3b82f6); transition: width 0.4s; }
+  .progress-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: #3b82f6; border: 2px solid #0f172a; border-radius: 50%; box-shadow: 0 0 8px #3b82f6; }
+  .progress-dot.atrasado { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+  .progress-steps { display: flex; justify-content: space-between; }
+  .step-label { font-size: 10px; color: #475569; text-align: center; flex: 1; }
+  .step-label.done { color: #22c55e; }
+  .step-label.current { color: #60a5fa; font-weight: 600; }
+  .step-label.alert { color: #f59e0b; }
+
+  .prazo-alert { display: inline-flex; align-items: center; gap: 5px; background: #f59e0b15; border: 1px solid #f59e0b30; border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #f59e0b; margin-bottom: 10px; }
+  .prazo-ok { background: #22c55e15; border-color: #22c55e30; color: #22c55e; }
+  .prazo-urgente { background: #ef444415; border-color: #ef444430; color: #f87171; }
+
+  .items-list { border-top: 1px solid #2d3748; padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .item-row { display: flex; justify-content: space-between; align-items: center; }
+  .item-nome { font-size: 12px; color: #cbd5e1; }
+  .item-preco { font-size: 12px; color: #94a3b8; }
+
+  .consultora-section { margin-bottom: 16px; background: #1e293b; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .consultora-avatar { width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .consultora-nome { font-size: 13px; font-weight: 600; }
+  .consultora-meta { font-size: 11px; color: #64748b; }
+
+  .question-box { background: #0f172a; border: 1px solid #3b82f640; border-radius: 10px; padding: 16px; margin-top: 20px; }
+  .question-box h3 { color: #60a5fa; font-size: 14px; margin-bottom: 12px; }
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .q-opt { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; transition: all 0.2s; }
+  .q-opt:hover { border-color: #3b82f6; background: #1e3a5f; }
+  .q-opt.selected { border-color: #3b82f6; background: #1e3a5f; }
+  .q-letter { width: 22px; height: 22px; border-radius: 50%; background: #3b82f620; color: #60a5fa; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .q-text h4 { font-size: 13px; color: #f1f5f9; margin-bottom: 2px; }
+  .q-text p { font-size: 11px; color: #64748b; line-height: 1.4; }
+</style>
+<script>
+  function selectOpt(el) {
+    document.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const choice = el.dataset.choice;
+    const label = el.querySelector('h4').textContent;
+    if (window.recordChoice) recordChoice(choice, label);
+  }
+</script>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard de Pedidos</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="view-toggle">
+      <button class="view-btn active">Visão Geral</button>
+      <button class="view-btn">Por Consultora</button>
+    </div>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="filter-chip active">Todos</div>
+  <div class="filter-chip">Pendentes</div>
+  <div class="filter-chip">Em andamento</div>
+  <div class="filter-chip">Atrasados</div>
+  <div class="filter-chip">Concluídos</div>
+</div>
+
+<!-- Card 1 — em andamento, próximo à entrega -->
+<div class="card ativo">
+  <div class="card-header">
+    <div>
+      <div class="card-id">#1843 Fernanda</div>
+      <div class="card-date">21 Nov 2024</div>
+    </div>
+    <span class="badge badge-andamento">Em andamento</span>
+  </div>
+  <div class="card-meta">
+    <div class="meta-item"><label>Cliente</label><span>Ana Silva</span></div>
+    <div class="meta-item"><label>Valor</label><span>R$ 4.200,00</span></div>
+    <div class="meta-item"><label>Itens</label><span>3 produtos</span></div>
+    <div class="meta-item"><label>Próx. entrega</label><span style="color:#f59e0b">15 Jun (5 dias)</span></div>
+  </div>
+  <div class="prazo-alert">⚠️ Conferência em 5 dias — Genitor 1 de 2</div>
+  <div class="progress-section">
+    <div class="progress-label">Progresso do pedido</div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width:66%"></div>
+      <div class="progress-dot" style="left:66%"></div>
+    </div>
+    <div class="progress-steps">
+      <span class="step-label done">PDF</span>
+      <span class="step-label done">Verif.</span>
+      <span class="step-label done">Categ.</span>
+      <span class="step-label current">Genitor 1</span>
+      <span class="step-label">Genitor 2</span>
+      <span class="step-label">Entrega</span>
+    </div>
+  </div>
+  <div class="items-list">
+    <div class="item-row"><span class="item-nome">Cortina Voil Linho</span><span class="item-preco">Qtd: 2 • R$ 1.800,00</span></div>
+    <div class="item-row"><span class="item-nome">Persiana Rolô Blackout</span><span class="item-preco">Qtd: 1 • R$ 2.400,00</span></div>
+  </div>
+</div>
+
+<!-- Card 2 — pendente, aguardando agendamento -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-id">#1844 Fernanda</div>
+      <div class="card-date">21 Nov 2024</div>
+    </div>
+    <span class="badge badge-aguardando">Aguardando</span>
+  </div>
+  <div class="card-meta">
+    <div class="meta-item"><label>Cliente</label><span>João Santos</span></div>
+    <div class="meta-item"><label>Valor</label><span>R$ 156,00</span></div>
+    <div class="meta-item"><label>Itens</label><span>2 produtos</span></div>
+  </div>
+  <div class="progress-section">
+    <div class="progress-label">Progresso do pedido</div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width:18%"></div>
+      <div class="progress-dot" style="left:18%"></div>
+    </div>
+    <div class="progress-steps">
+      <span class="step-label done">PDF</span>
+      <span class="step-label current">Verif.</span>
+      <span class="step-label">Categ.</span>
+      <span class="step-label">Genitor</span>
+      <span class="step-label">Entrega</span>
+    </div>
+  </div>
+  <div class="items-list">
+    <div class="item-row"><span class="item-nome">Produto A</span><span class="item-preco">Qtd: 1 • R$ 89,90</span></div>
+    <div class="item-row"><span class="item-nome">Produto D</span><span class="item-preco">Qtd: 2 • R$ 67,50</span></div>
+  </div>
+</div>
+
+<!-- Card 3 — atrasado -->
+<div class="card atrasado">
+  <div class="card-header">
+    <div>
+      <div class="card-id">#1839 Carla</div>
+      <div class="card-date">15 Nov 2024</div>
+    </div>
+    <span class="badge badge-atrasado">🔴 Atrasado</span>
+  </div>
+  <div class="card-meta">
+    <div class="meta-item"><label>Cliente</label><span>Maria Oliveira</span></div>
+    <div class="meta-item"><label>Valor</label><span>R$ 8.900,00</span></div>
+    <div class="meta-item"><label>Itens</label><span>5 produtos</span></div>
+    <div class="meta-item"><label>Conf. prevista</label><span style="color:#ef4444">08 Jun (vencido)</span></div>
+  </div>
+  <div class="prazo-urgente" style="display:inline-flex;align-items:center;gap:5px;background:#ef444415;border:1px solid #ef444430;border-radius:6px;padding:4px 10px;font-size:11px;color:#f87171;margin-bottom:10px">🔴 Conferência vencida há 2 dias</div>
+  <div class="progress-section">
+    <div class="progress-label">Progresso do pedido</div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width:50%;background:linear-gradient(90deg,#22c55e,#ef4444)"></div>
+      <div class="progress-dot atrasado" style="left:50%"></div>
+    </div>
+    <div class="progress-steps">
+      <span class="step-label done">PDF</span>
+      <span class="step-label done">Verif.</span>
+      <span class="step-label done">Categ.</span>
+      <span class="step-label" style="color:#f87171">Genitor ⚠️</span>
+      <span class="step-label">Entrega</span>
+    </div>
+  </div>
+</div>
+
+<!-- Pergunta -->
+<div class="question-box">
+  <h3>Ao clicar em um card, o que deve acontecer?</h3>
+  <div class="q-options">
+    <div class="q-opt" data-choice="expand-inline" onclick="selectOpt(this)">
+      <div class="q-letter">A</div>
+      <div class="q-text">
+        <h4>Expandir inline — o card abre para baixo</h4>
+        <p>O card cresce e mostra o fluxo completo com todos os genitores e herdeiros. Tudo na mesma lista, sem mudar de tela.</p>
+      </div>
+    </div>
+    <div class="q-opt" data-choice="painel-lateral" onclick="selectOpt(this)">
+      <div class="q-letter">B</div>
+      <div class="q-text">
+        <h4>Painel lateral deslizante (drawer)</h4>
+        <p>A lista fica visível à esquerda, um painel abre à direita com o fluxo detalhado do pedido selecionado — genitores, herdeiros, datas.</p>
+      </div>
+    </div>
+    <div class="q-opt" data-choice="pagina-fluxo" onclick="selectOpt(this)">
+      <div class="q-letter">C</div>
+      <div class="q-text">
+        <h4>Página de detalhe separada</h4>
+        <p>Vai para /pedidos/:id/fluxo com o diagrama completo em tela cheia. Mais espaço — ideal para pedidos com múltiplos genitores e vários herdeiros ramificados.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Wire into superpowers helper if available
+  window.addEventListener('load', () => {
+    if (window.recordChoice) return;
+    // fallback no-op
+  });
+</script>
+</body>
+</html>

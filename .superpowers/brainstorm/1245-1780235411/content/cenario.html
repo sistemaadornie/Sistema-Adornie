@@ -1,0 +1,56 @@
+<h2>Em qual cenário o problema ocorre?</h2>
+<p class="subtitle">Selecione o que melhor descreve como você usa o sistema no dia a dia</p>
+
+<div class="cards" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+
+  <!-- Desktop -->
+  <div class="card" data-choice="desktop" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: var(--surface-secondary); border-radius: 8px;">
+      <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; height: 180px;">
+        <!-- Lista -->
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; overflow: hidden;">
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">LISTA</div>
+          <div style="background: var(--primary); border-radius: 4px; padding: 5px 6px; margin-bottom: 4px; opacity: 0.3; font-size: 9px; color: white;">Pedido #001</div>
+          <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; margin-bottom: 4px; font-size: 9px; color: var(--text-secondary);">Pedido #002</div>
+          <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; margin-bottom: 4px; font-size: 9px; color: var(--text-secondary);">Pedido #003</div>
+          <div style="background: var(--surface-secondary); border-radius: 4px; padding: 5px 6px; margin-bottom: 4px; font-size: 9px; color: var(--text-secondary);">...</div>
+          <div style="background: var(--primary); border-radius: 4px; padding: 5px 6px; margin-bottom: 4px; opacity: 0.9; font-size: 9px; color: white; border: 1.5px solid var(--primary);">← clica aqui (abaixo)</div>
+        </div>
+        <!-- Detalhe -->
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; position: relative;">
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">DETALHE</div>
+          <div style="font-size: 9px; color: var(--text); margin-bottom: 4px; font-weight: 600;">Pedido #009</div>
+          <div style="font-size: 9px; color: var(--text-secondary);">Cliente: João Silva</div>
+          <div style="background: #fef3c7; border-radius: 4px; padding: 4px 6px; margin-top: 8px; font-size: 9px; color: #92400e;">⚠ precisa rolar para cima</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Desktop (tela grande)</h3>
+      <p>Lista à esquerda, detalhe à direita — lado a lado. Ao clicar num item no fundo da lista, o detalhe aparece no topo da coluna direita.</p>
+    </div>
+  </div>
+
+  <!-- Mobile/Tablet -->
+  <div class="card" data-choice="mobile" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: var(--surface-secondary); border-radius: 8px; display: flex; justify-content: center;">
+      <div style="width: 90px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; height: 180px; overflow: hidden;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">DETALHE</div>
+        <div style="font-size: 9px; color: var(--text); margin-bottom: 4px; font-weight: 600;">Pedido selecionado</div>
+        <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">LISTA</div>
+        <div style="background: var(--surface-secondary); border-radius: 4px; padding: 4px; margin-bottom: 3px; font-size: 9px; color: var(--text-secondary);">Pedido #001</div>
+        <div style="background: var(--surface-secondary); border-radius: 4px; padding: 4px; margin-bottom: 3px; font-size: 9px; color: var(--text-secondary);">...</div>
+        <div style="background: var(--primary); border-radius: 4px; padding: 4px; margin-bottom: 3px; font-size: 9px; color: white; opacity: 0.85;">← clica</div>
+        <div style="background: #fef3c7; border-radius: 4px; padding: 4px; margin-top: 4px; font-size: 9px; color: #92400e;">⬆ sobe para ver</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Mobile / Tablet</h3>
+      <p>Layout empilhado em coluna única. O detalhe aparece acima da lista. Ao clicar num item abaixo, é preciso rolar para cima para ver o detalhe.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 16px; text-align: center;">Pode selecionar os dois se ocorrer em ambos</p>

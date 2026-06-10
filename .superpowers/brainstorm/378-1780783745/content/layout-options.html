@@ -1,0 +1,83 @@
+<h2>Como reorganizar o modal "Dados do Pedido"?</h2>
+<p class="subtitle">Hoje tudo fica empilhado verticalmente (Ações → Pendências → Informações → Endereço → Itens → Pagamentos → Observações → Mídias). Aqui estão 3 direções para dar mais destaque ao essencial e reduzir a sensação de "lista infinita".</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px; font-size:11px; line-height:1.4;">
+        <div style="background:#1e3a5f; border:1px solid #3b82f6; border-radius:8px; padding:8px; margin-bottom:8px; display:flex; justify-content:space-between;">
+          <span><b>Cliente X</b> · Status: Em andamento</span>
+          <span style="color:#34d399;"><b>R$ 12.450,00</b></span>
+        </div>
+        <div style="background:#1a1206; border:1px solid #7c4a03; border-radius:6px; padding:6px; margin-bottom:8px; color:#fcd34d;">⚠ 2 pendências para concluir esta etapa</div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <div style="flex:1; text-align:center; background:#3b82f6; color:#fff; border-radius:6px; padding:4px;">Informações</div>
+          <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:4px;">Itens (8)</div>
+          <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:4px;">Pagamentos</div>
+          <div style="flex:1; text-align:center; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:4px;">Mídias</div>
+        </div>
+        <div class="placeholder" style="height:70px;">conteúdo da sub-aba selecionada</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Resumo fixo + sub-abas</h3>
+      <p>Um cabeçalho de resumo (cliente, status, total, pendências) sempre visível no topo do modal. Abaixo, as seções viram <b>sub-abas internas</b> (Informações / Itens / Pagamentos / Mídias) — você só vê uma de cada vez, sem rolagem longa.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px; font-size:11px; line-height:1.4; display:flex; gap:10px;">
+        <div style="width:34%; display:flex; flex-direction:column; gap:6px;">
+          <div style="background:#1e3a5f; border:1px solid #3b82f6; border-radius:8px; padding:8px;">
+            <div><b>Cliente X</b></div>
+            <div style="color:#94a3b8;">Consultora Y</div>
+            <div style="color:#34d399; font-weight:700; margin-top:4px;">R$ 12.450,00</div>
+            <div style="color:#fcd34d; font-size:10px; margin-top:4px;">⚠ 2 pendências</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="mock-button" style="text-align:center;">✏ Editar</div>
+            <div class="mock-button" style="text-align:center;">🖨 Imprimir</div>
+            <div class="mock-button" style="text-align:center;">📅 Agendar</div>
+          </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+          <div class="placeholder" style="height:34px;">Informações principais</div>
+          <div class="placeholder" style="height:50px;">Itens</div>
+          <div class="placeholder" style="height:30px;">Pagamentos / Observações</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Coluna lateral fixa + conteúdo rolável</h3>
+      <p>Painel esquerdo fixo com identidade do pedido (cliente, status, total, pendências) e ações principais. À direita, o conteúdo detalhado (itens, pagamentos, observações, mídias) rola independente — o essencial nunca some de vista.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px; font-size:11px; line-height:1.4;">
+        <div style="background:#1e3a5f; border:1px solid #3b82f6; border-radius:8px; padding:8px; margin-bottom:8px; display:flex; justify-content:space-between;">
+          <span><b>Cliente X</b> · R$ 12.450,00</span>
+          <span style="color:#fcd34d;">⚠ 2 pendências</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:6px; display:flex; justify-content:space-between;"><span>▾ Informações</span><span style="color:#64748b;">expandido</span></div>
+          <div class="placeholder" style="height:34px; margin:0 0 2px;">conteúdo</div>
+          <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:6px; display:flex; justify-content:space-between;"><span>▸ Itens (8)</span><span style="color:#64748b;">recolhido</span></div>
+          <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:6px; display:flex; justify-content:space-between;"><span>▸ Pagamentos</span><span style="color:#64748b;">recolhido</span></div>
+          <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:6px; display:flex; justify-content:space-between;"><span>▸ Mídias</span><span style="color:#64748b;">recolhido</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Cards colapsáveis (accordion)</h3>
+      <p>Banner de resumo no topo. Cada seção (Informações, Itens, Pagamentos, Observações, Mídias) vira um <b>card que expande/recolhe</b> — o usuário abre só o que precisa, mantendo a visão geral compacta.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Minha recomendação</p>
+  <p>Eu pencho para a <b>opção A (resumo fixo + sub-abas)</b>: resolve diretamente os 3 pontos que você apontou — destaca o essencial (cliente/status/total/pendências sempre visíveis), quebra o "empilhamento" em seções navegáveis, e abre espaço para repaginar o formulário de edição dentro da própria sub-aba "Informações" sem competir com itens/pagamentos. A opção B é boa em telas largas mas desperdiça espaço em modais (que já são limitados a ~920px). A opção C reduz a rolagem mas exige mais cliques para ver tudo de uma vez — pior para quem revisa o pedido inteiro.</p>
+</div>
