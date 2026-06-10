@@ -378,7 +378,6 @@
   flex-direction: column;
   background: var(--color-bg);
   position: relative;
-  isolation: isolate;
 }
 
 /* watermark removida — design limpo Adornie */

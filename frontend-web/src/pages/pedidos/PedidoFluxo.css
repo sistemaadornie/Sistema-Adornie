@@ -1,75 +1,75 @@
 /* ── Variáveis de tema ── */
 :root,
 :root[data-theme="dark"] {
-  --pf-bg-canvas: #0d0d0d;
-  --pf-dot: #1e293b;
-  --pf-card-bg: #111827;
-  --pf-card-border: #1e293b;
-  --pf-card-text: #e2e8f0;
-  --pf-card-sub: #64748b;
-  --pf-card-item: #94a3b8;
-  --pf-header-bg: #0d0d0d;
-  --pf-header-border: #1e293b;
-  --pf-header-text: #f1f5f9;
-  --pf-connector-from: #334155;
-  --pf-connector-to: #475569;
-  --pf-legenda-bg: #1e293b;
-  --pf-legenda-border: #334155;
-  --pf-hint-bg: #1e293b;
-  --pf-hint-border: #334155;
-  --pf-modal-bg: #111827;
-  --pf-modal-border: #1e293b;
-  --pf-modal-text: #e2e8f0;
-  --pf-input-bg: #0d0d0d;
-  --pf-input-border: #334155;
-  --pf-input-text: #e2e8f0;
-  --pf-btn-secondary-bg: #1e293b;
-  --pf-btn-secondary-text: #94a3b8;
-  --pf-aba-active-border: #3b82f6;
-  --pf-aba-active-text: #3b82f6;
-  --pf-separador: #1e293b;
-  --pf-badge-ok-bg: rgba(13,148,136,.2);
-  --pf-badge-ok-text: #2dd4bf;
-  --pf-badge-pend-bg: rgba(245,158,11,.15);
-  --pf-badge-pend-text: #fbbf24;
-  --pf-badge-err-bg: rgba(239,68,68,.15);
-  --pf-badge-err-text: #f87171;
+  --pf-bg-canvas: var(--color-bg);
+  --pf-dot: var(--color-border);
+  --pf-card-bg: var(--color-surface);
+  --pf-card-border: var(--color-border);
+  --pf-card-text: var(--color-text);
+  --pf-card-sub: var(--color-text-secondary);
+  --pf-card-item: var(--color-text-secondary);
+  --pf-header-bg: var(--sidebar-bg);
+  --pf-header-border: var(--color-border);
+  --pf-header-text: var(--color-text);
+  --pf-connector-from: var(--color-border-strong);
+  --pf-connector-to: var(--color-text-muted);
+  --pf-legenda-bg: var(--color-surface-strong);
+  --pf-legenda-border: var(--color-border-strong);
+  --pf-hint-bg: var(--color-surface-strong);
+  --pf-hint-border: var(--color-border-strong);
+  --pf-modal-bg: var(--color-surface);
+  --pf-modal-border: var(--color-border);
+  --pf-modal-text: var(--color-text);
+  --pf-input-bg: var(--color-bg);
+  --pf-input-border: var(--color-border-strong);
+  --pf-input-text: var(--color-text);
+  --pf-btn-secondary-bg: var(--color-surface-strong);
+  --pf-btn-secondary-text: var(--color-text-secondary);
+  --pf-aba-active-border: var(--color-primary);
+  --pf-aba-active-text: var(--color-primary);
+  --pf-separador: var(--color-border);
+  --pf-badge-ok-bg: var(--color-success-soft);
+  --pf-badge-ok-text: var(--color-success);
+  --pf-badge-pend-bg: var(--color-warning-soft);
+  --pf-badge-pend-text: var(--color-warning);
+  --pf-badge-err-bg: var(--color-danger-soft);
+  --pf-badge-err-text: var(--color-danger);
 }
 
 :root[data-theme="light"] {
-  --pf-bg-canvas: #f0f4f8;
-  --pf-dot: #cbd5e1;
-  --pf-card-bg: #ffffff;
-  --pf-card-border: #e2e8f0;
-  --pf-card-text: #0f172a;
-  --pf-card-sub: #475569;
-  --pf-card-item: #64748b;
-  --pf-header-bg: #ffffff;
-  --pf-header-border: #e2e8f0;
-  --pf-header-text: #0f172a;
-  --pf-connector-from: #cbd5e1;
-  --pf-connector-to: #94a3b8;
-  --pf-legenda-bg: #ffffff;
-  --pf-legenda-border: #e2e8f0;
-  --pf-hint-bg: #ffffff;
-  --pf-hint-border: #e2e8f0;
-  --pf-modal-bg: #ffffff;
-  --pf-modal-border: #e2e8f0;
-  --pf-modal-text: #0f172a;
-  --pf-input-bg: #f8fafc;
-  --pf-input-border: #cbd5e1;
-  --pf-input-text: #0f172a;
-  --pf-btn-secondary-bg: #f1f5f9;
-  --pf-btn-secondary-text: #475569;
-  --pf-aba-active-border: #2563eb;
-  --pf-aba-active-text: #2563eb;
-  --pf-separador: #e2e8f0;
-  --pf-badge-ok-bg: rgba(20,184,166,.15);
-  --pf-badge-ok-text: #0f766e;
-  --pf-badge-pend-bg: rgba(217,119,6,.15);
-  --pf-badge-pend-text: #92400e;
-  --pf-badge-err-bg: rgba(220,38,38,.1);
-  --pf-badge-err-text: #b91c1c;
+  --pf-bg-canvas: var(--color-bg);
+  --pf-dot: var(--color-border);
+  --pf-card-bg: var(--color-card);
+  --pf-card-border: var(--color-border);
+  --pf-card-text: var(--color-text);
+  --pf-card-sub: var(--color-text-secondary);
+  --pf-card-item: var(--color-text-secondary);
+  --pf-header-bg: var(--sidebar-bg);
+  --pf-header-border: var(--color-border);
+  --pf-header-text: var(--color-text);
+  --pf-connector-from: var(--color-border-strong);
+  --pf-connector-to: var(--color-text-muted);
+  --pf-legenda-bg: var(--color-surface-strong);
+  --pf-legenda-border: var(--color-border);
+  --pf-hint-bg: var(--color-surface-strong);
+  --pf-hint-border: var(--color-border);
+  --pf-modal-bg: var(--color-card);
+  --pf-modal-border: var(--color-border);
+  --pf-modal-text: var(--color-text);
+  --pf-input-bg: var(--color-surface-soft);
+  --pf-input-border: var(--color-border-strong);
+  --pf-input-text: var(--color-text);
+  --pf-btn-secondary-bg: var(--color-surface-strong);
+  --pf-btn-secondary-text: var(--color-text-secondary);
+  --pf-aba-active-border: var(--color-primary);
+  --pf-aba-active-text: var(--color-primary);
+  --pf-separador: var(--color-border);
+  --pf-badge-ok-bg: var(--color-success-soft);
+  --pf-badge-ok-text: var(--color-success);
+  --pf-badge-pend-bg: var(--color-warning-soft);
+  --pf-badge-pend-text: var(--color-warning);
+  --pf-badge-err-bg: var(--color-danger-soft);
+  --pf-badge-err-text: var(--color-danger);
 }
 
 /* ── Layout geral ── */
@@ -159,6 +159,10 @@
   max-height: 88vh; overflow-y: auto; color: var(--pf-modal-text);
 }
 .pf-modal-grande { max-width: min(1100px, 96vw); }
+
+/* Modal ganha mais espaço quando a sidebar está recolhida */
+body:has(.app-sidebar.collapsed) .pf-modal { max-width: 820px; }
+body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw); }
 
 /* ── Form fields (reuso em modais de edição) ── */
 .pf-form-field { display: flex; flex-direction: column; gap: 4px; }

@@ -79,7 +79,7 @@ export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
           <div className="pf-legenda-dot" style={{ background: "#f59e0b" }} /> Ativa
         </div>
         <div className="pf-legenda-item">
-          <div className="pf-legenda-dot" style={{ background: "#334155" }} /> Pendente
+          <div className="pf-legenda-dot" style={{ background: "var(--pf-connector-from)" }} /> Pendente
         </div>
       </div>
 
