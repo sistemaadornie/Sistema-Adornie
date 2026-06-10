@@ -385,8 +385,7 @@
   display: none;
 }
 
-.app-header,
-.app-content {
+.app-header {
   position: relative;
   z-index: 1;
 }
