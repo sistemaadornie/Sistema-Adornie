@@ -443,9 +443,30 @@ async function atualizar(id, empresaId, dados, userId) {
         diff[campo] = { antes: pedidoAntes[campo], depois: dadosDepoisAudit[campo] };
       }
     }
-    const descDiff = Object.entries(diff)
-      .map(([k, { antes, depois }]) => `${k}: "${antes ?? ""}" → "${depois ?? ""}"`)
-      .join(", ");
+    const partesDiff = Object.entries(diff)
+      .map(([k, { antes, depois }]) => `${k}: "${antes ?? ""}" → "${depois ?? ""}"`);
+
+    // Diff de itens (quantidade e valor total)
+    const itensAntes   = pedidoAntes.itens || [];
+    const totalItensAntes = itensAntes.reduce((s, it) => s + (Number(it.valor) || 0), 0);
+    const totalItensDepois = itens.reduce((s, it) => s + (Number(toDecimal(it.valor)) || 0), 0);
+    if (itensAntes.length !== itens.length || totalItensAntes.toFixed(2) !== totalItensDepois.toFixed(2)) {
+      partesDiff.push(
+        `itens: ${itensAntes.length} (R$ ${totalItensAntes.toFixed(2)}) → ${itens.length} (R$ ${totalItensDepois.toFixed(2)})`
+      );
+    }
+
+    // Diff de pagamentos (quantidade e valor total)
+    const pagamentosAntes = pedidoAntes.pagamentos || [];
+    const totalPagAntes = pagamentosAntes.reduce((s, pg) => s + (Number(pg.valor) || 0), 0);
+    const totalPagDepois = pagamentos.reduce((s, pg) => s + (Number(toDecimal(pg.valor)) || 0), 0);
+    if (pagamentosAntes.length !== pagamentos.length || totalPagAntes.toFixed(2) !== totalPagDepois.toFixed(2)) {
+      partesDiff.push(
+        `pagamentos: ${pagamentosAntes.length} (R$ ${totalPagAntes.toFixed(2)}) → ${pagamentos.length} (R$ ${totalPagDepois.toFixed(2)})`
+      );
+    }
+
+    const descDiff = partesDiff.join(", ");
 
     await auditSvc.registrarAuditoria(client, {
       pedidoId: id,

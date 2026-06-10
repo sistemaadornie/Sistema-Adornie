@@ -4,6 +4,7 @@ import usePedidos from "./hooks/usePedidos";
 import useAuth from "../../hooks/useAuth";
 import ImportarPedidoModal from "./ImportarPedidoModal";
 import { api, API_BASE } from "../../services/api";
+import { numeroPedidoCurto } from "../../utils/numeroPedido";
 import "./Pedidos.css";
 
 const STATUS_LABELS = {
@@ -103,9 +104,7 @@ function CardPedido({ pedido, onVerFluxo }) {
       onKeyDown={(e) => e.key === "Enter" && onVerFluxo(pedido.id)}
     >
       <div className="dp-card-header">
-        <span className="dp-numero">#{pedido.numero_origem
-          ? parseInt(pedido.numero_origem.replace(/^#+/, ""), 10)
-          : pedido.numero_sequencial}</span>
+        <span className="dp-numero">#{numeroPedidoCurto(pedido)}</span>
         <span className="dp-consultora">{pedido.consultor_nome}</span>
         <BadgeStatus status={pedido.status} nivelAlerta={estagio.nivel_alerta} />
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { api } from "../../services/api";
+import { numeroPedidoCurto } from "../../utils/numeroPedido";
 import FluxogramaCanvas from "./fluxo/FluxogramaCanvas";
 import EtapaDadosPedido from "./fluxo/etapas/EtapaDadosPedido";
 import EtapaConferencia from "./fluxo/etapas/EtapaConferencia";
@@ -80,7 +81,7 @@ export default function PedidoFluxo() {
         <button className="pf-header-back" onClick={() => navigate("/pedidos")}>← Voltar</button>
         <div>
           <div className="pf-header-pedido-num">
-            Pedido #{pedido.numero_sequencial || pedido.numero_origem}
+            Pedido #{numeroPedidoCurto(pedido)}
           </div>
           <div className="pf-header-pedido-sub">
             {pedido.cliente_nome} · R$ {fmtMoeda(pedido.total)}

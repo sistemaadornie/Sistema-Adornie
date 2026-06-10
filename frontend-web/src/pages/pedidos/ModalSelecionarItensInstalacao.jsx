@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import { numeroPedidoCompleto } from "../../utils/numeroPedido";
 import "./ModalSelecionarItensInstalacao.css";
 
 export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar, itensEndpoint }) {
@@ -48,7 +49,7 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
       <div className="modal-box msi-modal">
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">Agendar Instalação — {pedido.numero || pedido.numero_sequencial || pedido.numero_origem}</h2>
+            <h2 className="modal-title">Agendar Instalação — {pedido.numero || numeroPedidoCompleto(pedido)}</h2>
             {!loading && !erro && itens.length > 0 && (
               <p className="msi-subtitle">
                 {itens.length === 1 ? "1 item disponível" : `${itens.length} itens disponíveis`} para agendamento

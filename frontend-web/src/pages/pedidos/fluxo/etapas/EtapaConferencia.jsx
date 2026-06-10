@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
+import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -23,7 +24,7 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
       state: {
         novoInstalacao: {
           pedido_id:         pedido.id,
-          pedido_numero:     pedido.numero_sequencial || pedido.numero_origem,
+          pedido_numero:     numeroPedidoCompleto(pedido),
           cliente:           pedido.cliente_nome || "",
           cliente_id:        pedido.cliente_id || null,
           cep:               pedido.cep,

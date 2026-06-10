@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
+import EditarPedidoModal from "./EditarPedidoModal";
+import HistoricoPedidoModal from "./HistoricoPedidoModal";
+import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -20,6 +23,8 @@ function CriterioItem({ ok, texto }) {
 export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendamentos, onClose, onRecarregar }) {
   const navigate = useNavigate();
   const [instalacao, setInstalacao] = useState(null);
+  const [editando, setEditando] = useState(false);
+  const [historico, setHistorico] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
@@ -30,7 +35,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
       state: {
         novoInstalacao: {
           pedido_id:     pedido.id,
-          pedido_numero: pedido.numero_sequencial || pedido.numero_origem,
+          pedido_numero: numeroPedidoCompleto(pedido),
           cliente:       pedido.cliente_nome || "",
           cliente_id:    pedido.cliente_id || null,
           cep:           pedido.cep,
@@ -54,7 +59,11 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 1</div>
             <div className="pf-modal-titulo">📋 Dados do Pedido</div>
           </div>
-          <button className="pf-modal-fechar" onClick={onClose}>×</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
+            <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
+            <button className="pf-modal-fechar" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <div className="pf-modal-body">
@@ -107,6 +116,21 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
           pedido={instalacao}
           onClose={() => setInstalacao(null)}
           onContinuar={handleAgendarInstalacao}
+        />
+      )}
+
+      {editando && (
+        <EditarPedidoModal
+          pedidoId={pedidoId}
+          onClose={() => setEditando(false)}
+          onSalvo={() => { setEditando(false); onRecarregar?.(); }}
+        />
+      )}
+
+      {historico && (
+        <HistoricoPedidoModal
+          pedidoId={pedidoId}
+          onClose={() => setHistorico(false)}
         />
       )}
     </div>
