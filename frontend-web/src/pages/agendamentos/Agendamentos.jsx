@@ -152,7 +152,7 @@ function dateToISO(d) {
 }
 
 function corEvento(ev) {
-  if (ev.tipo === "Conferência") return "#8b5cf6";
+  if (ev.tipo === "Conferência" && ev.status !== "concluido" && ev.status !== "nao_concluido") return "#8b5cf6";
   return STATUS_META[ev.status]?.cor || "#888";
 }
 
@@ -1252,7 +1252,9 @@ function CartaoAprovacao({ p, onDecidir }) {
 /* ── EVENT CARD (lista dia) ──────────────────────── */
 function EventCard({ ev, equipe, onClick }) {
   const meta = metaEvento(ev);
-  const corBorda = TIPO_COR[ev.tipo] ?? meta.cor;
+  const corBorda = (ev.tipo === "Conferência" && (ev.status === "concluido" || ev.status === "nao_concluido"))
+    ? meta.cor
+    : (TIPO_COR[ev.tipo] ?? meta.cor);
   return (
     <div
       className="ag-event-card"
