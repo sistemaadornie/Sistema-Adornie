@@ -2,7 +2,7 @@ const db = require("../database/db");
 
 async function listar(empresaId) {
   const res = await db.query(
-    `SELECT id, nome, cor, ordem FROM categorias
+    `SELECT id, nome, cor, ordem, vinculavel, recebe_vinculos FROM categorias
      WHERE empresa_id = $1
      ORDER BY ordem ASC, nome ASC`,
     [empresaId]
@@ -19,14 +19,14 @@ async function buscar(id, empresaId) {
 }
 
 async function criar(empresaId, dados) {
-  const { nome, cor, ordem } = dados;
+  const { nome, cor, ordem, vinculavel, recebe_vinculos } = dados;
   if (!nome?.trim()) throw Object.assign(new Error("Nome é obrigatório."), { status: 400 });
 
   try {
     const res = await db.query(
-      `INSERT INTO categorias (empresa_id, nome, cor, ordem)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [empresaId, nome.trim(), cor || "#C9A96E", ordem ?? 0]
+      `INSERT INTO categorias (empresa_id, nome, cor, ordem, vinculavel, recebe_vinculos)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [empresaId, nome.trim(), cor || "#C9A96E", ordem ?? 0, !!vinculavel, !!recebe_vinculos]
     );
     return res.rows[0];
   } catch (e) {
@@ -36,15 +36,15 @@ async function criar(empresaId, dados) {
 }
 
 async function atualizar(id, empresaId, dados) {
-  const { nome, cor, ordem } = dados;
+  const { nome, cor, ordem, vinculavel, recebe_vinculos } = dados;
   if (!nome?.trim()) throw Object.assign(new Error("Nome é obrigatório."), { status: 400 });
 
   try {
     const res = await db.query(
       `UPDATE categorias
-       SET nome=$1, cor=$2, ordem=$3, updated_at=NOW()
-       WHERE id=$4 AND empresa_id=$5 RETURNING *`,
-      [nome.trim(), cor || "#C9A96E", ordem ?? 0, id, empresaId]
+       SET nome=$1, cor=$2, ordem=$3, vinculavel=$4, recebe_vinculos=$5, updated_at=NOW()
+       WHERE id=$6 AND empresa_id=$7 RETURNING *`,
+      [nome.trim(), cor || "#C9A96E", ordem ?? 0, !!vinculavel, !!recebe_vinculos, id, empresaId]
     );
     if (!res.rows.length) throw Object.assign(new Error("Categoria não encontrada."), { status: 404 });
     return res.rows[0];

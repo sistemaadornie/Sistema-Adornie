@@ -60,6 +60,80 @@ describe('buscar (montarPedido)', () => {
   });
 });
 
+describe('_verificarEtapa1', () => {
+  function makeFakeClient(respostas = []) {
+    const client = { query: jest.fn() };
+    respostas.forEach(r => client.query.mockResolvedValueOnce(r));
+    return client;
+  }
+
+  test('retorna false quando nao ha anexo PDF', async () => {
+    const client = makeFakeClient([
+      { rows: [] }, // pedido_anexos
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: false }] }, // pedido_itens
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna false quando pedido nao tem itens', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] }, // pedido_anexos
+      { rows: [] },   // pedido_itens
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna false quando algum item nao tem categoria', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: null, sem_vinculo: false, vinculavel: false }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna true quando nenhum item e de categoria vinculavel', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: false }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+
+  test('retorna false quando item vinculavel nao tem vinculo nem sem_vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: true }] },
+      { rows: [] }, // pedido_item_vinculos
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna true quando item vinculavel tem vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: true }] },
+      { rows: [{ item_id: 1 }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+
+  test('retorna true quando item vinculavel esta marcado sem_vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: true, vinculavel: true }] },
+      { rows: [] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+});
+
 // helper para criar cliente de transação mockado
 function makeClient(respostas = []) {
   const client = { query: jest.fn(), release: jest.fn() };
@@ -69,27 +143,23 @@ function makeClient(respostas = []) {
   return client;
 }
 
-describe('criar (salva vinculos)', () => {
-  test('insere em pedido_item_vinculos quando item_vinculado_idx esta definido', async () => {
+describe('criar (nao mexe em pedido_item_vinculos)', () => {
+  test('item_vinculado_idx legado nao gera DELETE/INSERT em pedido_item_vinculos', async () => {
     const fakeId = 99;
-    // Sem cliente_id no payload → a validação de cliente é pulada (sem db.query extra)
-    // db.query usado apenas por montarPedido após commit (itens retornado é vazio → sem 4ª chamada)
     db.query
       .mockResolvedValueOnce({ rows: [{ id: fakeId, empresa_id: 10, status: 'pendente', numero_origem: null, numero_sequencial: 1, cliente_nome: null, cliente_telefone: null, consultor_nome: null, arquiteto_nome: null, tem_anexo_pdf: false }] })
       .mockResolvedValueOnce({ rows: [] })   // SELECT pedido_itens (vazio)
       .mockResolvedValueOnce({ rows: [] });  // SELECT pedido_pagamentos
 
     const client = makeClient([
-      { rows: [] },                           // BEGIN
-      { rows: [{ seq: 1 }] },                // nextval
-      { rows: [{ id: fakeId }] },            // INSERT pedidos
-      { rows: [] },                           // SELECT existing ids
-      { rows: [{ id: 10 }] },               // INSERT item 0 (cortina)
-      { rows: [{ id: 11 }] },               // INSERT item 1 (trilho)
-      { rows: [] },                           // DELETE pedido_item_vinculos
-      { rows: [] },                           // INSERT vínculo trilho→cortina
-      { rows: [] },                           // DELETE pagamentos
-      { rows: [] },                           // COMMIT
+      { rows: [] },              // BEGIN
+      { rows: [{ seq: 1 }] },    // nextval
+      { rows: [{ id: fakeId }] }, // INSERT pedidos
+      { rows: [] },              // SELECT existing ids
+      { rows: [{ id: 10 }] },    // INSERT item 0 (cortina)
+      { rows: [{ id: 11 }] },    // INSERT item 1 (trilho)
+      { rows: [] },              // DELETE pagamentos
+      { rows: [] },              // COMMIT
     ]);
     db.connect.mockResolvedValue(client);
 
@@ -104,11 +174,9 @@ describe('criar (salva vinculos)', () => {
 
     await svc.criar(10, 99, dados);
 
-    // Verifica INSERT em pedido_item_vinculos
-    const insertVinculoCall = client.query.mock.calls.find(
-      call => typeof call[0] === 'string' && call[0].includes('INSERT INTO pedido_item_vinculos')
+    const vinculoCall = client.query.mock.calls.find(
+      call => typeof call[0] === 'string' && call[0].includes('pedido_item_vinculos')
     );
-    expect(insertVinculoCall).toBeDefined();
-    expect(insertVinculoCall[1]).toEqual([11, 10, 'acessorio']);
+    expect(vinculoCall).toBeUndefined();
   });
 });

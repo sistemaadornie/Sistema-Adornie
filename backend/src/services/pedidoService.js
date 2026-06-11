@@ -29,7 +29,13 @@ function toDecimal(v) {
 async function _verificarEtapa1(client, pedidoId) {
   const [pdfRes, itensRes] = await Promise.all([
     client.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id=$1 LIMIT 1`, [pedidoId]),
-    client.query(`SELECT id, categoria_id, sem_vinculo FROM pedido_itens WHERE pedido_id=$1`, [pedidoId]),
+    client.query(
+      `SELECT pi.id, pi.categoria_id, pi.sem_vinculo, COALESCE(cat.vinculavel, false) AS vinculavel
+       FROM pedido_itens pi
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.pedido_id=$1`,
+      [pedidoId]
+    ),
   ]);
 
   if (!pdfRes.rows.length) return false;
@@ -39,14 +45,17 @@ async function _verificarEtapa1(client, pedidoId) {
 
   if (!itens.every(it => it.categoria_id != null)) return false;
 
-  const itemIds = itens.map(it => it.id);
+  const itensVinculaveis = itens.filter(it => it.vinculavel);
+  if (itensVinculaveis.length === 0) return true;
+
+  const itemIds = itensVinculaveis.map(it => it.id);
   const { rows: vinculosRows } = await client.query(
     `SELECT DISTINCT item_id FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
     [itemIds]
   );
   const comVinculo = new Set(vinculosRows.map(r => r.item_id));
 
-  return itens.every(it => it.sem_vinculo || comVinculo.has(it.id));
+  return itensVinculaveis.every(it => it.sem_vinculo || comVinculo.has(it.id));
 }
 
 async function montarPedido(id, empresaId) {
@@ -178,8 +187,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
   }
 
-  const insertedIds = []; // IDs na mesma ordem do array itens
-
   for (let i = 0; i < itens.length; i++) {
     const it     = itens[i];
     const itemId = Number(it.id);
@@ -214,9 +221,8 @@ async function _salvarItens(client, pedidoId, itens = []) {
           pedidoId,
         ]
       );
-      insertedIds.push(itemId);
     } else {
-      // INSERT novo item (sem item_vinculado_id ainda — resolvido depois)
+      // INSERT novo item
       const ins = await client.query(
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
@@ -243,26 +249,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
           it.categoria_id        ?? null,
           it.sem_vinculo         ?? false,
         ]
-      );
-      insertedIds.push(ins.rows[0].id);
-    }
-  }
-
-  // Salva vínculos na tabela pedido_item_vinculos
-  // Suporta item_vinculado_idx (PedidoModal) e item_vinculado_ordem (ImportarPedidoModal — compat)
-  if (insertedIds.length > 0) {
-    await client.query(
-      `DELETE FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
-      [insertedIds]
-    );
-  }
-  for (let i = 0; i < itens.length; i++) {
-    const idx = itens[i].item_vinculado_idx ?? itens[i].item_vinculado_ordem ?? null;
-    if (idx != null && Number.isFinite(Number(idx)) && Number(idx) !== i && insertedIds[Number(idx)] != null) {
-      await client.query(
-        `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
-         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-        [insertedIds[i], insertedIds[Number(idx)], itens[i].tipo_vinculo || 'acessorio']
       );
     }
   }
@@ -663,4 +649,4 @@ async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, va
   return { [campo]: valor };
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa, fmtNumeroOrigem };
+module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa, fmtNumeroOrigem, _verificarEtapa1 };

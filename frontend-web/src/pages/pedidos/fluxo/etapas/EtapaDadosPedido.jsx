@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import EditarPedidoModal from "./EditarPedidoModal";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
+import VincularItensModal from "./VincularItensModal";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
 function fmtData(iso) {
@@ -25,6 +26,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const [instalacao, setInstalacao] = useState(null);
   const [editando, setEditando] = useState(false);
   const [historico, setHistorico] = useState(false);
+  const [vinculando, setVinculando] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
@@ -60,6 +62,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             <div className="pf-modal-titulo">📋 Dados do Pedido</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
             <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
             <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
             <button className="pf-modal-fechar" onClick={onClose}>×</button>
@@ -131,6 +134,14 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
         <HistoricoPedidoModal
           pedidoId={pedidoId}
           onClose={() => setHistorico(false)}
+        />
+      )}
+
+      {vinculando && (
+        <VincularItensModal
+          pedidoId={pedidoId}
+          onClose={() => setVinculando(false)}
+          onRecarregar={onRecarregar}
         />
       )}
     </div>

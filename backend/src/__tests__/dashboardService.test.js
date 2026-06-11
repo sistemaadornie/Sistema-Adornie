@@ -131,6 +131,10 @@ describe("listarPedidosDashboard", () => {
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
 
+    // Etapa 1: itens sem vinculo (6ª query) deve filtrar por categoria vinculavel
+    const querySemVinculo = db.query.mock.calls[5][0];
+    expect(querySemVinculo).toContain("cat.vinculavel");
+
     expect(resultado).toHaveLength(1);
     // etapa1_ok true (verificacao_ok + 2/2 cobertos), etapa2_ok true (2/2 conferidos),
     // etapa3_ok false (1/2 confeccao_ok) -> etapa_atual = 3

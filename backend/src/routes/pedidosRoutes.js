@@ -560,6 +560,107 @@ router.patch("/:id/producao-itens", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /pedidos/:id/vinculos
+router.post("/:id/vinculos", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const empresaId = req.user.empresa_id;
+    const { item_id, item_vinculado_id } = req.body;
+
+    if (!item_id || !item_vinculado_id) {
+      return res.status(400).json({ message: "item_id e item_vinculado_id são obrigatórios." });
+    }
+    if (Number(item_id) === Number(item_vinculado_id)) {
+      return res.status(400).json({ message: "Um item não pode ser vinculado a si mesmo." });
+    }
+
+    const { rows } = await db.query(
+      `SELECT pi.id, COALESCE(cat.vinculavel, false) AS vinculavel, COALESCE(cat.recebe_vinculos, false) AS recebe_vinculos
+       FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.id = ANY($1) AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [[item_id, item_vinculado_id], pedidoId, empresaId]
+    );
+    if (rows.length !== 2) return res.status(404).json({ message: "Item não encontrado." });
+
+    const item = rows.find((r) => Number(r.id) === Number(item_id));
+    const itemVinculado = rows.find((r) => Number(r.id) === Number(item_vinculado_id));
+
+    if (!item.vinculavel) return res.status(400).json({ message: "A categoria deste item não é vinculável." });
+    if (!itemVinculado.recebe_vinculos) return res.status(400).json({ message: "A categoria do item principal não recebe vínculos." });
+
+    await db.query(`DELETE FROM pedido_item_vinculos WHERE item_id = $1`, [item_id]);
+    await db.query(
+      `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
+       VALUES ($1, $2, 'acessorio') ON CONFLICT DO NOTHING`,
+      [item_id, item_vinculado_id]
+    );
+    await db.query(`UPDATE pedido_itens SET sem_vinculo = false WHERE id = $1`, [item_id]);
+
+    return res.json({
+      vinculo: { item_id: Number(item_id), item_vinculado_id: Number(item_vinculado_id), tipo_vinculo: "acessorio" },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao criar vínculo." });
+  }
+});
+
+// DELETE /pedidos/:id/vinculos/:itemId
+router.delete("/:id/vinculos/:itemId", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const itemId = Number(req.params.itemId);
+    const empresaId = req.user.empresa_id;
+
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [itemId, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    await db.query(`DELETE FROM pedido_item_vinculos WHERE item_id = $1`, [itemId]);
+    return res.json({ message: "Vínculo removido." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao remover vínculo." });
+  }
+});
+
+// PATCH /pedidos/:id/itens/:itemId/sem-vinculo
+router.patch("/:id/itens/:itemId/sem-vinculo", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const itemId = Number(req.params.itemId);
+    const empresaId = req.user.empresa_id;
+    const { sem_vinculo } = req.body;
+
+    if (typeof sem_vinculo !== "boolean") {
+      return res.status(400).json({ message: "sem_vinculo deve ser booleano." });
+    }
+
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [itemId, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    const { rows } = await db.query(
+      `UPDATE pedido_itens SET sem_vinculo = $1 WHERE id = $2 RETURNING id, sem_vinculo`,
+      [sem_vinculo, itemId]
+    );
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar item." });
+  }
+});
+
 // POST /pedidos/:id/pesquisa-satisfacao
 router.post("/:id/pesquisa-satisfacao", authMiddleware, async (req, res) => {
   try {
