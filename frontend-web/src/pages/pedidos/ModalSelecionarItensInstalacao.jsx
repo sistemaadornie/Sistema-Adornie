@@ -45,7 +45,7 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
   }
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box msi-modal">
         <div className="modal-header">
           <div>

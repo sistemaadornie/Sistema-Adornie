@@ -35,7 +35,7 @@ export default function PedidoPrint({ pedido, onClose }) {
   return createPortal(
     <>
       {/* Overlay visível na tela enquanto o print dialog não abre */}
-      <div className="print-overlay" onClick={onClose}>
+      <div className="print-overlay">
         <div className="print-overlay-msg">Abrindo impressão...</div>
       </div>
 

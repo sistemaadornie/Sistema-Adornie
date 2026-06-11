@@ -51,7 +51,7 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 420 }}>
         <div className="modal-header">
           <h2 className="modal-title">{categoria ? "Editar Categoria" : "Nova Categoria"}</h2>

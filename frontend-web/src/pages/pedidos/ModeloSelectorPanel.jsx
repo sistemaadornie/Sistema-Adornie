@@ -58,7 +58,7 @@ function CloseBtn({ onClose }) {
 function SimpleSelectorPanel({ titulo, config, valor, onChange, onClose }) {
   return (
     <>
-      <div style={backdropStyle} onClick={onClose} role="presentation" />
+      <div style={backdropStyle} role="presentation" />
       <div style={panelStyle} role="dialog" aria-modal="true">
         <div style={headerStyle}>
           <span>{titulo}</span>
@@ -121,7 +121,7 @@ function PersianaSelectorPanel({ config, valor, onChange, onClose }) {
 
   return (
     <>
-      <div style={backdropStyle} onClick={onClose} role="presentation" />
+      <div style={backdropStyle} role="presentation" />
       <div style={panelStyle} role="dialog" aria-modal="true">
         <div style={headerStyle}>
           <span>Especificações da persiana</span>

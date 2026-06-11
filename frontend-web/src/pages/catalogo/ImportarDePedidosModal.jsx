@@ -112,7 +112,7 @@ export default function ImportarDePedidosModal({ categorias, onClose, onImportad
   const totalSel = Object.values(selecionados).filter(Boolean).length;
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box imp-ped-modal">
 
         <div className="modal-header">

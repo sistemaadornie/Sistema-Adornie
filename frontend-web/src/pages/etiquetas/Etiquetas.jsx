@@ -534,8 +534,8 @@ function PrintModal({ open, onClose, onPrint, modelo, quantidade, ignorar }) {
   const orientacao = modelo.landscape ? "Paisagem" : "Retrato";
 
   return (
-    <div className="etqprint-overlay" onClick={onClose}>
-      <div className="etqprint-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+    <div className="etqprint-overlay">
+      <div className="etqprint-modal" role="dialog" aria-modal="true">
 
         <div className="etqprint-header">
           <span className="etqprint-title">Imprimir etiquetas</span>

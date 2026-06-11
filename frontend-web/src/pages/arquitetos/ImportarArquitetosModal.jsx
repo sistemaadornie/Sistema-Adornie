@@ -135,7 +135,7 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
   const temDuplicatas = verificacao && verificacao.duplicatas?.length > 0;
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box imp-modal">
 
         <div className="modal-header">

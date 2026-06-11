@@ -317,8 +317,8 @@ export default function OrdemServicoModal({ osId, onClose, onSalvarSucesso }) {
   const pedidoNumero = osData?.pedido_numero || osData?.pedido_id;
 
   return (
-    <div className="os-modal-overlay" onClick={onClose}>
-      <div className="os-modal-box" onClick={(e) => e.stopPropagation()}>
+    <div className="os-modal-overlay">
+      <div className="os-modal-box">
         <div className="os-modal-header">
           <div>
             <h2>Ordem de Serviço Cortina</h2>

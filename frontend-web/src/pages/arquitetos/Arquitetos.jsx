@@ -79,7 +79,7 @@ function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando })
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-box arq-modal">
         <div className="modal-header">
           <h2 className="modal-title">{arquiteto ? "Editar Arquiteto" : "Novo Arquiteto"}</h2>

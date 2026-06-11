@@ -184,8 +184,8 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
   }
 
   return (
-    <div className="modal-overlay pd-modal-overlay" onClick={onClose}>
-      <div className="modal-box pd-modal-grande" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay pd-modal-overlay">
+      <div className="modal-box pd-modal-grande">
         <div className="modal-header">
           <div>
             <h2>Importar Pedido</h2>

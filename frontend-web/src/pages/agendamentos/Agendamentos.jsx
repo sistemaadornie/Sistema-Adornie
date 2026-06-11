@@ -1190,7 +1190,7 @@ function AgendamentosOperador() {
 
       {/* ── PAINEL: PENDENTES DE APROVAÇÃO (ADMIN_MASTER) ── */}
       {abaAprovacoes && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setAbaAprovacoes(false)}>
+        <div className="modal-overlay">
           <div className="modal-box" style={{ maxWidth: 680, maxHeight: "85vh", overflowY: "auto" }}>
             <div className="modal-header">
               <h2 className="modal-title">Pendentes de aprovação</h2>
@@ -2739,8 +2739,8 @@ function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
   const totalConferidos = itens.filter((i) => i.ficha_preenchida).length;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay">
+      <div className="modal-box" style={{ maxWidth: 480 }}>
         <div className="modal-header">
           <div>
             <h2>📐 Itens para conferência</h2>

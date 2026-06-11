@@ -123,8 +123,8 @@ export default function EtiquetasConfig({ open, onClose, logos, carregando, onSa
   }
 
   return (
-    <div className="etqcfg-overlay" onClick={fechar}>
-      <div className="etqcfg-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+    <div className="etqcfg-overlay">
+      <div className="etqcfg-modal" role="dialog" aria-modal="true">
 
         {/* Header */}
         <div className="etqcfg-header">
