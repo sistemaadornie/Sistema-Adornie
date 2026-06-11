@@ -207,12 +207,13 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
                         <select
                           value=""
                           disabled={salvandoId != null}
-                          style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)" }}
+                          title={`Vincular item a "${principal.descricao}"`}
+                          style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)", width: 36, textAlign: "center" }}
                           onChange={(e) => { if (e.target.value) vincular(e.target.value, principal.id); }}
                         >
-                          <option value="">+ Vincular item a "{principal.descricao}"</option>
+                          <option value="">+</option>
                           {opcoes.map((op) => (
-                            <option key={op.id} value={op.id}>{numeroPorItemId[op.id]}. {op.descricao}</option>
+                            <option key={op.id} value={op.id}>{numeroPorItemId[op.id]}. {op.descricao} — {fmtMedidas(op)}</option>
                           ))}
                         </select>
                       </div>
@@ -252,7 +253,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
                     >
                       <option value="">Vincular a...</option>
                       {principais.filter((p) => p.id !== item.id).map((p) => (
-                        <option key={p.id} value={p.id}>{numeroPorItemId[p.id]}. {p.descricao}</option>
+                        <option key={p.id} value={p.id}>{numeroPorItemId[p.id]}. {p.descricao} — {fmtMedidas(p)}</option>
                       ))}
                     </select>
                     <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, true)}>
