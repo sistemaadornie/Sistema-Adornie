@@ -231,7 +231,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           {!carregando && vinculaveisPendentes.length > 0 && (
             <div className="vim-grupo">
               <div className="vim-grupo-titulo">Itens vinculáveis sem vínculo</div>
-              <div className="vim-tabela">
+              <div className="vim-tabela vim-com-ambiente">
                 <div className="vim-header vim-com-ambiente">
                   <span>#</span>
                   <span>Item</span>
@@ -273,7 +273,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           {!carregando && vinculaveisSemVinculoMarcado.length > 0 && (
             <div className="vim-grupo">
               <div className="vim-grupo-titulo">Itens marcados como "sem vínculo"</div>
-              <div className="vim-tabela">
+              <div className="vim-tabela vim-com-ambiente">
                 <div className="vim-header vim-com-ambiente">
                   <span>#</span>
                   <span>Item</span>
