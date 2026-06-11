@@ -16,7 +16,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
     ])
       .then(([pedidoRes, catRes]) => {
         if (!ativo) return;
-        setItens(pedidoRes.itens || []);
+        setItens(pedidoRes.pedido?.itens || []);
         setCategorias(catRes.categorias || []);
       })
       .catch((e) => { if (ativo) setErro(e?.message || "Erro ao carregar itens."); })
