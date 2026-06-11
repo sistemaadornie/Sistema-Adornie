@@ -163,7 +163,9 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     db.query(
       `SELECT pi.pedido_id, COUNT(*)::int AS sem_vinc
        FROM pedido_itens pi
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
        WHERE pi.pedido_id = ANY($1)
+         AND COALESCE(cat.vinculavel, false) = true
          AND pi.sem_vinculo = false
          AND NOT EXISTS (
            SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
