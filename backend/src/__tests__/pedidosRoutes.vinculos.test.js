@@ -98,3 +98,28 @@ describe('DELETE /api/pedidos/:id/vinculos/:itemId', () => {
     expect(db.query.mock.calls[1][1]).toEqual([11]);
   });
 });
+
+describe('PATCH /api/pedidos/:id/itens/:itemId/sem-vinculo', () => {
+  test('400 quando sem_vinculo nao e booleano', async () => {
+    const res = await request(app).patch('/api/pedidos/1/itens/11/sem-vinculo').send({ sem_vinculo: 'sim' });
+    expect(res.status).toBe(400);
+  });
+
+  test('404 quando item nao pertence ao pedido/empresa', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).patch('/api/pedidos/1/itens/11/sem-vinculo').send({ sem_vinculo: true });
+    expect(res.status).toBe(404);
+  });
+
+  test('200 atualiza sem_vinculo', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 11 }] })               // ownership check
+      .mockResolvedValueOnce({ rows: [{ id: 11, sem_vinculo: true }] }); // UPDATE
+
+    const res = await request(app).patch('/api/pedidos/1/itens/11/sem-vinculo').send({ sem_vinculo: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.item).toEqual({ id: 11, sem_vinculo: true });
+    expect(db.query.mock.calls[1][0]).toContain('UPDATE pedido_itens');
+  });
+});

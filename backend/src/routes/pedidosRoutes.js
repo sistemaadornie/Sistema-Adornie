@@ -630,6 +630,37 @@ router.delete("/:id/vinculos/:itemId", authMiddleware, async (req, res) => {
   }
 });
 
+// PATCH /pedidos/:id/itens/:itemId/sem-vinculo
+router.patch("/:id/itens/:itemId/sem-vinculo", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const itemId = Number(req.params.itemId);
+    const empresaId = req.user.empresa_id;
+    const { sem_vinculo } = req.body;
+
+    if (typeof sem_vinculo !== "boolean") {
+      return res.status(400).json({ message: "sem_vinculo deve ser booleano." });
+    }
+
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [itemId, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    const { rows } = await db.query(
+      `UPDATE pedido_itens SET sem_vinculo = $1 WHERE id = $2 RETURNING id, sem_vinculo`,
+      [sem_vinculo, itemId]
+    );
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar item." });
+  }
+});
+
 // POST /pedidos/:id/pesquisa-satisfacao
 router.post("/:id/pesquisa-satisfacao", authMiddleware, async (req, res) => {
   try {
