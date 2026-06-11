@@ -222,7 +222,7 @@ async function _salvarItens(client, pedidoId, itens = []) {
         ]
       );
     } else {
-      // INSERT novo item (sem item_vinculado_id ainda — resolvido depois)
+      // INSERT novo item
       const ins = await client.query(
         `INSERT INTO pedido_itens
            (pedido_id, ambiente, referencia, cor, descricao, medidas,
