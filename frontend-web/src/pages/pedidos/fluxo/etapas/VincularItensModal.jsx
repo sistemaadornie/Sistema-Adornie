@@ -170,7 +170,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
 
           {!carregando && Object.entries(grupos).map(([ambiente, lista]) => (
             <div key={ambiente} className="vim-grupo">
-              <div className="vim-grupo-titulo">📦 {ambiente}</div>
+              <div className="vim-grupo-titulo">🏠 {ambiente}</div>
               <div className="vim-tabela">
                 <div className="vim-header">
                   <span>#</span>
