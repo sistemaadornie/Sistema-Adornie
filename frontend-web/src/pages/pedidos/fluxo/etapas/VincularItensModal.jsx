@@ -171,129 +171,135 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           {!carregando && Object.entries(grupos).map(([ambiente, lista]) => (
             <div key={ambiente} className="vim-grupo">
               <div className="vim-grupo-titulo">📦 {ambiente}</div>
-              <div className="vim-header">
-                <span>#</span>
-                <span>Item</span>
-                <span>Medidas</span>
-                <span></span>
-              </div>
-              {lista.map((principal) => {
-                const filhos = filhosDe(principal);
-                const opcoes = pendentesPara(principal);
-                return (
-                  <div key={principal.id}>
-                    <div className="vim-row">
-                      <span className="vim-num">{numeroPorItemId[principal.id]}</span>
-                      <span className="vim-desc">{principal.descricao}</span>
-                      <span className="vim-medidas">{fmtMedidas(principal)}</span>
-                      <span className="vim-acao">
-                        <span className="pf-badge pf-badge-ok">Item principal</span>
-                      </span>
-                    </div>
-                    {filhos.map((filho) => (
-                      <div key={filho.id} className="vim-row vim-filho">
-                        <span className="vim-num">↳ {numeroPorItemId[filho.id]}</span>
-                        <span className="vim-desc">{filho.descricao}</span>
-                        <span className="vim-medidas">{fmtMedidas(filho)}</span>
+              <div className="vim-tabela">
+                <div className="vim-header">
+                  <span>#</span>
+                  <span>Item</span>
+                  <span>Medidas</span>
+                  <span></span>
+                </div>
+                {lista.map((principal) => {
+                  const filhos = filhosDe(principal);
+                  const opcoes = pendentesPara(principal);
+                  return (
+                    <React.Fragment key={principal.id}>
+                      <div className="vim-row">
+                        <span className="vim-num">{numeroPorItemId[principal.id]}</span>
+                        <span className="vim-desc">{principal.descricao}</span>
+                        <span className="vim-medidas">{fmtMedidas(principal)}</span>
                         <span className="vim-acao">
-                          <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === filho.id} onClick={() => remover(filho.id)}>
-                            remover
-                          </button>
+                          <span className="pf-badge pf-badge-ok">Item principal</span>
                         </span>
                       </div>
-                    ))}
-                    {opcoes.length > 0 && (
-                      <div style={{ margin: "6px 0 0 18px" }}>
-                        <select
-                          value=""
-                          disabled={salvandoId != null}
-                          title={`Vincular item a "${principal.descricao}"`}
-                          style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)", width: 36, textAlign: "center" }}
-                          onChange={(e) => { if (e.target.value) vincular(e.target.value, principal.id); }}
-                        >
-                          <option value="">+</option>
-                          {opcoes.map((op) => (
-                            <option key={op.id} value={op.id}>{numeroPorItemId[op.id]}. {op.descricao} — {fmtMedidas(op)}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {filhos.map((filho) => (
+                        <div key={filho.id} className="vim-row vim-filho">
+                          <span className="vim-num">↳ {numeroPorItemId[filho.id]}</span>
+                          <span className="vim-desc">{filho.descricao}</span>
+                          <span className="vim-medidas">{fmtMedidas(filho)}</span>
+                          <span className="vim-acao">
+                            <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === filho.id} onClick={() => remover(filho.id)}>
+                              remover
+                            </button>
+                          </span>
+                        </div>
+                      ))}
+                      {opcoes.length > 0 && (
+                        <div className="vim-row vim-add">
+                          <span>
+                            <select
+                              value=""
+                              disabled={salvandoId != null}
+                              title={`Vincular item a "${principal.descricao}"`}
+                              style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)", width: 36, textAlign: "center" }}
+                              onChange={(e) => { if (e.target.value) vincular(e.target.value, principal.id); }}
+                            >
+                              <option value="">+</option>
+                              {opcoes.map((op) => (
+                                <option key={op.id} value={op.id}>{numeroPorItemId[op.id]}. {op.descricao} — {fmtMedidas(op)}</option>
+                              ))}
+                            </select>
+                          </span>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
           ))}
 
           {!carregando && vinculaveisPendentes.length > 0 && (
-            <>
-              <hr className="pf-separador" />
+            <div className="vim-grupo">
               <div className="vim-grupo-titulo">Itens vinculáveis sem vínculo</div>
-              <div className="vim-header vim-com-ambiente">
-                <span>#</span>
-                <span>Item</span>
-                <span>Medidas</span>
-                <span>Ambiente</span>
-                <span></span>
-              </div>
-              {vinculaveisPendentes.map((item) => (
-                <div key={item.id} className="vim-row vim-com-ambiente">
-                  <span className="vim-num">{numeroPorItemId[item.id]}</span>
-                  <span className="vim-desc">
-                    {item.descricao}{" "}
-                    <small style={{ opacity: .6 }}>({categoriaPorId[item.categoria_id]?.nome})</small>
-                  </span>
-                  <span className="vim-medidas">{fmtMedidas(item)}</span>
-                  <span className="vim-ambiente">{item.ambiente || "—"}</span>
-                  <span className="vim-acao">
-                    <select
-                      value=""
-                      disabled={salvandoId != null}
-                      style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)" }}
-                      onChange={(e) => { if (e.target.value) vincular(item.id, e.target.value); }}
-                    >
-                      <option value="">Vincular a...</option>
-                      {principais.filter((p) => p.id !== item.id).map((p) => (
-                        <option key={p.id} value={p.id}>{numeroPorItemId[p.id]}. {p.descricao} — {fmtMedidas(p)}</option>
-                      ))}
-                    </select>
-                    <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, true)}>
-                      Marcar sem vínculo
-                    </button>
-                  </span>
+              <div className="vim-tabela">
+                <div className="vim-header vim-com-ambiente">
+                  <span>#</span>
+                  <span>Item</span>
+                  <span>Medidas</span>
+                  <span>Ambiente</span>
+                  <span></span>
                 </div>
-              ))}
-            </>
+                {vinculaveisPendentes.map((item) => (
+                  <div key={item.id} className="vim-row vim-com-ambiente">
+                    <span className="vim-num">{numeroPorItemId[item.id]}</span>
+                    <span className="vim-desc">
+                      {item.descricao}{" "}
+                      <small style={{ opacity: .6 }}>({categoriaPorId[item.categoria_id]?.nome})</small>
+                    </span>
+                    <span className="vim-medidas">{fmtMedidas(item)}</span>
+                    <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                    <span className="vim-acao">
+                      <select
+                        value=""
+                        disabled={salvandoId != null}
+                        style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)" }}
+                        onChange={(e) => { if (e.target.value) vincular(item.id, e.target.value); }}
+                      >
+                        <option value="">Vincular a...</option>
+                        {principais.filter((p) => p.id !== item.id).map((p) => (
+                          <option key={p.id} value={p.id}>{numeroPorItemId[p.id]}. {p.descricao} — {fmtMedidas(p)}</option>
+                        ))}
+                      </select>
+                      <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, true)}>
+                        Marcar sem vínculo
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {!carregando && vinculaveisSemVinculoMarcado.length > 0 && (
-            <>
-              <hr className="pf-separador" />
+            <div className="vim-grupo">
               <div className="vim-grupo-titulo">Itens marcados como "sem vínculo"</div>
-              <div className="vim-header vim-com-ambiente">
-                <span>#</span>
-                <span>Item</span>
-                <span>Medidas</span>
-                <span>Ambiente</span>
-                <span></span>
-              </div>
-              {vinculaveisSemVinculoMarcado.map((item) => (
-                <div key={item.id} className="vim-row vim-com-ambiente vim-sem-vinculo">
-                  <span className="vim-num">{numeroPorItemId[item.id]}</span>
-                  <span className="vim-desc">
-                    {item.descricao}{" "}
-                    <small>({categoriaPorId[item.categoria_id]?.nome})</small>
-                  </span>
-                  <span className="vim-medidas">{fmtMedidas(item)}</span>
-                  <span className="vim-ambiente">{item.ambiente || "—"}</span>
-                  <span className="vim-acao">
-                    <span className="pf-badge pf-badge-pend">Sem vínculo</span>
-                    <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, false)}>
-                      desfazer
-                    </button>
-                  </span>
+              <div className="vim-tabela">
+                <div className="vim-header vim-com-ambiente">
+                  <span>#</span>
+                  <span>Item</span>
+                  <span>Medidas</span>
+                  <span>Ambiente</span>
+                  <span></span>
                 </div>
-              ))}
-            </>
+                {vinculaveisSemVinculoMarcado.map((item) => (
+                  <div key={item.id} className="vim-row vim-com-ambiente vim-sem-vinculo">
+                    <span className="vim-num">{numeroPorItemId[item.id]}</span>
+                    <span className="vim-desc">
+                      {item.descricao}{" "}
+                      <small>({categoriaPorId[item.categoria_id]?.nome})</small>
+                    </span>
+                    <span className="vim-medidas">{fmtMedidas(item)}</span>
+                    <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                    <span className="vim-acao">
+                      <span className="pf-badge pf-badge-pend">Sem vínculo</span>
+                      <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, false)}>
+                        desfazer
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

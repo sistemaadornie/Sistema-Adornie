@@ -246,43 +246,54 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 .pf-item-ambiente { font-size: 12px; color: var(--pf-card-sub); }
 
 /* ── Vincular Itens (modal etapa 1) ── */
-.vim-grupo { margin-bottom: 16px; }
-.vim-grupo-titulo { font-weight: 700; margin-bottom: 6px; }
+.vim-grupo { margin-bottom: 20px; }
+.vim-grupo-titulo { font-weight: 700; margin-bottom: 8px; }
+
+.vim-tabela {
+  border: 1px solid var(--pf-separador);
+  border-radius: 8px;
+  overflow: hidden;
+}
 
 .vim-header,
 .vim-row {
   display: grid;
-  grid-template-columns: 40px 1fr 110px minmax(170px, auto);
-  gap: 10px;
+  grid-template-columns: 40px minmax(160px, 1fr) 110px minmax(170px, auto);
   align-items: center;
 }
 .vim-header.vim-com-ambiente,
 .vim-row.vim-com-ambiente {
-  grid-template-columns: 40px 1fr 110px 110px minmax(220px, auto);
+  grid-template-columns: 40px minmax(160px, 1fr) 110px 110px minmax(220px, auto);
 }
 .vim-header {
-  padding: 0 10px 4px;
   font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
   color: var(--pf-card-sub);
+  background: var(--pf-btn-secondary-bg);
+  border-bottom: 1px solid var(--pf-separador);
 }
 .vim-row {
-  padding: 6px 10px;
-  border: 1px solid var(--pf-separador);
-  border-radius: 6px;
-  margin-bottom: 4px;
+  border-bottom: 1px solid var(--pf-separador);
 }
-.vim-row.vim-filho {
-  width: calc(100% - 18px);
-  margin-left: 18px;
-  border-style: dashed;
-  border-color: #22c55e;
-}
+.vim-row:last-child { border-bottom: none; }
+.vim-row.vim-filho { background: rgba(34,197,94,.06); }
 .vim-row.vim-sem-vinculo { opacity: .6; }
+.vim-row.vim-add { background: var(--pf-btn-secondary-bg); }
+
+.vim-header > span,
+.vim-row > span {
+  padding: 8px 10px;
+  border-right: 1px solid var(--pf-separador);
+  min-width: 0;
+}
+.vim-header > span:last-child,
+.vim-row > span:last-child { border-right: none; }
+.vim-row.vim-add > span { grid-column: 1 / -1; border-right: none; padding-left: 50px; }
+
 .vim-num { text-align: center; font-weight: 600; color: var(--pf-card-sub); font-size: 12px; }
-.vim-desc { font-size: 13px; }
-.vim-medidas { font-size: 12px; color: var(--pf-card-sub); white-space: nowrap; }
-.vim-ambiente { font-size: 12px; color: var(--pf-card-sub); }
-.vim-acao { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.vim-desc { font-size: 13px; word-break: break-word; }
+.vim-medidas { font-size: 12px; color: var(--pf-card-sub); white-space: nowrap; text-align: center; }
+.vim-ambiente { font-size: 12px; color: var(--pf-card-sub); text-align: center; }
+.vim-acao { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
 /* ── EtapaCard estados ── */
 .etapa-card {
