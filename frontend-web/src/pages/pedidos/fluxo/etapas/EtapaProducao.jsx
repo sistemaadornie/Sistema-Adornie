@@ -57,7 +57,12 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRec
 
               {!item.em_confeccao && (
                 <>
-                  <span className="pf-badge pf-badge-ok" style={{ fontSize: 11 }}>Fornecedor</span>
+                  <span className="pf-badge" style={{
+                    fontSize: 11,
+                    background: (item.categoria_cor || "#C9A96E") + "22",
+                    color: item.categoria_cor || "#C9A96E",
+                    border: `1px solid ${(item.categoria_cor || "#C9A96E")}44`,
+                  }}>{item.categoria_nome || "Sem categoria"}</span>
                   <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
                     <input type="checkbox" checked={false}
                       onChange={() => toggleCampo(item.id, "em_confeccao", true)}
