@@ -30,6 +30,8 @@ const CATEGORIAS_PADRAO = [
 function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
   const [nome, setNome] = useState(categoria?.nome || "");
   const [cor, setCor]   = useState(categoria?.cor  || "#C9A96E");
+  const [vinculavel, setVinculavel] = useState(categoria?.vinculavel ?? false);
+  const [recebeVinculos, setRecebeVinculos] = useState(categoria?.recebe_vinculos ?? false);
   const [erro, setErro] = useState(null);
   const [logistica, setLogistica] = useState(prazos?.logistica_interna_dias ?? 2);
   const [confeccao, setConfeccao] = useState(prazos?.confeccao_dias ?? 10);
@@ -40,7 +42,7 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
     e.preventDefault();
     if (!nome.trim()) { setErro("Nome é obrigatório."); return; }
     setErro(null);
-    onSalvar({ nome, cor, prazos: {
+    onSalvar({ nome, cor, vinculavel, recebe_vinculos: recebeVinculos, prazos: {
       logistica_interna_dias: Number(logistica) || 0,
       confeccao_dias: Number(confeccao) || 0,
       expedicao_dias: Number(expedicao) || 0,
@@ -77,6 +79,24 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
             <div className="cat-preview-badge" style={{ background: cor + "22", color: cor, borderColor: cor + "44" }}>
               {nome || "Prévia"}
             </div>
+          </div>
+
+          <div className="ag-form-field" style={{ marginTop: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
+              <input type="checkbox" checked={vinculavel} onChange={(e) => setVinculavel(e.target.checked)} />
+              Item vinculável?
+            </label>
+            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
+              Itens desta categoria podem ser vinculados a um item principal (ex: Trilho → Cortina).
+            </p>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, marginTop: 8 }}>
+              <input type="checkbox" checked={recebeVinculos} onChange={(e) => setRecebeVinculos(e.target.checked)} />
+              Deve receber itens vinculados?
+            </label>
+            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
+              Itens desta categoria podem ser "principais" e receber outros itens vinculados a eles.
+            </p>
           </div>
 
           {categoria?.id && (
@@ -144,11 +164,11 @@ export default function Categorias({ onCategoriasChange }) {
     setSalvando(true);
     try {
       if (modal === "novo") {
-        const res = await api.post("/categorias", { nome: dados.nome, cor: dados.cor });
+        const res = await api.post("/categorias", { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos });
         setCategorias((prev) => [...prev, res.categoria]);
         onCategoriasChange?.([...categorias, res.categoria]);
       } else {
-        const res = await api.put(`/categorias/${modal.id}`, { nome: dados.nome, cor: dados.cor });
+        const res = await api.put(`/categorias/${modal.id}`, { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos });
         const atualizada = categorias.map((c) => c.id === res.categoria.id ? res.categoria : c);
         setCategorias(atualizada);
         onCategoriasChange?.(atualizada);
