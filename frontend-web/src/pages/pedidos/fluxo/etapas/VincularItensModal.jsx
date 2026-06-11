@@ -252,7 +252,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
                       <select
                         value=""
                         disabled={salvandoId != null}
-                        style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)" }}
+                        style={{ background: "var(--pf-input-bg)", border: "1px solid var(--pf-input-border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--pf-modal-text)", width: 140, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                         onChange={(e) => { if (e.target.value) vincular(item.id, e.target.value); }}
                       >
                         <option value="">Vincular a...</option>
