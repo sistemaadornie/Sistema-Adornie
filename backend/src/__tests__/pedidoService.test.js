@@ -143,27 +143,23 @@ function makeClient(respostas = []) {
   return client;
 }
 
-describe('criar (salva vinculos)', () => {
-  test('insere em pedido_item_vinculos quando item_vinculado_idx esta definido', async () => {
+describe('criar (nao mexe em pedido_item_vinculos)', () => {
+  test('item_vinculado_idx legado nao gera DELETE/INSERT em pedido_item_vinculos', async () => {
     const fakeId = 99;
-    // Sem cliente_id no payload → a validação de cliente é pulada (sem db.query extra)
-    // db.query usado apenas por montarPedido após commit (itens retornado é vazio → sem 4ª chamada)
     db.query
       .mockResolvedValueOnce({ rows: [{ id: fakeId, empresa_id: 10, status: 'pendente', numero_origem: null, numero_sequencial: 1, cliente_nome: null, cliente_telefone: null, consultor_nome: null, arquiteto_nome: null, tem_anexo_pdf: false }] })
       .mockResolvedValueOnce({ rows: [] })   // SELECT pedido_itens (vazio)
       .mockResolvedValueOnce({ rows: [] });  // SELECT pedido_pagamentos
 
     const client = makeClient([
-      { rows: [] },                           // BEGIN
-      { rows: [{ seq: 1 }] },                // nextval
-      { rows: [{ id: fakeId }] },            // INSERT pedidos
-      { rows: [] },                           // SELECT existing ids
-      { rows: [{ id: 10 }] },               // INSERT item 0 (cortina)
-      { rows: [{ id: 11 }] },               // INSERT item 1 (trilho)
-      { rows: [] },                           // DELETE pedido_item_vinculos
-      { rows: [] },                           // INSERT vínculo trilho→cortina
-      { rows: [] },                           // DELETE pagamentos
-      { rows: [] },                           // COMMIT
+      { rows: [] },              // BEGIN
+      { rows: [{ seq: 1 }] },    // nextval
+      { rows: [{ id: fakeId }] }, // INSERT pedidos
+      { rows: [] },              // SELECT existing ids
+      { rows: [{ id: 10 }] },    // INSERT item 0 (cortina)
+      { rows: [{ id: 11 }] },    // INSERT item 1 (trilho)
+      { rows: [] },              // DELETE pagamentos
+      { rows: [] },              // COMMIT
     ]);
     db.connect.mockResolvedValue(client);
 
@@ -178,11 +174,9 @@ describe('criar (salva vinculos)', () => {
 
     await svc.criar(10, 99, dados);
 
-    // Verifica INSERT em pedido_item_vinculos
-    const insertVinculoCall = client.query.mock.calls.find(
-      call => typeof call[0] === 'string' && call[0].includes('INSERT INTO pedido_item_vinculos')
+    const vinculoCall = client.query.mock.calls.find(
+      call => typeof call[0] === 'string' && call[0].includes('pedido_item_vinculos')
     );
-    expect(insertVinculoCall).toBeDefined();
-    expect(insertVinculoCall[1]).toEqual([11, 10, 'acessorio']);
+    expect(vinculoCall).toBeUndefined();
   });
 });

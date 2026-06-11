@@ -187,8 +187,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);
   }
 
-  const insertedIds = []; // IDs na mesma ordem do array itens
-
   for (let i = 0; i < itens.length; i++) {
     const it     = itens[i];
     const itemId = Number(it.id);
@@ -223,7 +221,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
           pedidoId,
         ]
       );
-      insertedIds.push(itemId);
     } else {
       // INSERT novo item (sem item_vinculado_id ainda — resolvido depois)
       const ins = await client.query(
@@ -252,26 +249,6 @@ async function _salvarItens(client, pedidoId, itens = []) {
           it.categoria_id        ?? null,
           it.sem_vinculo         ?? false,
         ]
-      );
-      insertedIds.push(ins.rows[0].id);
-    }
-  }
-
-  // Salva vínculos na tabela pedido_item_vinculos
-  // Suporta item_vinculado_idx (PedidoModal) e item_vinculado_ordem (ImportarPedidoModal — compat)
-  if (insertedIds.length > 0) {
-    await client.query(
-      `DELETE FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
-      [insertedIds]
-    );
-  }
-  for (let i = 0; i < itens.length; i++) {
-    const idx = itens[i].item_vinculado_idx ?? itens[i].item_vinculado_ordem ?? null;
-    if (idx != null && Number.isFinite(Number(idx)) && Number(idx) !== i && insertedIds[Number(idx)] != null) {
-      await client.query(
-        `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
-         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-        [insertedIds[i], insertedIds[Number(idx)], itens[i].tipo_vinculo || 'acessorio']
       );
     }
   }
