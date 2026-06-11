@@ -607,6 +607,29 @@ router.post("/:id/vinculos", authMiddleware, async (req, res) => {
   }
 });
 
+// DELETE /pedidos/:id/vinculos/:itemId
+router.delete("/:id/vinculos/:itemId", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const itemId = Number(req.params.itemId);
+    const empresaId = req.user.empresa_id;
+
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [itemId, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    await db.query(`DELETE FROM pedido_item_vinculos WHERE item_id = $1`, [itemId]);
+    return res.json({ message: "Vínculo removido." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao remover vínculo." });
+  }
+});
+
 // POST /pedidos/:id/pesquisa-satisfacao
 router.post("/:id/pesquisa-satisfacao", authMiddleware, async (req, res) => {
   try {

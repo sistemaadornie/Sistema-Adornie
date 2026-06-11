@@ -77,3 +77,24 @@ describe('POST /api/pedidos/:id/vinculos', () => {
     expect(db.query.mock.calls[3][0]).toContain('UPDATE pedido_itens');
   });
 });
+
+describe('DELETE /api/pedidos/:id/vinculos/:itemId', () => {
+  test('404 quando item nao pertence ao pedido/empresa', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app).delete('/api/pedidos/1/vinculos/11');
+    expect(res.status).toBe(404);
+  });
+
+  test('200 remove o vinculo', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 11 }] }) // ownership check
+      .mockResolvedValueOnce({ rows: [] });          // DELETE pedido_item_vinculos
+
+    const res = await request(app).delete('/api/pedidos/1/vinculos/11');
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Vínculo removido.');
+    expect(db.query.mock.calls[1][0]).toContain('DELETE FROM pedido_item_vinculos');
+    expect(db.query.mock.calls[1][1]).toEqual([11]);
+  });
+});
