@@ -39,3 +39,6 @@ out/
 # ── SO ─────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Brainstorming (companion visual) ──────────────────────────
+.superpowers/
