@@ -29,7 +29,13 @@ function toDecimal(v) {
 async function _verificarEtapa1(client, pedidoId) {
   const [pdfRes, itensRes] = await Promise.all([
     client.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id=$1 LIMIT 1`, [pedidoId]),
-    client.query(`SELECT id, categoria_id, sem_vinculo FROM pedido_itens WHERE pedido_id=$1`, [pedidoId]),
+    client.query(
+      `SELECT pi.id, pi.categoria_id, pi.sem_vinculo, COALESCE(cat.vinculavel, false) AS vinculavel
+       FROM pedido_itens pi
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.pedido_id=$1`,
+      [pedidoId]
+    ),
   ]);
 
   if (!pdfRes.rows.length) return false;
@@ -39,14 +45,17 @@ async function _verificarEtapa1(client, pedidoId) {
 
   if (!itens.every(it => it.categoria_id != null)) return false;
 
-  const itemIds = itens.map(it => it.id);
+  const itensVinculaveis = itens.filter(it => it.vinculavel);
+  if (itensVinculaveis.length === 0) return true;
+
+  const itemIds = itensVinculaveis.map(it => it.id);
   const { rows: vinculosRows } = await client.query(
     `SELECT DISTINCT item_id FROM pedido_item_vinculos WHERE item_id = ANY($1)`,
     [itemIds]
   );
   const comVinculo = new Set(vinculosRows.map(r => r.item_id));
 
-  return itens.every(it => it.sem_vinculo || comVinculo.has(it.id));
+  return itensVinculaveis.every(it => it.sem_vinculo || comVinculo.has(it.id));
 }
 
 async function montarPedido(id, empresaId) {
@@ -663,4 +672,4 @@ async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, va
   return { [campo]: valor };
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa, fmtNumeroOrigem };
+module.exports = { listar, buscar, criar, atualizar, excluir, importar, atualizarEtapa, fmtNumeroOrigem, _verificarEtapa1 };

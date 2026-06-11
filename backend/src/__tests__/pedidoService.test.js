@@ -60,6 +60,80 @@ describe('buscar (montarPedido)', () => {
   });
 });
 
+describe('_verificarEtapa1', () => {
+  function makeFakeClient(respostas = []) {
+    const client = { query: jest.fn() };
+    respostas.forEach(r => client.query.mockResolvedValueOnce(r));
+    return client;
+  }
+
+  test('retorna false quando nao ha anexo PDF', async () => {
+    const client = makeFakeClient([
+      { rows: [] }, // pedido_anexos
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: false }] }, // pedido_itens
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna false quando pedido nao tem itens', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] }, // pedido_anexos
+      { rows: [] },   // pedido_itens
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna false quando algum item nao tem categoria', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: null, sem_vinculo: false, vinculavel: false }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna true quando nenhum item e de categoria vinculavel', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: false }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+
+  test('retorna false quando item vinculavel nao tem vinculo nem sem_vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: true }] },
+      { rows: [] }, // pedido_item_vinculos
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(false);
+  });
+
+  test('retorna true quando item vinculavel tem vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: false, vinculavel: true }] },
+      { rows: [{ item_id: 1 }] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+
+  test('retorna true quando item vinculavel esta marcado sem_vinculo', async () => {
+    const client = makeFakeClient([
+      { rows: [{}] },
+      { rows: [{ id: 1, categoria_id: 5, sem_vinculo: true, vinculavel: true }] },
+      { rows: [] },
+    ]);
+    const result = await svc._verificarEtapa1(client, 1);
+    expect(result).toBe(true);
+  });
+});
+
 // helper para criar cliente de transação mockado
 function makeClient(respostas = []) {
   const client = { query: jest.fn(), release: jest.fn() };
