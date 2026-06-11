@@ -75,12 +75,12 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
               Critérios de conclusão
             </div>
             <CriterioItem ok={p.tem_anexo} texto="Anexo do PDF original" />
-            <CriterioItem ok={p.verificacao_ok} texto="Pedido verificado" />
             <CriterioItem ok={(p.itens_sem_categoria ?? 1) === 0 && (p.total_itens ?? 0) > 0} texto="Todos os itens com categoria" />
             <CriterioItem ok={(p.itens_sem_vinculo ?? 1) === 0 && (p.total_itens ?? 0) > 0} texto="Todos os itens com vínculo" />
+            <CriterioItem ok={p.verificacao_ok} texto="Pedido verificado" />
             <CriterioItem
               ok={(p.itens_cobertos ?? 0) >= (p.total_itens ?? 1) && (p.total_itens ?? 0) > 0}
-              texto={`Todos os itens agendados (${p.itens_cobertos ?? 0}/${p.total_itens ?? 0})`}
+              texto={`Todos os itens com data de entrega definida (${p.itens_cobertos ?? 0}/${p.total_itens ?? 0})`}
             />
           </div>
 
