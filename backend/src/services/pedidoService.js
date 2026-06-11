@@ -26,6 +26,56 @@ function toDecimal(v) {
   return parseFloat(s) || null;
 }
 
+const LABELS_CAMPO_AUDITORIA = {
+  cliente_id: "Cliente",
+  cpf_cnpj: "CPF/CNPJ",
+  email_cliente: "E-mail",
+  status: "Status",
+  data_pedido: "Data do Pedido",
+  consultor_id: "Consultor",
+  arquiteto_id: "Arquiteto",
+  descricao: "Descrição",
+  observacoes: "Observações",
+  observacoes_entrega: "Observações de Entrega",
+  cep: "CEP",
+  rua: "Rua",
+  bairro: "Bairro",
+  cidade: "Cidade",
+  estado: "Estado",
+  subtotal: "Subtotal",
+  desconto: "Desconto",
+  total: "Total",
+};
+
+const LABELS_STATUS_PEDIDO = {
+  pendente: "Pendente",
+  em_andamento: "Em andamento",
+  concluido: "Concluído",
+  cancelado: "Cancelado",
+};
+
+function fmtMoedaBR(v) {
+  const n = Number(v);
+  if (v == null || isNaN(n)) return "—";
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDataBR(v) {
+  if (!v) return "—";
+  const s = String(v);
+  const d = s.includes("T") ? new Date(s) : new Date(`${s}T12:00:00`);
+  return isNaN(d.getTime()) ? s : d.toLocaleDateString("pt-BR");
+}
+
+// Formata o valor de um campo para exibição no histórico (datas, moeda e status em formato BR)
+function fmtValorAuditoria(campo, v) {
+  if (v == null || v === "") return "—";
+  if (campo === "data_pedido") return fmtDataBR(v);
+  if (["subtotal", "desconto", "total"].includes(campo)) return `R$ ${fmtMoedaBR(v)}`;
+  if (campo === "status") return LABELS_STATUS_PEDIDO[v] || v;
+  return String(v);
+}
+
 async function _verificarEtapa1(client, pedidoId) {
   const [pdfRes, itensRes] = await Promise.all([
     client.query(`SELECT 1 FROM pedido_anexos WHERE pedido_id=$1 LIMIT 1`, [pedidoId]),
@@ -430,7 +480,9 @@ async function atualizar(id, empresaId, dados, userId) {
       }
     }
     const partesDiff = Object.entries(diff)
-      .map(([k, { antes, depois }]) => `${k}: "${antes ?? ""}" → "${depois ?? ""}"`);
+      .map(([k, { antes, depois }]) =>
+        `${LABELS_CAMPO_AUDITORIA[k] || k}: "${fmtValorAuditoria(k, antes)}" → "${fmtValorAuditoria(k, depois)}"`
+      );
 
     // Diff de itens (quantidade e valor total)
     const itensAntes   = pedidoAntes.itens || [];
@@ -438,7 +490,7 @@ async function atualizar(id, empresaId, dados, userId) {
     const totalItensDepois = itens.reduce((s, it) => s + (Number(toDecimal(it.valor)) || 0), 0);
     if (itensAntes.length !== itens.length || totalItensAntes.toFixed(2) !== totalItensDepois.toFixed(2)) {
       partesDiff.push(
-        `itens: ${itensAntes.length} (R$ ${totalItensAntes.toFixed(2)}) → ${itens.length} (R$ ${totalItensDepois.toFixed(2)})`
+        `Itens: "${itensAntes.length} item(ns) — R$ ${fmtMoedaBR(totalItensAntes)}" → "${itens.length} item(ns) — R$ ${fmtMoedaBR(totalItensDepois)}"`
       );
     }
 
@@ -448,7 +500,7 @@ async function atualizar(id, empresaId, dados, userId) {
     const totalPagDepois = pagamentos.reduce((s, pg) => s + (Number(toDecimal(pg.valor)) || 0), 0);
     if (pagamentosAntes.length !== pagamentos.length || totalPagAntes.toFixed(2) !== totalPagDepois.toFixed(2)) {
       partesDiff.push(
-        `pagamentos: ${pagamentosAntes.length} (R$ ${totalPagAntes.toFixed(2)}) → ${pagamentos.length} (R$ ${totalPagDepois.toFixed(2)})`
+        `Pagamentos: "${pagamentosAntes.length} item(ns) — R$ ${fmtMoedaBR(totalPagAntes)}" → "${pagamentos.length} item(ns) — R$ ${fmtMoedaBR(totalPagDepois)}"`
       );
     }
 

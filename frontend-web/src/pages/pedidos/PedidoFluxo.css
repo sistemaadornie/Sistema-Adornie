@@ -186,6 +186,17 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 .pf-historico-acao { font-size: 13px; font-weight: 700; }
 .pf-historico-meta { font-size: 11px; color: var(--pf-card-sub); }
 .pf-historico-desc { font-size: 12px; color: var(--pf-modal-text); line-height: 1.5; word-break: break-word; }
+
+.pf-historico-diffs { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.pf-diff-item {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 12px; padding: 5px 10px;
+  background: var(--pf-btn-secondary-bg); border-radius: 6px;
+}
+.pf-diff-campo { font-weight: 700; color: var(--pf-card-sub); min-width: 130px; }
+.pf-diff-antes { color: var(--pf-badge-err-text); text-decoration: line-through; opacity: .8; }
+.pf-diff-seta { color: var(--pf-card-sub); }
+.pf-diff-depois { color: var(--pf-badge-ok-text); font-weight: 600; }
 .pf-modal-header {
   padding: 18px 24px 14px;
   border-bottom: 1px solid var(--pf-separador);
