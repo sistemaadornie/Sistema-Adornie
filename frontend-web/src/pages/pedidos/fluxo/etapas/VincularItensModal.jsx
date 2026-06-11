@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { api } from "../../../../services/api";
 
+function fmtMedidas(item) {
+  const fmt = (v) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (item.largura != null || item.altura != null) {
+    const l = item.largura != null ? `${fmt(item.largura)}m` : "—";
+    const a = item.altura != null ? `${fmt(item.altura)}m` : "—";
+    return `${l} x ${a}`;
+  }
+  if (item.medidas) {
+    const partes = item.medidas.split(/[xX×]/).map((p) => p.trim());
+    if (partes.length === 2) return `${partes[0]}m x ${partes[1]}m`;
+    return item.medidas;
+  }
+  return "—";
+}
+
 export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) {
   const [itens, setItens] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -23,6 +38,12 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
       .finally(() => { if (ativo) setCarregando(false); });
     return () => { ativo = false; };
   }, [pedidoId]);
+
+  const numeroPorItemId = useMemo(() => {
+    const map = {};
+    itens.forEach((it, i) => { map[it.id] = i + 1; });
+    return map;
+  }, [itens]);
 
   const categoriaPorId = useMemo(() => {
     const map = {};
@@ -148,23 +169,37 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           )}
 
           {!carregando && Object.entries(grupos).map(([ambiente, lista]) => (
-            <div key={ambiente} style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>📦 {ambiente}</div>
+            <div key={ambiente} className="vim-grupo">
+              <div className="vim-grupo-titulo">📦 {ambiente}</div>
+              <div className="vim-header">
+                <span>#</span>
+                <span>Item</span>
+                <span>Medidas</span>
+                <span></span>
+              </div>
               {lista.map((principal) => {
                 const filhos = filhosDe(principal);
                 const opcoes = pendentesPara(principal);
                 return (
-                  <div key={principal.id} style={{ marginBottom: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", border: "1px solid var(--pf-separador)", borderRadius: 6 }}>
-                      <span>{principal.id}. {principal.descricao}</span>
-                      <span className="pf-badge pf-badge-ok" style={{ fontSize: 10 }}>Item principal</span>
+                  <div key={principal.id}>
+                    <div className="vim-row">
+                      <span className="vim-num">{numeroPorItemId[principal.id]}</span>
+                      <span className="vim-desc">{principal.descricao}</span>
+                      <span className="vim-medidas">{fmtMedidas(principal)}</span>
+                      <span className="vim-acao">
+                        <span className="pf-badge pf-badge-ok">Item principal</span>
+                      </span>
                     </div>
                     {filhos.map((filho) => (
-                      <div key={filho.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "4px 0 0 18px", padding: "6px 10px", border: "1px dashed #22c55e", borderRadius: 6 }}>
-                        <span>↳ {filho.id}. {filho.descricao}</span>
-                        <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === filho.id} onClick={() => remover(filho.id)}>
-                          remover
-                        </button>
+                      <div key={filho.id} className="vim-row vim-filho">
+                        <span className="vim-num">↳ {numeroPorItemId[filho.id]}</span>
+                        <span className="vim-desc">{filho.descricao}</span>
+                        <span className="vim-medidas">{fmtMedidas(filho)}</span>
+                        <span className="vim-acao">
+                          <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === filho.id} onClick={() => remover(filho.id)}>
+                            remover
+                          </button>
+                        </span>
                       </div>
                     ))}
                     {opcoes.length > 0 && (
@@ -177,7 +212,7 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
                         >
                           <option value="">+ Vincular item a "{principal.descricao}"</option>
                           {opcoes.map((op) => (
-                            <option key={op.id} value={op.id}>{op.id}. {op.descricao}</option>
+                            <option key={op.id} value={op.id}>{numeroPorItemId[op.id]}. {op.descricao}</option>
                           ))}
                         </select>
                       </div>
@@ -191,16 +226,24 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           {!carregando && vinculaveisPendentes.length > 0 && (
             <>
               <hr className="pf-separador" />
-              <div style={{ fontWeight: 700, margin: "10px 0 6px" }}>Itens vinculáveis sem vínculo</div>
+              <div className="vim-grupo-titulo">Itens vinculáveis sem vínculo</div>
+              <div className="vim-header vim-com-ambiente">
+                <span>#</span>
+                <span>Item</span>
+                <span>Medidas</span>
+                <span>Ambiente</span>
+                <span></span>
+              </div>
               {vinculaveisPendentes.map((item) => (
-                <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", border: "1px solid var(--pf-separador)", borderRadius: 6, marginBottom: 6 }}>
-                  <span>
-                    {item.id}. {item.descricao}{" "}
-                    <small style={{ opacity: .6 }}>
-                      ({categoriaPorId[item.categoria_id]?.nome}{item.ambiente ? ` — ${item.ambiente}` : ""})
-                    </small>
+                <div key={item.id} className="vim-row vim-com-ambiente">
+                  <span className="vim-num">{numeroPorItemId[item.id]}</span>
+                  <span className="vim-desc">
+                    {item.descricao}{" "}
+                    <small style={{ opacity: .6 }}>({categoriaPorId[item.categoria_id]?.nome})</small>
                   </span>
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <span className="vim-medidas">{fmtMedidas(item)}</span>
+                  <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                  <span className="vim-acao">
                     <select
                       value=""
                       disabled={salvandoId != null}
@@ -209,13 +252,13 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
                     >
                       <option value="">Vincular a...</option>
                       {principais.filter((p) => p.id !== item.id).map((p) => (
-                        <option key={p.id} value={p.id}>{p.id}. {p.descricao}</option>
+                        <option key={p.id} value={p.id}>{numeroPorItemId[p.id]}. {p.descricao}</option>
                       ))}
                     </select>
                     <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, true)}>
                       Marcar sem vínculo
                     </button>
-                  </div>
+                  </span>
                 </div>
               ))}
             </>
@@ -224,19 +267,29 @@ export default function VincularItensModal({ pedidoId, onClose, onRecarregar }) 
           {!carregando && vinculaveisSemVinculoMarcado.length > 0 && (
             <>
               <hr className="pf-separador" />
-              <div style={{ fontWeight: 700, margin: "10px 0 6px" }}>Itens marcados como "sem vínculo"</div>
+              <div className="vim-grupo-titulo">Itens marcados como "sem vínculo"</div>
+              <div className="vim-header vim-com-ambiente">
+                <span>#</span>
+                <span>Item</span>
+                <span>Medidas</span>
+                <span>Ambiente</span>
+                <span></span>
+              </div>
               {vinculaveisSemVinculoMarcado.map((item) => (
-                <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", border: "1px solid var(--pf-separador)", borderRadius: 6, marginBottom: 6, opacity: .6 }}>
-                  <span>
-                    {item.id}. {item.descricao}{" "}
-                    <small>({categoriaPorId[item.categoria_id]?.nome}{item.ambiente ? ` — ${item.ambiente}` : ""})</small>
+                <div key={item.id} className="vim-row vim-com-ambiente vim-sem-vinculo">
+                  <span className="vim-num">{numeroPorItemId[item.id]}</span>
+                  <span className="vim-desc">
+                    {item.descricao}{" "}
+                    <small>({categoriaPorId[item.categoria_id]?.nome})</small>
                   </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span className="pf-badge pf-badge-pend" style={{ fontSize: 10 }}>Sem vínculo</span>
+                  <span className="vim-medidas">{fmtMedidas(item)}</span>
+                  <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                  <span className="vim-acao">
+                    <span className="pf-badge pf-badge-pend">Sem vínculo</span>
                     <button className="pf-btn-secondary" style={{ fontSize: 11, padding: "2px 8px" }} disabled={salvandoId === item.id} onClick={() => marcarSemVinculo(item.id, false)}>
                       desfazer
                     </button>
-                  </div>
+                  </span>
                 </div>
               ))}
             </>
