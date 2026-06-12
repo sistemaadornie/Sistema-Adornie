@@ -19,7 +19,12 @@ function calcularEtapaAtual({
   itensConferidos,
   totalEmConf,
   totalConfOk,
+  itensComProdutoOk,
   genitoresAgendados,
+  instalacoesTotal,
+  instalacoesConcluidas,
+  totalItensInstalacao,
+  itensSeparados,
   status,
 }) {
   const etapa1_ok = verificacaoOk &&
@@ -32,18 +37,33 @@ function calcularEtapaAtual({
 
   const etapa3_ok = totalEmConf === 0 || totalConfOk >= totalEmConf;
 
-  const etapa4_ok = genitoresAgendados > 0;
+  const etapa4_ok = totalItens > 0 && itensComProdutoOk >= totalItens;
 
-  const etapa5_ok = status === "concluido";
+  const etapa5_ok = genitoresAgendados > 0;
+
+  const etapa6_ok = instalacoesTotal > 0 &&
+                    totalItensInstalacao > 0 &&
+                    itensSeparados >= totalItensInstalacao;
+
+  const etapa7_ok = instalacoesTotal > 0 && instalacoesConcluidas >= instalacoesTotal;
+
+  const etapa8_ok = status === "concluido";
 
   let etapa_atual = 1;
   if (etapa1_ok) etapa_atual = 2;
   if (etapa1_ok && etapa2_ok) etapa_atual = 3;
   if (etapa1_ok && etapa2_ok && etapa3_ok) etapa_atual = 4;
   if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok) etapa_atual = 5;
-  if (etapa5_ok) etapa_atual = 5;
+  if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok && etapa5_ok) etapa_atual = 6;
+  if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok && etapa5_ok && etapa6_ok) etapa_atual = 7;
+  if (etapa1_ok && etapa2_ok && etapa3_ok && etapa4_ok && etapa5_ok && etapa6_ok && etapa7_ok) etapa_atual = 8;
+  if (etapa8_ok) etapa_atual = 8;
 
-  return { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok, etapa5_ok };
+  return {
+    etapa_atual,
+    etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok,
+    etapa5_ok, etapa6_ok, etapa7_ok, etapa8_ok,
+  };
 }
 
 async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {}) {

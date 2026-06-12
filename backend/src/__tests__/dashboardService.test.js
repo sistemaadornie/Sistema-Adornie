@@ -15,7 +15,12 @@ describe("calcularEtapaAtual", () => {
     itensConferidos: 0,
     totalEmConf: 0,
     totalConfOk: 0,
+    itensComProdutoOk: 0,
     genitoresAgendados: 0,
+    instalacoesTotal: 0,
+    instalacoesConcluidas: 0,
+    totalItensInstalacao: 0,
+    itensSeparados: 0,
     status: "pendente",
   };
 
@@ -50,41 +55,105 @@ describe("calcularEtapaAtual", () => {
     expect(r.etapa_atual).toBe(3);
   });
 
-  test("etapas 1-3 completas, sem genitor agendado -> etapa_atual 4", () => {
+  test("etapas 1-3 completas, conferencia do produto pendente -> etapa_atual 4", () => {
     const r = calcularEtapaAtual({
       ...base,
       verificacaoOk: true,
       itensCobertos: 2,
       totalItensConf: 2,
       itensConferidos: 2,
-      totalEmConf: 0,
-      totalConfOk: 0,
-      genitoresAgendados: 0,
+      totalEmConf: 2,
+      totalConfOk: 2,
+      itensComProdutoOk: 1,
     });
     expect(r.etapa3_ok).toBe(true);
     expect(r.etapa4_ok).toBe(false);
     expect(r.etapa_atual).toBe(4);
   });
 
-  test("etapas 1-4 completas -> etapa_atual 5", () => {
+  test("etapas 1-4 completas, sem agendamento de instalacao -> etapa_atual 5", () => {
     const r = calcularEtapaAtual({
       ...base,
       verificacaoOk: true,
       itensCobertos: 2,
       totalItensConf: 2,
       itensConferidos: 2,
-      totalEmConf: 0,
-      totalConfOk: 0,
-      genitoresAgendados: 1,
+      totalEmConf: 2,
+      totalConfOk: 2,
+      itensComProdutoOk: 2,
+      genitoresAgendados: 0,
     });
     expect(r.etapa4_ok).toBe(true);
+    expect(r.etapa5_ok).toBe(false);
     expect(r.etapa_atual).toBe(5);
   });
 
-  test("status concluido forca etapa_atual 5 mesmo com etapa 1 incompleta", () => {
-    const r = calcularEtapaAtual({ ...base, verificacaoOk: false, status: "concluido" });
+  test("etapas 1-5 completas, instalacao agendada sem separacao -> etapa_atual 6", () => {
+    const r = calcularEtapaAtual({
+      ...base,
+      verificacaoOk: true,
+      itensCobertos: 2,
+      totalItensConf: 2,
+      itensConferidos: 2,
+      totalEmConf: 2,
+      totalConfOk: 2,
+      itensComProdutoOk: 2,
+      genitoresAgendados: 1,
+      instalacoesTotal: 1,
+      totalItensInstalacao: 2,
+      itensSeparados: 0,
+    });
     expect(r.etapa5_ok).toBe(true);
-    expect(r.etapa_atual).toBe(5);
+    expect(r.etapa6_ok).toBe(false);
+    expect(r.etapa_atual).toBe(6);
+  });
+
+  test("etapas 1-6 completas, instalacao nao concluida -> etapa_atual 7", () => {
+    const r = calcularEtapaAtual({
+      ...base,
+      verificacaoOk: true,
+      itensCobertos: 2,
+      totalItensConf: 2,
+      itensConferidos: 2,
+      totalEmConf: 2,
+      totalConfOk: 2,
+      itensComProdutoOk: 2,
+      genitoresAgendados: 1,
+      instalacoesTotal: 1,
+      instalacoesConcluidas: 0,
+      totalItensInstalacao: 2,
+      itensSeparados: 2,
+    });
+    expect(r.etapa6_ok).toBe(true);
+    expect(r.etapa7_ok).toBe(false);
+    expect(r.etapa_atual).toBe(7);
+  });
+
+  test("etapas 1-7 completas, pos-venda pendente -> etapa_atual 8", () => {
+    const r = calcularEtapaAtual({
+      ...base,
+      verificacaoOk: true,
+      itensCobertos: 2,
+      totalItensConf: 2,
+      itensConferidos: 2,
+      totalEmConf: 2,
+      totalConfOk: 2,
+      itensComProdutoOk: 2,
+      genitoresAgendados: 1,
+      instalacoesTotal: 1,
+      instalacoesConcluidas: 1,
+      totalItensInstalacao: 2,
+      itensSeparados: 2,
+    });
+    expect(r.etapa7_ok).toBe(true);
+    expect(r.etapa8_ok).toBe(false);
+    expect(r.etapa_atual).toBe(8);
+  });
+
+  test("status concluido forca etapa_atual 8 mesmo com etapa 1 incompleta", () => {
+    const r = calcularEtapaAtual({ ...base, verificacaoOk: false, status: "concluido" });
+    expect(r.etapa8_ok).toBe(true);
+    expect(r.etapa_atual).toBe(8);
   });
 });
 
