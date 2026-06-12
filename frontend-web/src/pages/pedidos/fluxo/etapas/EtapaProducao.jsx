@@ -29,7 +29,7 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRec
         <div className="pf-modal-header">
           <div>
             <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 3</div>
-            <div className="pf-modal-titulo">⚙️ Produção</div>
+            <div className="pf-modal-titulo">⚙️ Produção/Compras</div>
           </div>
           <button className="pf-modal-fechar" onClick={onClose}>×</button>
         </div>

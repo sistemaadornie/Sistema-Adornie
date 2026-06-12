@@ -26,7 +26,7 @@ export default function EtapaPosvenda({ pedidoId, pedido, etapas, preAgendamento
       <div className="pf-modal">
         <div className="pf-modal-header">
           <div>
-            <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 5</div>
+            <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 8</div>
             <div className="pf-modal-titulo">⭐ Pós-venda</div>
           </div>
           <button className="pf-modal-fechar" onClick={onClose}>×</button>

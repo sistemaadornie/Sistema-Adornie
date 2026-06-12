@@ -33,8 +33,8 @@ export default function EtapaAgendamento({ pedidoId, pedido, etapas, preAgendame
       <div className="pf-modal">
         <div className="pf-modal-header">
           <div>
-            <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 4</div>
-            <div className="pf-modal-titulo">📅 Agendamento</div>
+            <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 5</div>
+            <div className="pf-modal-titulo">📅 Agendamento (Instalação)</div>
           </div>
           <button className="pf-modal-fechar" onClick={onClose}>×</button>
         </div>

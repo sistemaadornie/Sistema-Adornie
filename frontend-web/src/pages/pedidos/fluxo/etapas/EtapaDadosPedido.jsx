@@ -59,7 +59,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
         <div className="pf-modal-header">
           <div>
             <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 1</div>
-            <div className="pf-modal-titulo">📋 Dados do Pedido</div>
+            <div className="pf-modal-titulo">📋 Pedidos</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
