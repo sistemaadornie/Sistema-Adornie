@@ -420,7 +420,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ),
     db.query(`SELECT 1 FROM pedido_itens WHERE pedido_id = $1 LIMIT 1`, [pedidoId]),
     db.query(
-      `SELECT id, descricao, ambiente, quantidade, unidade, em_confeccao, confeccao_ok
+      `SELECT id, descricao, ambiente, quantidade, unidade, em_confeccao, confeccao_ok, produto_ok
        FROM pedido_itens WHERE pedido_id = $1 ORDER BY ordem ASC, id ASC`,
       [pedidoId]
     ),
@@ -457,6 +457,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     { rows: confRows },
     { rows: prodRows },
     { rows: agendadoRows },
+    { rows: produtoOkRows },
   ] = await Promise.all([
     db.query(
       `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
@@ -521,6 +522,12 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
          )`,
       [pedidoId, empresaId]
     ),
+    db.query(
+      `SELECT COUNT(*) FILTER (WHERE produto_ok = true)::int AS produto_ok
+       FROM pedido_itens
+       WHERE pedido_id = $1`,
+      [pedidoId]
+    ),
   ]);
 
   const totalItens = totalItensRows[0]?.total ?? 0;
@@ -530,23 +537,39 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { total: totalItensConf, conferidos: itensConferidos } = confRows[0] ?? { total: 0, conferidos: 0 };
   const { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } = prodRows[0] ?? { em_confeccao: 0, confeccao_ok: 0 };
   const genitoresAgendados = agendadoRows[0]?.agendados ?? 0;
+  const itensComProdutoOk = produtoOkRows[0]?.produto_ok ?? 0;
 
   if (!genitoresRaw.length) {
-    const etapa1_ok_early = pedido.verificacao_ok &&
-                             itensSemCategoria === 0 &&
-                             itensSemVinculo === 0 &&
-                             totalItens > 0 &&
-                             itensCobertos >= totalItens;
-    const etapa3_ok_no_gen = totalEmConf === 0;
+    const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok } = calcularEtapaAtual({
+      verificacaoOk: pedido.verificacao_ok,
+      itensSemCategoria,
+      itensSemVinculo,
+      totalItens,
+      itensCobertos,
+      totalItensConf,
+      itensConferidos,
+      totalEmConf,
+      totalConfOk,
+      itensComProdutoOk,
+      genitoresAgendados: 0,
+      instalacoesTotal: 0,
+      instalacoesConcluidas: 0,
+      totalItensInstalacao: 0,
+      itensSeparados: 0,
+      status: pedido.status,
+    });
     return {
       pedido,
-      etapa_atual: etapa1_ok_early ? 2 : 1,
+      etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok_early, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos } },
-        { numero: 2, concluida: false, progresso: { total: totalItensConf, conferidos: itensConferidos } },
-        { numero: 3, concluida: etapa3_ok_no_gen, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
-        { numero: 4, concluida: false, progresso: { genitores_agendados: 0 } },
-        { numero: 5, concluida: false, progresso: { status: pedido.status } },
+        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos } },
+        { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
+        { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
+        { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
+        { numero: 5, concluida: false, progresso: { genitores_agendados: 0 } },
+        { numero: 6, concluida: false, progresso: { total_itens_instalacao: 0, itens_separados: 0 } },
+        { numero: 7, concluida: false, progresso: { instalacoes_total: 0, instalacoes_concluidas: 0 } },
+        { numero: 8, concluida: false, progresso: { status: pedido.status } },
       ],
       estagio: { ...estagio_base, pre_agendamentos: [], proximo_prazo: null, dias_para_prazo: null, nivel_alerta: null },
       pre_agendamentos: [],
@@ -586,10 +609,43 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     });
   }
 
+  const instalacaoHerdeiros = herdeirosRaw.filter((h) => h.tipo === "Instalação");
+  const instalacaoIds = instalacaoHerdeiros.map((h) => h.id);
+  const instalacoesTotal = instalacaoHerdeiros.length;
+  const instalacoesConcluidas = instalacaoHerdeiros.filter((h) => h.status === "concluido").length;
+
+  const { rows: separacaoRows } = await db.query(
+    `SELECT ai.agendamento_id, ai.pedido_item_id, ai.separado, pi.descricao, pi.ambiente
+     FROM agendamento_itens ai
+     JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+     WHERE ai.agendamento_id = ANY($1) AND ai.pedido_item_id IS NOT NULL`,
+    [instalacaoIds]
+  );
+
+  const totalItensInstalacao = separacaoRows.length;
+  const itensSeparados = separacaoRows.filter((r) => r.separado).length;
+
+  const itensSeparacaoPorAg = {};
+  for (const r of separacaoRows) {
+    if (!itensSeparacaoPorAg[r.agendamento_id]) itensSeparacaoPorAg[r.agendamento_id] = [];
+    itensSeparacaoPorAg[r.agendamento_id].push({
+      pedido_item_id: r.pedido_item_id,
+      descricao: r.descricao,
+      ambiente: r.ambiente,
+      separado: r.separado,
+    });
+  }
+
   const herdeirosporPai = {};
   for (const h of herdeirosRaw) {
     if (!herdeirosporPai[h.agendamento_pai_id]) herdeirosporPai[h.agendamento_pai_id] = [];
-    herdeirosporPai[h.agendamento_pai_id].push({ id: h.id, tipo: h.tipo, status: h.status, data_inicio: h.data_inicio });
+    herdeirosporPai[h.agendamento_pai_id].push({
+      id: h.id,
+      tipo: h.tipo,
+      status: h.status,
+      data_inicio: h.data_inicio,
+      itens: itensSeparacaoPorAg[h.id] || [],
+    });
   }
 
   const pre_agendamentos = genitoresRaw.map((g) => ({
@@ -609,7 +665,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
     : null;
 
-  const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok, etapa5_ok } = calcularEtapaAtual({
+  const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok, etapa5_ok, etapa6_ok, etapa7_ok, etapa8_ok } = calcularEtapaAtual({
     verificacaoOk: pedido.verificacao_ok,
     itensSemCategoria,
     itensSemVinculo,
@@ -619,7 +675,12 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     itensConferidos,
     totalEmConf,
     totalConfOk,
+    itensComProdutoOk,
     genitoresAgendados,
+    instalacoesTotal,
+    instalacoesConcluidas,
+    totalItensInstalacao,
+    itensSeparados,
     status: pedido.status,
   });
 
@@ -649,11 +710,26 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     {
       numero: 4,
       concluida: etapa4_ok,
-      progresso: { genitores_agendados: genitoresAgendados },
+      progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk },
     },
     {
       numero: 5,
       concluida: etapa5_ok,
+      progresso: { genitores_agendados: genitoresAgendados },
+    },
+    {
+      numero: 6,
+      concluida: etapa6_ok,
+      progresso: { total_itens_instalacao: totalItensInstalacao, itens_separados: itensSeparados },
+    },
+    {
+      numero: 7,
+      concluida: etapa7_ok,
+      progresso: { instalacoes_total: instalacoesTotal, instalacoes_concluidas: instalacoesConcluidas },
+    },
+    {
+      numero: 8,
+      concluida: etapa8_ok,
       progresso: { status: pedido.status },
     },
   ];
