@@ -374,6 +374,40 @@ router.patch("/:id/confirmar-cliente", authMiddleware, async (req, res) => {
   }
 });
 
+// PATCH /agendamentos/:id/itens/:itemId/separado
+router.patch("/:id/itens/:itemId/separado", authMiddleware, async (req, res) => {
+  try {
+    const db = require("../database/db");
+    const agendamentoId = Number(req.params.id);
+    const pedidoItemId = Number(req.params.itemId);
+    const { empresa_id } = req.user;
+    const { separado } = req.body;
+
+    if (typeof separado !== "boolean") {
+      return res.status(400).json({ message: "Campo 'separado' (boolean) é obrigatório." });
+    }
+
+    const check = await db.query(
+      `SELECT id FROM agendamentos WHERE id = $1 AND empresa_id = $2 AND tipo = 'Instalação'`,
+      [agendamentoId, empresa_id]
+    );
+    if (!check.rows.length) return res.status(404).json({ message: "Agendamento de instalação não encontrado." });
+
+    const { rows } = await db.query(
+      `UPDATE agendamento_itens SET separado = $1
+       WHERE agendamento_id = $2 AND pedido_item_id = $3
+       RETURNING id, pedido_item_id, separado`,
+      [separado, agendamentoId, pedidoItemId]
+    );
+    if (!rows.length) return res.status(404).json({ message: "Item não encontrado neste agendamento." });
+
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao atualizar separação." });
+  }
+});
+
 /* Error handler para erros do multer (tipo/tamanho de arquivo) que escapam do try/catch */
 // eslint-disable-next-line no-unused-vars
 router.use((err, req, res, _next) => {
