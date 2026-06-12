@@ -560,6 +560,36 @@ router.patch("/:id/producao-itens", authMiddleware, async (req, res) => {
   }
 });
 
+// PATCH /pedidos/:id/conferencia-produto-itens
+router.patch("/:id/conferencia-produto-itens", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = Number(req.params.id);
+    const empresaId = req.user.empresa_id;
+    const { pedido_item_id, produto_ok } = req.body;
+
+    if (!pedido_item_id) return res.status(400).json({ message: "pedido_item_id obrigatório." });
+    if (typeof produto_ok !== "boolean") return res.status(400).json({ message: "produto_ok (boolean) obrigatório." });
+
+    // Verificar que o item pertence ao pedido e à empresa
+    const { rows: check } = await db.query(
+      `SELECT pi.id FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [pedido_item_id, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    const { rows } = await db.query(
+      `UPDATE pedido_itens SET produto_ok = $1 WHERE id = $2 RETURNING id, produto_ok`,
+      [produto_ok, pedido_item_id]
+    );
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar conferência do produto." });
+  }
+});
+
 // POST /pedidos/:id/vinculos
 router.post("/:id/vinculos", authMiddleware, async (req, res) => {
   try {
