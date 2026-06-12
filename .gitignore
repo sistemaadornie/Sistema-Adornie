@@ -42,3 +42,7 @@ Thumbs.db
 
 # ── Brainstorming (companion visual) ──────────────────────────
 .superpowers/
+
+# ── Claude Code (estado local) ─────────────────────────────────
+.claude/scheduled_tasks.lock
+.claude/worktrees/
