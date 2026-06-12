@@ -17,11 +17,14 @@ const STATUS_LABELS = {
 const ALERTA_LABELS = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
 
 const ETAPA_CONFIG = [
-  { numero: 1, label: "Dados do Pedido",          labelCurto: "Pedido",      icone: "📋" },
-  { numero: 2, label: "Conferência de Medidas",   labelCurto: "Medidas",     icone: "📐" },
-  { numero: 3, label: "Produção",                 labelCurto: "Produção",    icone: "⚙️" },
-  { numero: 4, label: "Agendamento",              labelCurto: "Agendamento", icone: "📅" },
-  { numero: 5, label: "Pós-venda",                labelCurto: "Pós-venda",   icone: "⭐" },
+  { numero: 1, label: "Pedidos",                  labelCurto: "Pedidos",       icone: "📋" },
+  { numero: 2, label: "Conferência de Medidas",   labelCurto: "Medidas",       icone: "📐" },
+  { numero: 3, label: "Produção/Compras",         labelCurto: "Produção",      icone: "⚙️" },
+  { numero: 4, label: "Conferência do Produto",   labelCurto: "Conf. Produto", icone: "🔍" },
+  { numero: 5, label: "Agendamento (Instalação)", labelCurto: "Agendamento",   icone: "📅" },
+  { numero: 6, label: "Separação",                labelCurto: "Separação",     icone: "📦" },
+  { numero: 7, label: "Entrega",                  labelCurto: "Entrega",       icone: "🚚" },
+  { numero: 8, label: "Pós-venda",                labelCurto: "Pós-venda",     icone: "⭐" },
 ];
 
 function ContagemEntrega({ estagio }) {
