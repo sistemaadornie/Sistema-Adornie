@@ -196,6 +196,12 @@ describe("listarPedidosDashboard", () => {
       // 8) confeccao por pedido
       .mockResolvedValueOnce({ rows: [{ pedido_id: 1, em_confeccao: 2, confeccao_ok: 1 }] })
       // 9) genitores agendados por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 10) produto_ok por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 11) instalacoes por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 12) separacao por pedido
       .mockResolvedValueOnce({ rows: [] });
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
@@ -239,7 +245,10 @@ describe("listarPedidosDashboard", () => {
       .mockResolvedValueOnce({ rows: [] }) // sem vinculo
       .mockResolvedValueOnce({ rows: [] }) // conferencia
       .mockResolvedValueOnce({ rows: [] }) // confeccao
-      .mockResolvedValueOnce({ rows: [] }); // genitores agendados
+      .mockResolvedValueOnce({ rows: [] }) // genitores agendados
+      .mockResolvedValueOnce({ rows: [] }) // produto_ok
+      .mockResolvedValueOnce({ rows: [] }) // instalacoes
+      .mockResolvedValueOnce({ rows: [] }); // separacao
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
 

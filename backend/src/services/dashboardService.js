@@ -138,6 +138,9 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     { rows: confRows },
     { rows: prodRows },
     { rows: agendadoRows },
+    { rows: produtoOkRows },
+    { rows: instalacaoRows },
+    { rows: separacaoRows },
   ] = await Promise.all([
     // Genitores: agendamentos com pedido_id + itens de pedido vinculados
     db.query(
@@ -227,6 +230,37 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        GROUP BY a.pedido_id`,
       [pedidoIds, empresaId]
     ),
+    // Etapa 4: itens com produto_ok por pedido
+    db.query(
+      `SELECT pedido_id, COUNT(*) FILTER (WHERE produto_ok = true)::int AS produto_ok
+       FROM pedido_itens
+       WHERE pedido_id = ANY($1)
+       GROUP BY pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 6/7: instalacoes (herdeiros tipo Instalacao) por pedido, via genitor
+    db.query(
+      `SELECT g.pedido_id,
+              COUNT(*)::int AS instalacoes_total,
+              COUNT(*) FILTER (WHERE h.status = 'concluido')::int AS instalacoes_concluidas
+       FROM agendamentos h
+       JOIN agendamentos g ON g.id = h.agendamento_pai_id
+       WHERE g.pedido_id = ANY($1) AND h.empresa_id = $2 AND h.tipo = 'Instalação'
+       GROUP BY g.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
+    // Etapa 6: itens de separacao das instalacoes por pedido
+    db.query(
+      `SELECT g.pedido_id,
+              COUNT(ai.id)::int AS total_itens_instalacao,
+              COUNT(ai.id) FILTER (WHERE ai.separado = true)::int AS itens_separados
+       FROM agendamentos h
+       JOIN agendamentos g ON g.id = h.agendamento_pai_id
+       JOIN agendamento_itens ai ON ai.agendamento_id = h.id AND ai.pedido_item_id IS NOT NULL
+       WHERE g.pedido_id = ANY($1) AND h.empresa_id = $2 AND h.tipo = 'Instalação'
+       GROUP BY g.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
   ]);
 
   const preAgsPorPedido = {};
@@ -261,6 +295,25 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
   const agendadosPorPedido = {};
   for (const r of agendadoRows) agendadosPorPedido[r.pedido_id] = Number(r.agendados);
 
+  const produtoOkPorPedido = {};
+  for (const r of produtoOkRows) produtoOkPorPedido[r.pedido_id] = Number(r.produto_ok);
+
+  const instalacaoPorPedido = {};
+  for (const r of instalacaoRows) {
+    instalacaoPorPedido[r.pedido_id] = {
+      total: Number(r.instalacoes_total),
+      concluidas: Number(r.instalacoes_concluidas),
+    };
+  }
+
+  const separacaoPorPedido = {};
+  for (const r of separacaoRows) {
+    separacaoPorPedido[r.pedido_id] = {
+      total: Number(r.total_itens_instalacao),
+      separados: Number(r.itens_separados),
+    };
+  }
+
   const hoje = new Date();
 
   const resultado = pedidos.map((p) => {
@@ -276,6 +329,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
     const conf = confPorPedido[p.id] || { total: 0, conferidos: 0 };
     const prod = prodPorPedido[p.id] || { em_confeccao: 0, confeccao_ok: 0 };
+    const inst = instalacaoPorPedido[p.id] || { total: 0, concluidas: 0 };
+    const sep = separacaoPorPedido[p.id] || { total: 0, separados: 0 };
 
     const { etapa_atual } = calcularEtapaAtual({
       verificacaoOk: p.verificacao_ok,
@@ -287,7 +342,12 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       itensConferidos: conf.conferidos,
       totalEmConf: prod.em_confeccao,
       totalConfOk: prod.confeccao_ok,
+      itensComProdutoOk: produtoOkPorPedido[p.id] || 0,
       genitoresAgendados: agendadosPorPedido[p.id] || 0,
+      instalacoesTotal: inst.total,
+      instalacoesConcluidas: inst.concluidas,
+      totalItensInstalacao: sep.total,
+      itensSeparados: sep.separados,
       status: p.status,
     });
 
