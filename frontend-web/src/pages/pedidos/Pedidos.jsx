@@ -57,7 +57,7 @@ function BarraProgresso({ estagio, status }) {
     <>
       <div className="dp-barra">
         {ETAPA_CONFIG.map((etapa, idx) => {
-          const ok = etapa.numero < etapaAtual || (etapa.numero === 5 && concluido);
+          const ok = etapa.numero < etapaAtual || (etapa.numero === 8 && concluido);
           const atual = !ok && etapa.numero === etapaAtual;
 
           let cls = "dp-etapa";
