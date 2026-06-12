@@ -7,7 +7,10 @@ import FluxogramaCanvas from "./fluxo/FluxogramaCanvas";
 import EtapaDadosPedido from "./fluxo/etapas/EtapaDadosPedido";
 import EtapaConferencia from "./fluxo/etapas/EtapaConferencia";
 import EtapaProducao from "./fluxo/etapas/EtapaProducao";
+import EtapaConferenciaProduto from "./fluxo/etapas/EtapaConferenciaProduto";
 import EtapaAgendamento from "./fluxo/etapas/EtapaAgendamento";
+import EtapaSeparacao from "./fluxo/etapas/EtapaSeparacao";
+import EtapaEntrega from "./fluxo/etapas/EtapaEntrega";
 import EtapaPosvenda from "./fluxo/etapas/EtapaPosvenda";
 import "./PedidoFluxo.css";
 
@@ -20,8 +23,11 @@ const ETAPA_COMPONENTES = {
   1: EtapaDadosPedido,
   2: EtapaConferencia,
   3: EtapaProducao,
-  4: EtapaAgendamento,
-  5: EtapaPosvenda,
+  4: EtapaConferenciaProduto,
+  5: EtapaAgendamento,
+  6: EtapaSeparacao,
+  7: EtapaEntrega,
+  8: EtapaPosvenda,
 };
 
 export default function PedidoFluxo() {
