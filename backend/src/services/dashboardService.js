@@ -217,7 +217,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        GROUP BY pedido_id`,
       [pedidoIds]
     ),
-    // Etapa 4: genitores agendados por pedido
+    // Etapa 5: genitores agendados por pedido
     db.query(
       `SELECT a.pedido_id, COUNT(*)::int AS agendados
        FROM agendamentos a
