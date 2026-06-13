@@ -458,6 +458,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     { rows: prodRows },
     { rows: agendadoRows },
     { rows: produtoOkRows },
+    { rows: itensPersianaPendentesRows },
   ] = await Promise.all([
     db.query(
       `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
@@ -528,6 +529,15 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        WHERE pedido_id = $1`,
       [pedidoId]
     ),
+    db.query(
+      `SELECT COUNT(*)::int AS pendentes
+       FROM pedido_itens pi
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.pedido_id = $1
+         AND cat.nome = 'Persianas'
+         AND pi.modelo IS NULL`,
+      [pedidoId]
+    ),
   ]);
 
   const totalItens = totalItensRows[0]?.total ?? 0;
@@ -538,6 +548,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } = prodRows[0] ?? { em_confeccao: 0, confeccao_ok: 0 };
   const genitoresAgendados = agendadoRows[0]?.agendados ?? 0;
   const itensComProdutoOk = produtoOkRows[0]?.produto_ok ?? 0;
+  const itensPersianaPendentes = itensPersianaPendentesRows[0]?.pendentes ?? 0;
 
   if (!genitoresRaw.length) {
     const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok } = calcularEtapaAtual({
@@ -562,7 +573,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido,
       etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos } },
+        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, itens_persiana_pendentes: itensPersianaPendentes } },
         { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
@@ -695,6 +706,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
         itens_sem_vinculo: itensSemVinculo,
         total_itens: totalItens,
         itens_cobertos: itensCobertos,
+        itens_persiana_pendentes: itensPersianaPendentes,
       },
     },
     {
