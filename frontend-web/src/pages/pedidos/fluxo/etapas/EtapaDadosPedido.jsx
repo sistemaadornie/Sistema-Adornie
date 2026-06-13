@@ -4,6 +4,7 @@ import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao
 import EditarPedidoModal from "./EditarPedidoModal";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
+import SelecionarTipoPersianaModal from "./SelecionarTipoPersianaModal";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
 function fmtData(iso) {
@@ -27,6 +28,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const [editando, setEditando] = useState(false);
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
+  const [selecionandoTipo, setSelecionandoTipo] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
@@ -63,6 +65,11 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
+            {(p.itens_persiana_pendentes ?? 0) > 0 && (
+              <button className="pf-btn-secondary" onClick={() => setSelecionandoTipo(true)}>
+                🎛️ Selecionar Tipo ({p.itens_persiana_pendentes})
+              </button>
+            )}
             <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
             <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
             <button className="pf-modal-fechar" onClick={onClose}>×</button>
@@ -141,6 +148,14 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
         <VincularItensModal
           pedidoId={pedidoId}
           onClose={() => setVinculando(false)}
+          onRecarregar={onRecarregar}
+        />
+      )}
+
+      {selecionandoTipo && (
+        <SelecionarTipoPersianaModal
+          pedidoId={pedidoId}
+          onClose={() => setSelecionandoTipo(false)}
           onRecarregar={onRecarregar}
         />
       )}
