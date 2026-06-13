@@ -6,7 +6,7 @@ const panelStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  zIndex: 1200,
+  zIndex: 9100,
   background: "var(--color-surface)",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-lg, 10px)",
@@ -19,7 +19,7 @@ const panelStyle = {
 const backdropStyle = {
   position: "fixed",
   inset: 0,
-  zIndex: 1199,
+  zIndex: 9099,
   background: "rgba(0,0,0,0.35)",
 };
 
