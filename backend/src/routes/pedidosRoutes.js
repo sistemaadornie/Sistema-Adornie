@@ -731,6 +731,55 @@ router.patch("/:id/itens/:itemId/sem-vinculo", authMiddleware, async (req, res) 
   }
 });
 
+router.patch("/:id/itens/:itemId/modelo", authMiddleware, async (req, res) => {
+  const pedidoId = Number(req.params.id);
+  const itemId = Number(req.params.itemId);
+  const empresaId = req.user.empresa_id;
+  const { modelo, especificacoes } = req.body;
+
+  if (!modelo || typeof modelo !== "string") {
+    return res.status(400).json({ message: "Campo 'modelo' obrigatório." });
+  }
+
+  const client = await db.connect();
+  try {
+    const { rows: check } = await client.query(
+      `SELECT pi.id, pi.descricao FROM pedido_itens pi
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE pi.id = $1 AND pi.pedido_id = $2 AND p.empresa_id = $3`,
+      [itemId, pedidoId, empresaId]
+    );
+    if (!check.length) return res.status(404).json({ message: "Item não encontrado." });
+
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `UPDATE pedido_itens SET modelo = $1, especificacoes = $2 WHERE id = $3
+       RETURNING id, modelo, especificacoes`,
+      [modelo, (typeof especificacoes === "object" && especificacoes !== null) ? especificacoes : null, itemId]
+    );
+
+    const partes = [`Modelo: "${modelo}"`];
+    if (especificacoes?.tubo) partes.push(`Tubo: ${especificacoes.tubo}`);
+    if (especificacoes?.bando) partes.push(`Bandô: ${especificacoes.bando}`);
+
+    await auditSvc.registrarAuditoria(client, {
+      pedidoId, empresaId, usuarioId: req.user.id,
+      etapa: "dados_pedido",
+      acao: "categorizacao",
+      descricao: `${check[0].descricao} — ${partes.join(", ")}`,
+    });
+    await client.query("COMMIT");
+
+    return res.json({ item: rows[0] });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar modelo do item." });
+  } finally {
+    client.release();
+  }
+});
+
 // POST /pedidos/:id/pesquisa-satisfacao
 router.post("/:id/pesquisa-satisfacao", authMiddleware, async (req, res) => {
   try {
