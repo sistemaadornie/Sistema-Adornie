@@ -410,6 +410,46 @@ function detectarNomeCategoriaPedido(descricao) {
   return melhorNome;
 }
 
+// ─── Detecção de modelo/acionamento por keyword na descrição do item ────────
+const MODELO_KEYWORDS_CORTINA = [
+  { keywords: ["wave"],             modelo: "Cortina Wave"            },
+  { keywords: ["prega macho"],      modelo: "Cortina Prega Macho"     },
+  { keywords: ["prega americana"],  modelo: "Cortina Prega Americana" },
+  { keywords: ["franzid"],          modelo: "Cortina Franzida"        },
+];
+
+const MODELO_KEYWORDS_FORRO = [
+  { keywords: ["blackout"],   modelo: "Forro Franzido Blackout"   },
+  { keywords: ["microfibra"], modelo: "Forro Franzido Microfibra" },
+];
+
+function detectarAcionamento(lower) {
+  if (lower.includes("motoriza")) return "motorizado";
+  if (lower.includes("manual"))   return "manual";
+  return null;
+}
+
+function detectarModeloEEspecificacoes(descricao, nomeCategoria) {
+  if (!descricao) return { modelo: null, especificacoes: null };
+  const lower = descricao.toLowerCase();
+
+  const acionamento = detectarAcionamento(lower);
+  const especificacoes = acionamento ? { acionamento } : null;
+
+  let candidatos = null;
+  if (nomeCategoria === "Cortinas") candidatos = MODELO_KEYWORDS_CORTINA;
+  else if (nomeCategoria === "Forros") candidatos = MODELO_KEYWORDS_FORRO;
+
+  let modelo = null;
+  if (candidatos) {
+    for (const { keywords, modelo: nomeModelo } of candidatos) {
+      if (keywords.some((k) => lower.includes(k))) { modelo = nomeModelo; break; }
+    }
+  }
+
+  return { modelo, especificacoes };
+}
+
 // ─── rotas ──────────────────────────────────────────────────────────────────
 
 router.get("/", authMiddleware, async (req, res) => {
@@ -796,7 +836,8 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
     const itensComCategoria = itens.map((it) => {
       const nomeCategoria = detectarNomeCategoriaPedido(it.descricao);
       const categoria_id = nomeCategoria ? (catMap[nomeCategoria.toLowerCase()] ?? null) : null;
-      return { ...it, categoria_id };
+      const { modelo, especificacoes } = detectarModeloEEspecificacoes(it.descricao, nomeCategoria);
+      return { ...it, categoria_id, modelo, especificacoes };
     });
 
     return res.json({
