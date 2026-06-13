@@ -43,9 +43,9 @@ export default function SelecionarTipoPersianaModal({ pedidoId, onClose, onRecar
 
   async function salvarTipo(itemId, valor) {
     try {
-      await api.patch(`/pedidos/${pedidoId}/itens/${itemId}/modelo`, valor);
+      const { item } = await api.patch(`/pedidos/${pedidoId}/itens/${itemId}/modelo`, valor);
       setItens((prev) => prev.map((it) =>
-        it.id === itemId ? { ...it, modelo: valor.modelo, especificacoes: valor.especificacoes } : it
+        it.id === itemId ? { ...it, modelo: item.modelo, especificacoes: item.especificacoes } : it
       ));
     } catch (e) {
       alert(e?.message || "Erro ao salvar tipo de persiana.");
@@ -83,7 +83,7 @@ export default function SelecionarTipoPersianaModal({ pedidoId, onClose, onRecar
           )}
 
           {pendentes.map((item) => (
-            <div key={item.id} className="vim-row vim-com-ambiente">
+            <div key={item.id} className="stp-row">
               <span className="vim-desc">{item.descricao}</span>
               <span className="pf-badge pf-badge-pend">Sem tipo definido</span>
               <button className="pf-btn-secondary" onClick={() => setSelecionandoItemId(item.id)}>
@@ -102,7 +102,7 @@ export default function SelecionarTipoPersianaModal({ pedidoId, onClose, onRecar
           ))}
 
           {resolvidas.map((item) => (
-            <div key={item.id} className="vim-row vim-com-ambiente">
+            <div key={item.id} className="stp-row">
               <span className="vim-desc">
                 {item.descricao}{" "}
                 <small style={{ opacity: .6 }}>
