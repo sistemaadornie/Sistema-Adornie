@@ -36,6 +36,11 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
 
+  const temConferenciaAgendada = (preAgendamentos || []).some(
+    (ag) => ag.tipo === "Conferência" && ag.status !== "cancelado" && ag.status !== "rejeitado"
+  );
+  const temItensPendentesEntrega = (p.itens_cobertos ?? 0) < (p.total_itens ?? 0);
+
   function handleAgendarInstalacao(itensSel) {
     setInstalacao(null);
     navigate("/agendamentos", {
@@ -156,9 +161,17 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             </div>
           ))}
 
-          <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={handleDefinirDataEntrega}>
-            DEFINIR DATA DE ENTREGA
-          </button>
+          {!temConferenciaAgendada && (
+            <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={handleDefinirDataEntrega}>
+              DEFINIR DATA DE ENTREGA
+            </button>
+          )}
+
+          {temConferenciaAgendada && temItensPendentesEntrega && (
+            <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={() => setInstalacao(pedido)}>
+              DEFINIR PRÉ-AGENDAMENTO DE ENTREGA
+            </button>
+          )}
         </div>
       </div>
 
