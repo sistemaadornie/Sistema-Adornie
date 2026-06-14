@@ -16,7 +16,7 @@ function encontrarPares(itens) {
     }
     const grupo = grupos.get(it.ambiente);
     if (it.vinculavel && !it.ja_vinculado) grupo.acessorios.push(it);
-    if (it.recebe_vinculos) grupo.principais.push(it);
+    if (it.recebe_vinculo_automatico) grupo.principais.push(it);
   }
 
   const pares = [];
@@ -43,8 +43,9 @@ async function processarPedido(pedidoId, empresaId, userId) {
 
     const itensRes = await client.query(
       `SELECT pi.id, pi.ambiente, pi.largura, pi.descricao,
-              COALESCE(c.vinculavel, false)      AS vinculavel,
-              COALESCE(c.recebe_vinculos, false) AS recebe_vinculos,
+              COALESCE(c.vinculavel, false)               AS vinculavel,
+              COALESCE(c.recebe_vinculos, false)          AS recebe_vinculos,
+              COALESCE(c.recebe_vinculo_automatico, false) AS recebe_vinculo_automatico,
               EXISTS (
                 SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
               ) AS ja_vinculado
