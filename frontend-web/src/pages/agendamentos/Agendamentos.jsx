@@ -1364,9 +1364,10 @@ function horaFimFromDuracao(hora, duracaoMin) {
 
 function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamentos, agEditar, dataInicial, prefill, user }) {
   const modoEditar = !!agEditar;
-  const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado" || !!prefill);
+  const prefillPreAgendado = prefill ? (prefill.status ?? "pre_agendado") === "pre_agendado" : false;
+  const [preAgendado, setPreAgendado] = useState(agEditar?.status === "pre_agendado" || prefillPreAgendado);
   const [form, setForm] = useState({
-    titulo:      agEditar?.titulo      ?? (prefill ? `Instalação — ${prefill.pedido_numero || ""}`.trim() : ""),
+    titulo:      agEditar?.titulo      ?? prefill?.titulo ?? (prefill ? `Instalação — ${prefill.pedido_numero || ""}`.trim() : ""),
     cliente:     agEditar?.cliente     ?? prefill?.cliente    ?? "",
     tipo:        agEditar?.tipo        ?? prefill?.tipo ?? "Instalação",
     data:        agEditar?.data        ?? dataInicial ?? "",
@@ -1652,6 +1653,12 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
         </div>
 
         <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+          {prefill?.tipo === "Conferência" && prefill?.status === "agendado" && (
+            <div style={{ padding: "10px 14px", background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.35)", borderRadius: 8, color: "#eab308", fontSize: 13 }}>
+              ⚠️ Confirme esta data e horário com o cliente antes de salvar. Este agendamento será criado como "Agendado".
+            </div>
+          )}
 
           {/* Linha 1 — Título */}
           <div className="ag-modal-grid">
