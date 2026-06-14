@@ -7,6 +7,7 @@ const ICONES_ACAO = {
   categorizacao_ok: "🏷️",
   pdf_vinculado: "📎",
   importacao: "📥",
+  vinculo_automatico: "🔗",
 };
 
 const LABELS_ACAO = {
@@ -15,6 +16,7 @@ const LABELS_ACAO = {
   categorizacao_ok: "Categorização concluída",
   pdf_vinculado: "PDF vinculado",
   importacao: "Pedido importado",
+  vinculo_automatico: "Vínculo automático",
 };
 
 function labelAcao(acao) {
@@ -82,7 +84,7 @@ export default function HistoricoPedidoModal({ pedidoId, onClose }) {
           )}
 
           {!carregando && registros.map((r) => {
-            const diffs = parseDiffs(r.descricao);
+            const diffs = r.acao === "edicao" ? parseDiffs(r.descricao) : null;
             return (
               <div key={r.id} className="pf-historico-item">
                 <div className="pf-historico-topo">
