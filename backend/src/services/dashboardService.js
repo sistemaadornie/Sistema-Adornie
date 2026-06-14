@@ -168,6 +168,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
          AND ai.pedido_item_id IS NOT NULL
          AND a.status NOT IN ('cancelado','rejeitado')
          AND a.agendamento_pai_id IS NULL
+         AND a.tipo = 'Instalação'
        GROUP BY a.pedido_id`,
       [pedidoIds, empresaId]
     ),

@@ -254,4 +254,44 @@ describe("listarPedidosDashboard", () => {
 
     expect(resultado[0].estagio.etapa_atual).toBe(1);
   });
+
+  test("query de itens cobertos do dashboard filtra a.tipo = Instalação", async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 3,
+            numero_sequencial: 12,
+            numero_origem: null,
+            status: "em_andamento",
+            verificacao_ok: true,
+            categorizacao_ok: true,
+            total: "0.00",
+            criado_em: "2026-01-03T00:00:00.000Z",
+            cliente_nome: "Cliente C",
+            consultor_nome: "Consultora Z",
+            consultor_id: 7,
+            itens_count: "0",
+            pdf_ok: true,
+            vinculos_ok: true,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] }) // preAgs
+      .mockResolvedValueOnce({ rows: [] }) // total itens
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos
+      .mockResolvedValueOnce({ rows: [] }) // sem categoria
+      .mockResolvedValueOnce({ rows: [] }) // sem vinculo
+      .mockResolvedValueOnce({ rows: [] }) // conferencia
+      .mockResolvedValueOnce({ rows: [] }) // confeccao
+      .mockResolvedValueOnce({ rows: [] }) // genitores agendados
+      .mockResolvedValueOnce({ rows: [] }) // produto_ok
+      .mockResolvedValueOnce({ rows: [] }) // instalacoes
+      .mockResolvedValueOnce({ rows: [] }); // separacao
+
+    await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
+
+    const queryItensCobertos = db.query.mock.calls[3][0];
+    expect(queryItensCobertos).toContain("a.tipo = 'Instalação'");
+  });
 });
