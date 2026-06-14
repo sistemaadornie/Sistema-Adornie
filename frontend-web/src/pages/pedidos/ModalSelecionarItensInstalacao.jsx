@@ -3,7 +3,7 @@ import { api } from "../../services/api";
 import { numeroPedidoCompleto } from "../../utils/numeroPedido";
 import "./ModalSelecionarItensInstalacao.css";
 
-export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar, itensEndpoint }) {
+export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar, itensEndpoint, titulo, textoVazio }) {
   const [itens, setItens]   = useState([]);
   const [sel, setSel]       = useState(() => new Set());
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
       <div className="modal-box msi-modal">
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">Agendar Instalação — {pedido.numero || numeroPedidoCompleto(pedido)}</h2>
+            <h2 className="modal-title">{titulo || `Agendar Instalação — ${pedido.numero || numeroPedidoCompleto(pedido)}`}</h2>
             {!loading && !erro && itens.length > 0 && (
               <p className="msi-subtitle">
                 {itens.length === 1 ? "1 item disponível" : `${itens.length} itens disponíveis`} para agendamento
@@ -64,7 +64,9 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
           ) : erro ? (
             <p className="arq-form-erro">{erro}</p>
           ) : itens.length === 0 ? (
-            <p style={{ color: "var(--color-text-muted)" }}>Todos os itens deste pedido já estão agendados para instalação.</p>
+            <p style={{ color: "var(--color-text-muted)" }}>
+              {textoVazio || "Todos os itens deste pedido já estão agendados para instalação."}
+            </p>
           ) : (
             <>
               <div className="msi-toolbar">
@@ -91,8 +93,12 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
                         </span>
                         <span className="msi-card-meta">
                           <span className="msi-meta-item">{it.categoria_nome || "Sem categoria"}</span>
-                          <span className="msi-meta-ponto">·</span>
-                          <span className="msi-meta-item">prazo mínimo: {totalDias(it)} dias úteis</span>
+                          {it.logistica_interna_dias != null && (
+                            <>
+                              <span className="msi-meta-ponto">·</span>
+                              <span className="msi-meta-item">prazo mínimo: {totalDias(it)} dias úteis</span>
+                            </>
+                          )}
                         </span>
                       </span>
                     </label>
