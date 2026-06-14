@@ -471,7 +471,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        WHERE a.pedido_id = $1 AND a.empresa_id = $2
          AND ai.pedido_item_id IS NOT NULL
          AND a.status NOT IN ('cancelado','rejeitado')
-         AND a.agendamento_pai_id IS NULL`,
+         AND a.agendamento_pai_id IS NULL
+         AND a.tipo = 'Instalação'`,
       [pedidoId, empresaId]
     ),
     db.query(
@@ -663,6 +664,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     id: g.id,
     data_inicio: g.data_inicio,
     status: g.status,
+    tipo: g.tipo,
     itens: itensPorAg[g.id] || [],
     herdeiros: herdeirosporPai[g.id] || [],
   }));
