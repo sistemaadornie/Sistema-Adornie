@@ -32,6 +32,7 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
   const [cor, setCor]   = useState(categoria?.cor  || "#C9A96E");
   const [vinculavel, setVinculavel] = useState(categoria?.vinculavel ?? false);
   const [recebeVinculos, setRecebeVinculos] = useState(categoria?.recebe_vinculos ?? false);
+  const [necessitaConferencia, setNecessitaConferencia] = useState(categoria?.necessita_conferencia ?? false);
   const [erro, setErro] = useState(null);
   const [logistica, setLogistica] = useState(prazos?.logistica_interna_dias ?? 2);
   const [confeccao, setConfeccao] = useState(prazos?.confeccao_dias ?? 10);
@@ -42,7 +43,7 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
     e.preventDefault();
     if (!nome.trim()) { setErro("Nome é obrigatório."); return; }
     setErro(null);
-    onSalvar({ nome, cor, vinculavel, recebe_vinculos: recebeVinculos, prazos: {
+    onSalvar({ nome, cor, vinculavel, recebe_vinculos: recebeVinculos, necessita_conferencia: necessitaConferencia, prazos: {
       logistica_interna_dias: Number(logistica) || 0,
       confeccao_dias: Number(confeccao) || 0,
       expedicao_dias: Number(expedicao) || 0,
@@ -96,6 +97,14 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
             </label>
             <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
               Itens desta categoria podem ser "principais" e receber outros itens vinculados a eles.
+            </p>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, marginTop: 8 }}>
+              <input type="checkbox" checked={necessitaConferencia} onChange={(e) => setNecessitaConferencia(e.target.checked)} />
+              Item com necessidade de conferência?
+            </label>
+            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
+              Itens desta categoria precisam de uma visita de conferência agendada antes de definir a data de entrega.
             </p>
           </div>
 
@@ -164,11 +173,11 @@ export default function Categorias({ onCategoriasChange }) {
     setSalvando(true);
     try {
       if (modal === "novo") {
-        const res = await api.post("/categorias", { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos });
+        const res = await api.post("/categorias", { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos, necessita_conferencia: dados.necessita_conferencia });
         setCategorias((prev) => [...prev, res.categoria]);
         onCategoriasChange?.([...categorias, res.categoria]);
       } else {
-        const res = await api.put(`/categorias/${modal.id}`, { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos });
+        const res = await api.put(`/categorias/${modal.id}`, { nome: dados.nome, cor: dados.cor, vinculavel: dados.vinculavel, recebe_vinculos: dados.recebe_vinculos, necessita_conferencia: dados.necessita_conferencia });
         const atualizada = categorias.map((c) => c.id === res.categoria.id ? res.categoria : c);
         setCategorias(atualizada);
         onCategoriasChange?.(atualizada);
