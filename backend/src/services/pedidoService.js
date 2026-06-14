@@ -2,6 +2,7 @@ const db = require("../database/db");
 const cliSvc = require("./clienteService");
 const arqSvc = require("./arquitetoService");
 const auditSvc = require("./auditoriaService");
+const vinculoAutoSvc = require("./vinculoAutomaticoService");
 
 const STATUS_VALIDOS = ["pendente", "em_andamento", "concluido", "cancelado"];
 
@@ -638,6 +639,7 @@ async function importar(empresaId, userId, dados) {
          VALUES ($1,$2,$3,'dados_pedido','importacao','Pedido reimportado (substituição)')`,
         [existe.rows[0].id, empresaId, userId || null]
       );
+      await _processarVinculoAutomatico(existe.rows[0].id, empresaId, userId);
       return pedidoAtualizado;
     }
   }
@@ -649,7 +651,18 @@ async function importar(empresaId, userId, dados) {
      VALUES ($1,$2,$3,'dados_pedido','importacao','Pedido importado')`,
     [pedidoCriado.id, empresaId, userId || null]
   );
+  await _processarVinculoAutomatico(pedidoCriado.id, empresaId, userId);
   return pedidoCriado;
+}
+
+// Vínculo automático é um refinamento pós-importação: erros aqui são
+// logados, mas não devem fazer a importação (já salva com sucesso) falhar.
+async function _processarVinculoAutomatico(pedidoId, empresaId, userId) {
+  try {
+    await vinculoAutoSvc.processarPedido(pedidoId, empresaId, userId);
+  } catch (err) {
+    console.error("[vinculoAutomatico]", err);
+  }
 }
 
 async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, valor) {

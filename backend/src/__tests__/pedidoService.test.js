@@ -1,6 +1,8 @@
 jest.mock('../database/db', () => ({ query: jest.fn(), connect: jest.fn() }));
 const db = require('../database/db');
 const svc = require('../services/pedidoService');
+jest.mock('../services/vinculoAutomaticoService');
+const vinculoAutoSvc = require('../services/vinculoAutomaticoService');
 
 afterEach(() => jest.clearAllMocks());
 
@@ -178,5 +180,57 @@ describe('criar (nao mexe em pedido_item_vinculos)', () => {
       call => typeof call[0] === 'string' && call[0].includes('pedido_item_vinculos')
     );
     expect(vinculoCall).toBeUndefined();
+  });
+});
+
+describe('importar', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  function mockCriarPedidoNovo() {
+    const pedidoRow = {
+      id: 50, empresa_id: 10, status: 'pendente',
+      numero_origem: null, numero_sequencial: 5,
+      cliente_nome: null, cliente_telefone: null,
+      consultor_nome: null, arquiteto_nome: null,
+      tem_anexo_pdf: false,
+    };
+
+    db.query
+      .mockResolvedValueOnce({ rows: [pedidoRow] }) // montarPedido: SELECT pedidos
+      .mockResolvedValueOnce({ rows: [] })          // montarPedido: SELECT pedido_itens
+      .mockResolvedValueOnce({ rows: [] })          // montarPedido: SELECT pedido_pagamentos
+      .mockResolvedValueOnce({ rows: [] });         // INSERT pedido_auditoria (importacao)
+
+    const client = { query: jest.fn(), release: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [] })           // BEGIN
+      .mockResolvedValueOnce({ rows: [{ seq: 5 }] }) // nextval
+      .mockResolvedValueOnce({ rows: [{ id: 50 }] }) // INSERT pedidos
+      .mockResolvedValueOnce({ rows: [] })           // SELECT existing item ids
+      .mockResolvedValueOnce({ rows: [] })           // DELETE pedido_pagamentos
+      .mockResolvedValueOnce({ rows: [] });          // COMMIT
+    db.connect.mockResolvedValue(client);
+  }
+
+  test('chama vinculoAutomaticoService.processarPedido apos criar pedido novo', async () => {
+    mockCriarPedidoNovo();
+    vinculoAutoSvc.processarPedido.mockResolvedValue();
+
+    const pedido = await svc.importar(10, 99, { status: 'pendente', itens: [], pagamentos: [] });
+
+    expect(pedido.id).toBe(50);
+    expect(vinculoAutoSvc.processarPedido).toHaveBeenCalledWith(50, 10, 99);
+  });
+
+  test('nao falha a importacao quando processarPedido rejeita', async () => {
+    mockCriarPedidoNovo();
+    vinculoAutoSvc.processarPedido.mockRejectedValue(new Error('boom'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const pedido = await svc.importar(10, 99, { status: 'pendente', itens: [], pagamentos: [] });
+
+    expect(pedido.id).toBe(50);
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });
