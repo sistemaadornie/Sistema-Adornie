@@ -6,6 +6,8 @@ import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
 import SelecionarTipoPersianaModal from "./SelecionarTipoPersianaModal";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
+import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
+import { api } from "../../../../services/api";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -29,6 +31,7 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
   const [selecionandoTipo, setSelecionandoTipo] = useState(false);
+  const [definindoConferencia, setDefinindoConferencia] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
@@ -50,6 +53,44 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
           cidade:        pedido.cidade,
           estado:        pedido.estado,
           itens:         itensSel,
+        },
+      },
+    });
+  }
+
+  async function handleDefinirDataEntrega() {
+    try {
+      const res = await api.get(`/pedidos/${pedidoId}/itens-disponiveis-conferencia-entrega`);
+      if ((res.itens || []).length > 0) {
+        setDefinindoConferencia(true);
+      } else {
+        setInstalacao(pedido);
+      }
+    } catch (e) {
+      alert(e.message || "Erro ao verificar itens pendentes de conferência.");
+    }
+  }
+
+  function handleAgendarConferenciaEntrega(itensSel) {
+    setDefinindoConferencia(false);
+    navigate("/agendamentos", {
+      state: {
+        novoInstalacao: {
+          pedido_id:     pedido.id,
+          pedido_numero: numeroPedidoCompleto(pedido),
+          cliente:       pedido.cliente_nome || "",
+          cliente_id:    pedido.cliente_id || null,
+          cep:           pedido.cep,
+          rua:           pedido.rua,
+          numero:        pedido.numero_rua,
+          complemento:   pedido.complemento,
+          bairro:        pedido.bairro,
+          cidade:        pedido.cidade,
+          estado:        pedido.estado,
+          itens:         itensSel,
+          tipo:          "Conferência",
+          status:        "agendado",
+          titulo:        `Conferência - ${primeiroEUltimoNome(pedido.cliente_nome)} - ${numeroPedidoCompleto(pedido)}`,
         },
       },
     });
@@ -115,8 +156,8 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             </div>
           ))}
 
-          <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={() => setInstalacao(pedido)}>
-            📅 Agendar Instalação
+          <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={handleDefinirDataEntrega}>
+            DEFINIR DATA DE ENTREGA
           </button>
         </div>
       </div>
@@ -126,6 +167,17 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
           pedido={instalacao}
           onClose={() => setInstalacao(null)}
           onContinuar={handleAgendarInstalacao}
+        />
+      )}
+
+      {definindoConferencia && (
+        <ModalSelecionarItensInstalacao
+          pedido={pedido}
+          itensEndpoint={`/pedidos/${pedidoId}/itens-disponiveis-conferencia-entrega`}
+          titulo={`Agendar Conferência — ${numeroPedidoCompleto(pedido)}`}
+          textoVazio="Todos os itens deste pedido já têm conferência agendada."
+          onClose={() => setDefinindoConferencia(false)}
+          onContinuar={handleAgendarConferenciaEntrega}
         />
       )}
 
