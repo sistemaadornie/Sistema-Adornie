@@ -525,6 +525,54 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
   }
 });
 
+// GET /pedidos/:id/itens-disponiveis-conferencia-entrega
+router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const empresaId = req.user.empresa_id;
+
+    const pedCheck = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (pedCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    const query = `
+      SELECT
+        pi.id,
+        pi.ambiente,
+        pi.descricao,
+        pi.quantidade,
+        pi.unidade,
+        COALESCE(pi.categoria_id, prod.categoria_id) AS categoria_id,
+        cat.nome AS categoria_nome
+      FROM pedido_itens pi
+      LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+      LEFT JOIN produtos prod ON prod.id = oi.produto_id
+      LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      WHERE pi.pedido_id = $1
+        AND cat.necessita_conferencia = true
+        AND pi.id NOT IN (
+          SELECT ai.pedido_item_id
+          FROM agendamento_itens ai
+          JOIN agendamentos a ON a.id = ai.agendamento_id
+          WHERE ai.pedido_item_id IS NOT NULL
+            AND a.tipo = 'Conferência'
+            AND a.status NOT IN ('cancelado','rejeitado')
+        )
+      ORDER BY pi.ordem ASC, pi.id ASC
+    `;
+
+    const { rows } = await db.query(query, [pedidoId, empresaId]);
+    return res.json({ itens: rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar itens pendentes de conferência." });
+  }
+});
+
 // GET /pedidos/:id/itens-disponiveis-conferencia
 router.get("/:id/itens-disponiveis-conferencia", authMiddleware, async (req, res) => {
   try {
