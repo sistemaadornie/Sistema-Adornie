@@ -36,4 +36,58 @@ function encontrarPares(itens) {
   return pares;
 }
 
-module.exports = { encontrarPares };
+async function processarPedido(pedidoId, empresaId, userId) {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    const itensRes = await client.query(
+      `SELECT pi.id, pi.ambiente, pi.largura, pi.descricao,
+              COALESCE(c.vinculavel, false)      AS vinculavel,
+              COALESCE(c.recebe_vinculos, false) AS recebe_vinculos,
+              EXISTS (
+                SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
+              ) AS ja_vinculado
+       FROM pedido_itens pi
+       LEFT JOIN categorias c ON c.id = pi.categoria_id
+       WHERE pi.pedido_id = $1`,
+      [pedidoId]
+    );
+
+    const pares = encontrarPares(itensRes.rows);
+    const itensPorId = new Map(itensRes.rows.map((it) => [it.id, it]));
+
+    for (const { acessorioId, principalId } of pares) {
+      const acessorio = itensPorId.get(acessorioId);
+      const principal = itensPorId.get(principalId);
+
+      await client.query(
+        `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
+         VALUES ($1, $2, 'acessorio')
+         ON CONFLICT DO NOTHING`,
+        [acessorioId, principalId]
+      );
+      await client.query(
+        `UPDATE pedido_itens SET sem_vinculo = false WHERE id = $1`,
+        [acessorioId]
+      );
+      await auditSvc.registrarAuditoria(client, {
+        pedidoId,
+        empresaId,
+        usuarioId: userId,
+        etapa: "dados_pedido",
+        acao: "vinculo_automatico",
+        descricao: `Vínculo automático: "${acessorio.descricao}" → "${principal.descricao}" (ambiente: ${acessorio.ambiente}, largura: ${acessorio.largura}m)`,
+      });
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { encontrarPares, processarPedido };

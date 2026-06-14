@@ -1,4 +1,7 @@
-const { encontrarPares } = require('../services/vinculoAutomaticoService');
+jest.mock('../database/db', () => ({ query: jest.fn(), connect: jest.fn() }));
+const db = require('../database/db');
+
+const { encontrarPares, processarPedido } = require('../services/vinculoAutomaticoService');
 
 function item(overrides) {
   return {
@@ -98,5 +101,101 @@ describe('encontrarPares', () => {
       { acessorioId: 1, principalId: 2 },
       { acessorioId: 3, principalId: 4 },
     ]);
+  });
+});
+
+describe('processarPedido', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  test('cria vinculo, marca sem_vinculo=false e registra auditoria para 1 par', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 11,
+              ambiente: 'Sala',
+              largura: '1.5000',
+              descricao: 'Trilho Wave',
+              vinculavel: true,
+              recebe_vinculos: false,
+              ja_vinculado: false,
+            },
+            {
+              id: 10,
+              ambiente: 'Sala',
+              largura: '1.5000',
+              descricao: 'Cortina Wave',
+              vinculavel: false,
+              recebe_vinculos: true,
+              ja_vinculado: false,
+            },
+          ],
+        }) // SELECT itens
+        .mockResolvedValueOnce(undefined) // INSERT pedido_item_vinculos
+        .mockResolvedValueOnce(undefined) // UPDATE pedido_itens sem_vinculo
+        .mockResolvedValueOnce(undefined) // INSERT pedido_auditoria
+        .mockResolvedValueOnce(undefined), // COMMIT
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValue(client);
+
+    await processarPedido(1, 10, 99);
+
+    expect(client.query.mock.calls[2][0]).toContain('INSERT INTO pedido_item_vinculos');
+    expect(client.query.mock.calls[2][1]).toEqual([11, 10]);
+
+    expect(client.query.mock.calls[3][0]).toContain('UPDATE pedido_itens');
+    expect(client.query.mock.calls[3][1]).toEqual([11]);
+
+    expect(client.query.mock.calls[4][0]).toContain('INSERT INTO pedido_auditoria');
+
+    expect(client.query.mock.calls[5][0]).toBe('COMMIT');
+    expect(client.release).toHaveBeenCalled();
+  });
+
+  test('pedido sem itens vinculaveis -> nenhuma escrita alem de BEGIN/SELECT/COMMIT', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 20,
+              ambiente: 'Sala',
+              largura: '1.5000',
+              descricao: 'Persiana Wave',
+              vinculavel: false,
+              recebe_vinculos: false,
+              ja_vinculado: false,
+            },
+          ],
+        }) // SELECT itens
+        .mockResolvedValueOnce(undefined), // COMMIT
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValue(client);
+
+    await processarPedido(1, 10, 99);
+
+    expect(client.query).toHaveBeenCalledTimes(3);
+    expect(client.release).toHaveBeenCalled();
+  });
+
+  test('rollback e propaga erro quando a busca de itens falha', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockRejectedValueOnce(new Error('boom')) // SELECT itens falha
+        .mockResolvedValueOnce(undefined), // ROLLBACK
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValue(client);
+
+    await expect(processarPedido(1, 10, 99)).rejects.toThrow('boom');
+
+    expect(client.query).toHaveBeenCalledWith('ROLLBACK');
+    expect(client.release).toHaveBeenCalled();
   });
 });
