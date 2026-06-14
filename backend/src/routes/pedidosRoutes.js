@@ -573,44 +573,6 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
   }
 });
 
-// GET /pedidos/:id/itens-disponiveis-conferencia
-router.get("/:id/itens-disponiveis-conferencia", authMiddleware, async (req, res) => {
-  try {
-    const pedidoId = Number(req.params.id);
-    const empresaId = req.user.empresa_id;
-    const genitorId = req.query.genitor_id ? Number(req.query.genitor_id) : null;
-
-    const pedCheck = await db.query(
-      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
-      [pedidoId, empresaId]
-    );
-    if (!pedCheck.rows.length) return res.status(404).json({ message: "Pedido não encontrado." });
-
-    if (!genitorId) return res.status(400).json({ message: "Parâmetro genitor_id obrigatório." });
-
-    // Retorna os itens do genitor específico que ainda não têm conferência 'conferido'
-    const { rows } = await db.query(
-      `SELECT pi.id, pi.descricao, pi.ambiente, pi.quantidade, pi.unidade
-       FROM agendamento_itens ai
-       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
-       WHERE ai.agendamento_id = $1
-         AND ai.pedido_item_id IS NOT NULL
-         AND NOT EXISTS (
-           SELECT 1 FROM conferencia_itens ci
-           WHERE ci.pedido_item_id = pi.id
-             AND ci.empresa_id = $2
-             AND ci.status = 'conferido'
-         )
-       ORDER BY pi.ordem ASC, pi.id ASC`,
-      [genitorId, empresaId]
-    );
-    return res.json({ itens: rows });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Erro ao buscar itens para conferência." });
-  }
-});
-
 // PATCH /pedidos/:id/producao-itens
 router.patch("/:id/producao-itens", authMiddleware, async (req, res) => {
   try {
