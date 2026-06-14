@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
-import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -9,38 +7,13 @@ function fmtData(iso) {
   return d.toLocaleDateString("pt-BR");
 }
 
-export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendamentos, onClose }) {
+export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
-  const [agendandoConf, setAgendandoConf] = useState(null);
 
   const etapa2 = etapas.find((e) => e.numero === 2) || {};
   const p = etapa2.progresso || {};
 
   const genitores = preAgendamentos || [];
-
-  function handleAgendarConferencia(genitor, itensSel) {
-    setAgendandoConf(null);
-    navigate("/agendamentos", {
-      state: {
-        novoInstalacao: {
-          pedido_id:         pedido.id,
-          pedido_numero:     numeroPedidoCompleto(pedido),
-          cliente:           pedido.cliente_nome || "",
-          cliente_id:        pedido.cliente_id || null,
-          cep:               pedido.cep,
-          rua:               pedido.rua,
-          numero:            pedido.numero_rua,
-          complemento:       pedido.complemento,
-          bairro:            pedido.bairro,
-          cidade:            pedido.cidade,
-          estado:            pedido.estado,
-          itens:             itensSel,
-          agendamento_pai_id: genitor.id,
-          tipo:              "Conferência",
-        },
-      },
-    });
-  }
 
   return (
     <div className="pf-modal-overlay">
@@ -79,13 +52,11 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
             <div key={g.id} style={{ border: "1px solid var(--pf-separador)", borderRadius: 8, marginBottom: 12, overflow: "hidden" }}>
               <div style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>Entrega: {fmtData(g.data_inicio)}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    {g.tipo === "Conferência" ? "Conferência" : "Entrega"}: {fmtData(g.data_inicio)}
+                  </div>
                   <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>{(g.itens || []).length} itens</div>
                 </div>
-                <button className="pf-btn-primary" style={{ fontSize: 12, padding: "6px 12px" }}
-                  onClick={() => setAgendandoConf(g)}>
-                  + Agendar Conferência
-                </button>
               </div>
               {(g.herdeiros || []).filter((h) => h.tipo !== "Instalação").length > 0 && (
                 <div style={{ padding: "10px 14px" }}>
@@ -119,14 +90,6 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
         </div>
       </div>
 
-      {agendandoConf && (
-        <ModalSelecionarItensInstalacao
-          pedido={pedido}
-          itensEndpoint={`/pedidos/${pedidoId}/itens-disponiveis-conferencia?genitor_id=${agendandoConf.id}`}
-          onClose={() => setAgendandoConf(null)}
-          onContinuar={(itensSel) => handleAgendarConferencia(agendandoConf, itensSel)}
-        />
-      )}
     </div>
   );
 }
