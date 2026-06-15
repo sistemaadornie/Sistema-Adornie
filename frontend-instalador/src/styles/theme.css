@@ -1,0 +1,60 @@
+/* ============================================================
+   ADORNIE INSTALADOR — tema (dark, fixo)
+   Subconjunto das variáveis do frontend-web/src/styles/theme.css
+   ============================================================ */
+
+:root {
+  --header-height: 56px;
+  --bottomnav-height: 64px;
+
+  --color-bg:           #0E0D0B;
+  --color-bg-secondary: #161512;
+
+  --color-surface:        #161512;
+  --color-surface-strong: #1F1D19;
+  --color-surface-soft:   #1A1815;
+  --color-card:           #161512;
+
+  --color-primary:          #C9A96E;
+  --color-primary-hover:    #D4B87A;
+  --color-primary-soft:     rgba(201, 169, 110, 0.10);
+  --color-primary-btn-text: #0E0D0B;
+  --color-primary-rgb:      201, 169, 110;
+
+  --color-text:           #F2EDE4;
+  --color-text-secondary: #9A9080;
+  --color-text-muted:     #5A544A;
+
+  --color-border:        #2C2A25;
+  --color-border-strong: #3A3830;
+
+  --color-success:      #7FB069;
+  --color-success-soft: rgba(127, 176, 105, 0.12);
+  --color-warning:      #D4A843;
+  --color-warning-soft: rgba(212, 168, 67, 0.12);
+  --color-danger:       #C0614A;
+  --color-danger-soft:  rgba(192, 97, 74, 0.12);
+  --color-info:         #6B9AB8;
+  --color-info-soft:    rgba(107, 154, 184, 0.12);
+
+  --shadow-sm:   0 1px 4px rgba(0, 0, 0, 0.40);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.52);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+
+  --font-title: "Cormorant Garamond", Georgia, serif;
+  --font-body:  "Jost", system-ui, sans-serif;
+
+  --transition-fast:   0.13s ease;
+  --transition-normal: 0.22s ease;
+}
