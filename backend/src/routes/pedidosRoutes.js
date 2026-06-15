@@ -565,7 +565,7 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
       ORDER BY pi.ordem ASC, pi.id ASC
     `;
 
-    const { rows } = await db.query(query, [pedidoId, empresaId]);
+    const { rows } = await db.query(query, [pedidoId]);
     return res.json({ itens: rows });
   } catch (err) {
     console.error(err);

@@ -41,6 +41,17 @@ describe('GET /api/pedidos/:id/itens-disponiveis-conferencia-entrega', () => {
     expect(db.query.mock.calls[1][0]).toContain("a.tipo = 'Conferência'");
   });
 
+  test('200 chama a query de itens pendentes apenas com pedidoId (sem parametro extra nao referenciado)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app).get('/api/pedidos/1/itens-disponiveis-conferencia-entrega');
+
+    expect(res.status).toBe(200);
+    expect(db.query.mock.calls[1][1]).toEqual(['1']);
+  });
+
   test('200 retorna lista vazia quando nao ha itens pendentes', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
