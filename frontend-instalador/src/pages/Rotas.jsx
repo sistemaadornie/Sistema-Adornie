@@ -4,7 +4,6 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { FiExternalLink, FiMapPin } from "react-icons/fi";
 import { api } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
 import { statusLabel, mapsUrl, todayISO, addDaysISO } from "../utils/agendamentos";
 
@@ -23,7 +22,6 @@ const FILTROS = [
 ];
 
 export default function Rotas() {
-  const { user } = useAuth();
   const [filtro, setFiltro] = useState("hoje");
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,13 +36,13 @@ export default function Rotas() {
     const dataFim = filtro === "hoje" ? hoje : addDaysISO(hoje, 7);
 
     api
-      .get(`/agendamentos?usuario_id=${user.id}&data_inicio=${hoje}&data_fim=${dataFim}`)
+      .get(`/agendamentos?data_inicio=${hoje}&data_fim=${dataFim}`)
       .then((data) => ativo && setAgendamentos(data.agendamentos || []))
       .catch((err) => ativo && setErro(err.message))
       .finally(() => ativo && setLoading(false));
 
     return () => { ativo = false; };
-  }, [filtro, user.id]);
+  }, [filtro]);
 
   const comCoords = useMemo(() => agendamentos.filter((a) => a.lat && a.lng), [agendamentos]);
   const semCoords = useMemo(() => agendamentos.filter((a) => !a.lat || !a.lng), [agendamentos]);

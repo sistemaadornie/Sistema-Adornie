@@ -16,7 +16,7 @@ export default function Home() {
     let ativo = true;
     setLoading(true);
     api
-      .get(`/agendamentos?usuario_id=${user.id}&data_inicio=${todayISO()}`)
+      .get(`/agendamentos?data_inicio=${todayISO()}`)
       .then((data) => {
         if (!ativo) return;
         setAgendamentos((data.agendamentos || []).slice(0, 4));
@@ -24,7 +24,7 @@ export default function Home() {
       .catch((err) => ativo && setErro(err.message))
       .finally(() => ativo && setLoading(false));
     return () => { ativo = false; };
-  }, [user.id]);
+  }, []);
 
   const hoje = agendamentos.filter((a) => a.data === todayISO());
   const primeiroNome = (user?.nome_completo || "").split(" ")[0];
@@ -36,15 +36,15 @@ export default function Home() {
         <h2 className="page-title">Olá, {primeiroNome || "instalador"}</h2>
         <p className="page-subtitle">
           {hoje.length === 0
-            ? "Você não tem atendimentos para hoje."
-            : `Você tem ${hoje.length} atendimento${hoje.length > 1 ? "s" : ""} hoje.`}
+            ? "Nenhum atendimento agendado para hoje."
+            : `${hoje.length} atendimento${hoje.length > 1 ? "s" : ""} agendado${hoje.length > 1 ? "s" : ""} para hoje.`}
         </p>
 
         <div className="shortcut-grid">
           <Link to="/agenda" className="shortcut-card">
             <FiCalendar className="shortcut-icon" />
             <strong>Agenda</strong>
-            <span>Seus agendamentos</span>
+            <span>Todos os agendamentos</span>
           </Link>
           <Link to="/rotas" className="shortcut-card">
             <FiMap className="shortcut-icon" />

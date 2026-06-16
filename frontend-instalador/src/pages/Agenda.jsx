@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiClock, FiMapPin } from "react-icons/fi";
 import { api } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
 import { statusLabel, formatDateLabel, todayISO, addDaysISO } from "../utils/agendamentos";
 
@@ -13,7 +12,6 @@ const FILTROS = [
 ];
 
 export default function Agenda() {
-  const { user } = useAuth();
   const [filtro, setFiltro] = useState("hoje");
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +23,7 @@ export default function Agenda() {
     setErro("");
 
     const hoje = todayISO();
-    let query = `usuario_id=${user.id}&data_inicio=${hoje}`;
+    let query = `data_inicio=${hoje}`;
     if (filtro === "hoje") query += `&data_fim=${hoje}`;
     if (filtro === "semana") query += `&data_fim=${addDaysISO(hoje, 7)}`;
 
@@ -36,7 +34,7 @@ export default function Agenda() {
       .finally(() => ativo && setLoading(false));
 
     return () => { ativo = false; };
-  }, [filtro, user.id]);
+  }, [filtro]);
 
   const grupos = useMemo(() => {
     const porData = new Map();
