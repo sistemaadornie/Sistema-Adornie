@@ -189,7 +189,7 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
         <div className="modal-header">
           <div>
             <h2>Importar Pedido</h2>
-            <p>{etapa === "upload" ? "Cole o texto do edecoração e anexe o PDF original (opcional)" : "Revise os dados extraídos antes de salvar"}</p>
+            <p>{etapa === "upload" ? "Cole o texto do edecoração e anexe o PDF original (obrigatório)" : "Revise os dados extraídos antes de salvar"}</p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
@@ -217,20 +217,12 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                     color: "var(--color-text)", resize: "vertical", lineHeight: 1.5,
                   }}
                 />
-                <button
-                  className="ek-btn ek-btn-primary"
-                  onClick={handleTexto}
-                  disabled={carregando || !textoColar.trim()}
-                  style={{ alignSelf: "flex-end", minWidth: 140 }}
-                >
-                  {carregando ? "Processando..." : "Processar texto →"}
-                </button>
               </div>
 
-              {/* PDF original — opcional */}
+              {/* PDF original — obrigatório */}
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", marginBottom: 6 }}>
-                  PDF original (opcional) — será vinculado ao pedido após importar
+                  PDF original (obrigatório) — será vinculado ao pedido após importar
                 </div>
                 <div
                   onClick={() => pdfRef.current?.click()}
@@ -272,6 +264,15 @@ export default function ImportarPedidoModal({ onClose, onSalvar, salvando }) {
                   }}
                 />
               </div>
+
+              <button
+                className="ek-btn ek-btn-primary"
+                onClick={handleTexto}
+                disabled={carregando || !textoColar.trim() || !pdfOriginal}
+                style={{ alignSelf: "flex-end", minWidth: 140 }}
+              >
+                {carregando ? "Processando..." : "Processar texto →"}
+              </button>
 
               {erro && (
                 <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", borderRadius: "var(--radius-md)", color: "#ef4444", fontSize: 13 }}>

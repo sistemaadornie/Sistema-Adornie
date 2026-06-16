@@ -70,12 +70,15 @@ export default function EditarPedidoModal({ pedidoId, onClose, onSalvo }) {
           descricao:      it.descricao || "",
           largura:        it.largura ?? "",
           altura:         it.altura ?? "",
+          medidas:        it.medidas ?? null,
           quantidade:     it.quantidade ?? 1,
           unidade:        it.unidade || "UN",
           preco_unitario: it.preco_unitario ?? "",
           valor:          it.valor ?? "",
           categoria_id:   it.categoria_id ?? null,
           sem_vinculo:    it.sem_vinculo ?? false,
+          modelo:         it.modelo ?? null,
+          especificacoes: it.especificacoes ?? null,
         })));
         setPagamentos((p.pagamentos || []).map((pg) => ({
           forma:      pg.forma || "PIX / DEPÓSITO",

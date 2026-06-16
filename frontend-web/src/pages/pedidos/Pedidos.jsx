@@ -69,9 +69,8 @@ function BarraProgresso({ estagio, status }) {
 
           return (
             <React.Fragment key={etapa.numero}>
-              <div className={cls}>
-                <div className="dp-ponto" />
-                <span className="dp-label">{etapa.labelCurto}</span>
+              <div className={cls} title={etapa.label}>
+                <span className="dp-ponto">{etapa.icone}</span>
               </div>
               {idx < ETAPA_CONFIG.length - 1 && (
                 <div className={`dp-linha ${ok ? "dp-ok" : ""}`} />

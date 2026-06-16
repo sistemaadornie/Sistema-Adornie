@@ -186,53 +186,45 @@
 .dp-barra {
   display: flex;
   align-items: center;
-  overflow-x: auto;
   padding: 4px 0;
   gap: 0;
 }
 
 .dp-etapa {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-width: 48px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .dp-ponto {
-  width: 12px;
-  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  line-height: 1;
   border-radius: 50%;
-  background: var(--color-border, #334155);
+  background: var(--color-bg, #0f172a);
   border: 2px solid var(--color-border, #475569);
+  filter: grayscale(1) opacity(0.55);
   transition: all 0.2s;
 }
 
-.dp-etapa.dp-ok     .dp-ponto { background: #10b981; border-color: #10b981; }
-.dp-etapa.dp-atual  .dp-ponto { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
-.dp-etapa.dp-atrasado .dp-ponto { background: #ef4444; border-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
-.dp-label {
-  font-size: 10px;
-  color: var(--color-text-muted, #64748b);
-  white-space: nowrap;
-}
-
-.dp-etapa.dp-ok    .dp-label  { color: #10b981; }
-.dp-etapa.dp-atual .dp-label  { color: #3b82f6; font-weight: 600; }
+.dp-etapa.dp-ok     .dp-ponto { border-color: #10b981; filter: none; }
+.dp-etapa.dp-atual  .dp-ponto { border-color: #3b82f6; filter: none; box-shadow: 0 0 8px #3b82f6; }
+.dp-etapa.dp-atrasado .dp-ponto { border-color: #ef4444; filter: none; box-shadow: 0 0 8px #ef4444; }
 
 .dp-linha {
   flex: 1;
   height: 2px;
   background: var(--color-border, #334155);
-  min-width: 12px;
-  margin-bottom: 16px;
+  min-width: 4px;
   transition: background 0.2s;
 }
 
 .dp-linha.dp-ok { background: #10b981; }
-
-.dp-etapa.dp-atrasado .dp-label { color: #ef4444; font-weight: 600; }
 
 .dp-etapa-atual-label {
   margin-top: 6px;
