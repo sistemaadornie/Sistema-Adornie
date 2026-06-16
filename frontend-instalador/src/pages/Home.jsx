@@ -4,7 +4,7 @@ import { FiCalendar, FiMap, FiDroplet, FiClock, FiMapPin } from "react-icons/fi"
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
-import { statusLabel, formatDateLabel, todayISO } from "../utils/agendamentos";
+import { statusLabel, formatDateLabel, todayISO, STATUS_CORES } from "../utils/agendamentos";
 
 export default function Home() {
   const { user } = useAuth();
@@ -73,7 +73,7 @@ export default function Home() {
         )}
 
         {agendamentos.map((ag) => (
-          <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item">
+          <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item" style={{ borderLeft: `4px solid ${STATUS_CORES[ag.status] || "var(--color-border)"}` }}>
             <div className="list-item-top">
               <div className="list-item-title">{ag.cliente}</div>
               <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>

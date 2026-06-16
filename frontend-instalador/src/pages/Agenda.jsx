@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FiClock, FiMapPin } from "react-icons/fi";
 import { api } from "../services/api";
 import TopBar from "../components/TopBar";
-import { statusLabel, formatDateLabel, todayISO, addDaysISO } from "../utils/agendamentos";
+import { statusLabel, formatDateLabel, todayISO, addDaysISO, STATUS_CORES } from "../utils/agendamentos";
 
 const FILTROS = [
   { id: "hoje", label: "Hoje" },
@@ -72,7 +72,7 @@ export default function Agenda() {
           <div key={data}>
             <h3 className="section-title">{formatDateLabel(data)}</h3>
             {itens.map((ag) => (
-              <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item">
+              <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item" style={{ borderLeft: `4px solid ${STATUS_CORES[ag.status] || "var(--color-border)"}` }}>
                 <div className="list-item-top">
                   <div className="list-item-title">{ag.cliente}</div>
                   <span className="list-item-time">{ag.hora}</span>

@@ -1,3 +1,15 @@
+export const STATUS_CORES = {
+  pre_agendado:  "#6B9AB8",
+  agendado:      "#6B9AB8",
+  aguardando:    "#D4A843",
+  andamento:     "#D4A843",
+  concluido:     "#7FB069",
+  nao_concluido: "#C0614A",
+  cancelado:     "#C0614A",
+  retorno:       "#9A9080",
+  atrasado:      "#C0614A",
+};
+
 export const STATUS_LABELS = {
   pre_agendado: "Pré-agendado",
   agendado: "Agendado",

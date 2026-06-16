@@ -2,45 +2,66 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import {
   FiMapPin, FiClock, FiUser, FiFileText, FiCamera,
-  FiExternalLink, FiUsers, FiPackage, FiTag,
+  FiExternalLink, FiUsers, FiPackage, FiTag, FiX,
 } from "react-icons/fi";
 import { api } from "../services/api";
 import TopBar from "../components/TopBar";
 import {
-  statusLabel, formatDateBR, enderecoCompleto, mapsUrl, STATUS_INSTALADOR_ACOES,
+  statusLabel, formatDateBR, enderecoCompleto, mapsUrl,
+  STATUS_INSTALADOR_ACOES, STATUS_CORES,
 } from "../utils/agendamentos";
 
 const ANEXO_LABELS = {
-  foto_antes: "Antes",
-  foto_depois: "Depois",
-  video_antes: "Vídeo (antes)",
+  foto_antes:   "Antes",
+  foto_depois:  "Depois",
+  video_antes:  "Vídeo (antes)",
   video_depois: "Vídeo (depois)",
-  video: "Vídeo",
-  documento: "Documento",
+  video:        "Vídeo",
+  documento:    "Documento",
 };
 
-function FilePicker({ files, setFiles, label }) {
+const AVISO_FOTO = {
+  andamento: {
+    titulo: "📷 Foto obrigatória antes de iniciar",
+    texto: "Registre o estado do local antes de tocar em qualquer coisa. Esse comprovante protege você e a empresa caso surjam questionamentos sobre danos pré-existentes.",
+  },
+  concluido: {
+    titulo: "✅ Foto obrigatória para concluir",
+    texto: "Registre o resultado final do serviço com pelo menos uma foto. Esse comprovante documenta o trabalho entregue.",
+  },
+  nao_concluido: {
+    titulo: "⚠️ Foto obrigatória ao registrar não conclusão",
+    texto: "Fotografe a situação que impediu a conclusão. Esse registro é essencial para explicar a ocorrência e orientar o retorno.",
+  },
+};
+
+const STATUS_SHEET_LABEL = {
+  andamento:     "Iniciar atendimento",
+  concluido:     "Concluir atendimento",
+  nao_concluido: "Não concluído",
+};
+
+/* ── FilePicker ── */
+function FilePicker({ files, setFiles }) {
   function onChange(e) {
     const novos = Array.from(e.target.files || []);
     setFiles((prev) => [...prev, ...novos]);
     e.target.value = "";
   }
-
   function remover(idx) {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   }
-
   return (
     <div className="photo-grid">
       {files.map((file, idx) => (
-        <div className="photo-thumb" key={idx} onClick={() => remover(idx)}>
+        <div className="photo-thumb" key={idx} style={{ cursor: "pointer" }} onClick={() => remover(idx)}>
           <img src={URL.createObjectURL(file)} alt={file.name} />
-          <span className="photo-tag">Remover</span>
+          <span className="photo-tag">✕ Remover</span>
         </div>
       ))}
       <label className="upload-btn">
         <FiCamera />
-        {label}
+        Adicionar foto
         <input
           type="file"
           accept="image/*"
@@ -54,18 +75,32 @@ function FilePicker({ files, setFiles, label }) {
   );
 }
 
+/* ── BottomSheet ── */
+function BottomSheet({ open, onClose, children }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="bs-overlay" onClick={onClose} />
+      <div className="bottom-sheet">
+        <div className="bs-handle" />
+        {children}
+      </div>
+    </>
+  );
+}
+
+/* ── Página principal ── */
 export default function AgendamentoDetalhe() {
   const { id } = useParams();
   const [ag, setAg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
-  const [actionFiles, setActionFiles] = useState([]);
-  const [anexoFiles, setAnexoFiles] = useState([]);
-  const [motivo, setMotivo] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
-  const [actionMsg, setActionMsg] = useState("");
+  const [sheetStatus,   setSheetStatus]   = useState(null);
+  const [sheetFiles,    setSheetFiles]    = useState([]);
+  const [sheetMotivo,   setSheetMotivo]   = useState("");
+  const [sheetEnviando, setSheetEnviando] = useState(false);
+  const [sheetMsg,      setSheetMsg]      = useState("");
 
   const carregar = useCallback(() => {
     setLoading(true);
@@ -78,43 +113,37 @@ export default function AgendamentoDetalhe() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  async function alterarStatus(status) {
-    if (status === "nao_concluido" && !motivo.trim()) {
-      setActionMsg("Informe o motivo para marcar como não concluído.");
-      return;
-    }
-    setEnviando(true);
-    setActionMsg("");
-    try {
-      const fd = new FormData();
-      fd.append("status", status);
-      if (motivo.trim()) fd.append("motivo", motivo.trim());
-      actionFiles.forEach((f) => fd.append("arquivos", f));
-      await api.put(`/agendamentos/${id}/status`, fd, true);
-      setActionFiles([]);
-      setMotivo("");
-      carregar();
-    } catch (err) {
-      setActionMsg(err.message);
-    } finally {
-      setEnviando(false);
-    }
+  function abrirSheet(status) {
+    setSheetStatus(status);
+    setSheetFiles([]);
+    setSheetMotivo("");
+    setSheetMsg("");
   }
 
-  async function enviarAnexos() {
-    if (!anexoFiles.length) return;
-    setEnviandoAnexo(true);
-    setActionMsg("");
+  function fecharSheet() {
+    if (sheetEnviando) return;
+    setSheetStatus(null);
+  }
+
+  async function confirmarAcao() {
+    if (!sheetFiles.length) {
+      setSheetMsg("Adicione pelo menos uma foto para continuar.");
+      return;
+    }
+    setSheetEnviando(true);
+    setSheetMsg("");
     try {
       const fd = new FormData();
-      anexoFiles.forEach((f) => fd.append("arquivos", f));
-      await api.post(`/agendamentos/${id}/anexos`, fd, true);
-      setAnexoFiles([]);
+      fd.append("status", sheetStatus);
+      if (sheetMotivo.trim()) fd.append("motivo", sheetMotivo.trim());
+      sheetFiles.forEach((f) => fd.append("arquivos", f));
+      await api.put(`/agendamentos/${id}/status`, fd, true);
+      setSheetStatus(null);
       carregar();
     } catch (err) {
-      setActionMsg(err.message);
+      setSheetMsg(err.message);
     } finally {
-      setEnviandoAnexo(false);
+      setSheetEnviando(false);
     }
   }
 
@@ -131,24 +160,36 @@ export default function AgendamentoDetalhe() {
     return (
       <>
         <TopBar title="Agendamento" back />
-        <div className="page"><div className="banner banner-danger">{erro || "Agendamento não encontrado."}</div></div>
+        <div className="page">
+          <div className="banner banner-danger">{erro || "Agendamento não encontrado."}</div>
+        </div>
       </>
     );
   }
 
-  const endereco = enderecoCompleto(ag);
-  const link = mapsUrl(ag);
+  const endereco  = enderecoCompleto(ag);
+  const link      = mapsUrl(ag);
+  const statusCor = STATUS_CORES[ag.status] || "var(--color-border)";
 
   return (
     <>
       <TopBar title={ag.cliente} back />
       <div className="page">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-          <h2 className="page-title" style={{ fontSize: 22 }}>{ag.titulo}</h2>
-          <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>
-        </div>
-        {ag.pedido_numero && <p className="page-subtitle">Pedido {ag.pedido_numero}</p>}
 
+        {/* Header com cor do status */}
+        <div className="ag-header" style={{ borderLeft: `4px solid ${statusCor}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+            <h2 className="page-title" style={{ fontSize: 20, margin: 0 }}>{ag.titulo}</h2>
+            <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>
+          </div>
+          {ag.pedido_numero && (
+            <p className="page-subtitle" style={{ margin: "4px 0 0" }}>
+              Pedido {ag.pedido_numero}
+            </p>
+          )}
+        </div>
+
+        {/* Info principal */}
         <div className="card">
           <div className="detail-row">
             <FiUser className="detail-icon" />
@@ -189,6 +230,7 @@ export default function AgendamentoDetalhe() {
           )}
         </div>
 
+        {/* Descrição / observações */}
         {(ag.descricao || ag.observacoes) && (
           <div className="card">
             {ag.descricao && (
@@ -212,6 +254,7 @@ export default function AgendamentoDetalhe() {
           </div>
         )}
 
+        {/* Itens */}
         {ag.itens?.length > 0 && (
           <div className="card">
             <div className="detail-row" style={{ marginBottom: 6 }}>
@@ -224,6 +267,7 @@ export default function AgendamentoDetalhe() {
           </div>
         )}
 
+        {/* Equipe */}
         {ag.equipe?.length > 0 && (
           <div className="card">
             <div className="detail-row" style={{ marginBottom: 6 }}>
@@ -236,16 +280,23 @@ export default function AgendamentoDetalhe() {
           </div>
         )}
 
-        {/* Fotos existentes */}
+        {/* Fotos e anexos existentes */}
         {ag.anexos?.length > 0 && (
           <>
             <h3 className="section-title">Fotos e anexos</h3>
             <div className="photo-grid">
               {ag.anexos.map((a) => (
                 <a className="photo-thumb" href={a.url} target="_blank" rel="noreferrer" key={a.id}>
-                  {a.url?.match(/\.(mp4|mov|webm|mkv|3gp)$/i)
-                    ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 12, color: "var(--color-text-secondary)" }}>Vídeo</div>
-                    : <img src={a.url} alt={a.nome} />}
+                  {a.url?.match(/\.(mp4|mov|webm|mkv|3gp)$/i) ? (
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      height: "100%", fontSize: 12, color: "var(--color-text-secondary)",
+                    }}>
+                      Vídeo
+                    </div>
+                  ) : (
+                    <img src={a.url} alt={a.nome} />
+                  )}
                   <span className="photo-tag">{ANEXO_LABELS[a.tipo] || a.tipo}</span>
                 </a>
               ))}
@@ -253,48 +304,24 @@ export default function AgendamentoDetalhe() {
           </>
         )}
 
-        {/* Anexar novas fotos */}
-        <h3 className="section-title">Anexar fotos</h3>
-        <FilePicker files={anexoFiles} setFiles={setAnexoFiles} label="Adicionar foto" />
-        {anexoFiles.length > 0 && (
-          <button className="btn btn-primary btn-block" style={{ marginTop: 8 }} disabled={enviandoAnexo} onClick={enviarAnexos}>
-            {enviandoAnexo ? "Enviando..." : `Enviar ${anexoFiles.length} foto(s)`}
-          </button>
-        )}
-
-        {actionMsg && <div className="banner banner-danger" style={{ marginTop: 12 }}>{actionMsg}</div>}
-
         {/* Ações de status */}
         {STATUS_INSTALADOR_ACOES.podeIniciar(ag.status) && (
           <>
-            <h3 className="section-title">Iniciar atendimento</h3>
-            <p className="list-item-meta">Tire fotos do local antes de começar (opcional).</p>
-            <FilePicker files={actionFiles} setFiles={setActionFiles} label="Foto antes" />
-            <button className="btn btn-primary btn-block" style={{ marginTop: 12 }} disabled={enviando} onClick={() => alterarStatus("andamento")}>
-              {enviando ? "Enviando..." : "Iniciar atendimento"}
+            <h3 className="section-title">Ação</h3>
+            <button className="btn btn-primary btn-block" onClick={() => abrirSheet("andamento")}>
+              ▶ Iniciar atendimento
             </button>
           </>
         )}
 
         {STATUS_INSTALADOR_ACOES.podeFinalizar(ag.status) && (
           <>
-            <h3 className="section-title">Finalizar atendimento</h3>
-            <p className="list-item-meta">Tire fotos do resultado final (opcional).</p>
-            <FilePicker files={actionFiles} setFiles={setActionFiles} label="Foto depois" />
-            <div className="form-group" style={{ marginTop: 12 }}>
-              <label>Motivo (obrigatório se não concluído)</label>
-              <textarea
-                className="input-base"
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ex.: cliente ausente, falta de material..."
-              />
-            </div>
+            <h3 className="section-title">Finalizar</h3>
             <div className="btn-row">
-              <button className="btn btn-success" disabled={enviando} onClick={() => alterarStatus("concluido")}>
-                {enviando ? "Enviando..." : "Concluir"}
+              <button className="btn btn-success" onClick={() => abrirSheet("concluido")}>
+                ✓ Concluir
               </button>
-              <button className="btn btn-danger" disabled={enviando} onClick={() => alterarStatus("nao_concluido")}>
+              <button className="btn btn-danger" onClick={() => abrirSheet("nao_concluido")}>
                 Não concluído
               </button>
             </div>
@@ -307,6 +334,64 @@ export default function AgendamentoDetalhe() {
           </div>
         )}
       </div>
+
+      {/* Bottom Sheet — mudança de status com foto obrigatória */}
+      <BottomSheet open={!!sheetStatus} onClose={fecharSheet}>
+        {sheetStatus && (
+          <div className="bs-content">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <span className="bs-title">{STATUS_SHEET_LABEL[sheetStatus]}</span>
+              <button className="bs-close" onClick={fecharSheet}><FiX /></button>
+            </div>
+
+            {AVISO_FOTO[sheetStatus] && (
+              <div className="bs-aviso">
+                <strong>{AVISO_FOTO[sheetStatus].titulo}</strong>
+                <p>{AVISO_FOTO[sheetStatus].texto}</p>
+              </div>
+            )}
+
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
+            }}>
+              Fotos <span style={{ color: "var(--color-danger)" }}>*</span>
+            </div>
+            <FilePicker files={sheetFiles} setFiles={setSheetFiles} />
+
+            {sheetStatus === "nao_concluido" && (
+              <div className="form-group" style={{ marginTop: 14 }}>
+                <label>Motivo (opcional)</label>
+                <textarea
+                  className="input-base"
+                  value={sheetMotivo}
+                  onChange={(e) => setSheetMotivo(e.target.value)}
+                  placeholder="Descreva o motivo pelo qual não foi possível concluir..."
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {sheetFiles.length === 0 && (
+              <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
+                Adicione pelo menos uma foto para continuar.
+              </p>
+            )}
+            {sheetMsg && (
+              <div className="banner banner-danger" style={{ marginTop: 8 }}>{sheetMsg}</div>
+            )}
+
+            <button
+              className="btn btn-primary btn-block"
+              style={{ marginTop: 16 }}
+              disabled={sheetEnviando || sheetFiles.length === 0}
+              onClick={confirmarAcao}
+            >
+              {sheetEnviando ? "Enviando..." : `Confirmar — ${statusLabel(sheetStatus)}`}
+            </button>
+          </div>
+        )}
+      </BottomSheet>
     </>
   );
 }
