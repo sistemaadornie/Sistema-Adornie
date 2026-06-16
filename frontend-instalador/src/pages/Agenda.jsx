@@ -1,18 +1,108 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiClock, FiMapPin } from "react-icons/fi";
+import { FiMapPin, FiUsers } from "react-icons/fi";
 import { api } from "../services/api";
 import TopBar from "../components/TopBar";
-import { statusLabel, formatDateLabel, todayISO, addDaysISO, STATUS_CORES } from "../utils/agendamentos";
+import {
+  statusLabel, formatDateBR, todayISO, addDaysISO,
+  STATUS_CORES, parseDateInfo,
+} from "../utils/agendamentos";
 
 const FILTROS = [
-  { id: "hoje", label: "Hoje" },
-  { id: "semana", label: "Próximos 7 dias" },
-  { id: "todos", label: "Todos" },
+  { id: "hoje",   label: "Hoje" },
+  { id: "semana", label: "7 dias" },
+  { id: "mes",    label: "30 dias" },
+  { id: "todos",  label: "Todos" },
 ];
 
+function horaFim(horaInicio, duracaoMin) {
+  if (!horaInicio) return null;
+  const [h, m] = horaInicio.split(":").map(Number);
+  const total = h * 60 + m + (duracaoMin || 60);
+  const hf = String(Math.floor(total / 60)).padStart(2, "0");
+  const mf = String(total % 60).padStart(2, "0");
+  return `${hf}:${mf}`;
+}
+
+function EventoCard({ ag }) {
+  const cor = STATUS_CORES[ag.status] || "#888";
+  const equipe = ag.equipe?.map((m) => m.nome || m).join(", ");
+  const fim = ag.hora_fim || horaFim(ag.hora, ag.duracao_minutos);
+
+  return (
+    <Link
+      to={`/agenda/${ag.id}`}
+      className="gcal-evento"
+      style={{ backgroundColor: `${cor}18`, borderLeft: `3px solid ${cor}` }}
+    >
+      <div className="gcal-evento-titulo">{ag.titulo || ag.cliente}</div>
+
+      {ag.hora && (
+        <div className="gcal-evento-hora">
+          {ag.hora}{fim ? ` – ${fim}` : ""}
+        </div>
+      )}
+
+      {ag.titulo && ag.cliente && (
+        <div className="gcal-evento-sub">{ag.cliente}</div>
+      )}
+
+      {ag.endereco && (
+        <div className="gcal-evento-sub">
+          <FiMapPin size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />
+          {ag.endereco}
+        </div>
+      )}
+
+      {equipe && (
+        <div className="gcal-evento-sub">
+          <FiUsers size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />
+          {equipe}
+        </div>
+      )}
+
+      <span
+        className="gcal-evento-status"
+        style={{ color: cor }}
+      >
+        {statusLabel(ag.status)}
+      </span>
+    </Link>
+  );
+}
+
+function GrupoData({ data, itens }) {
+  const info = parseDateInfo(data);
+
+  return (
+    <div className="gcal-grupo">
+      {/* Coluna esquerda: data estilo Google */}
+      <div className="gcal-data-col">
+        <span className="gcal-dia-semana">{info.diaSemana}</span>
+        <span
+          className={`gcal-dia-num${info.isHoje ? " gcal-hoje" : ""}`}
+        >
+          {info.dia}
+        </span>
+        {!info.isHoje && !info.isAmanha && (
+          <span className="gcal-mes">{info.mes}</span>
+        )}
+        {info.isHoje && <span className="gcal-label-dia">Hoje</span>}
+        {info.isAmanha && <span className="gcal-label-dia">Amanhã</span>}
+      </div>
+
+      {/* Coluna direita: lista de eventos */}
+      <div className="gcal-eventos-col">
+        {itens.map((ag) => (
+          <EventoCard key={ag.id} ag={ag} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Agenda() {
-  const [filtro, setFiltro] = useState("hoje");
+  const [filtro, setFiltro] = useState("semana");
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -24,8 +114,9 @@ export default function Agenda() {
 
     const hoje = todayISO();
     let query = `data_inicio=${hoje}`;
-    if (filtro === "hoje") query += `&data_fim=${hoje}`;
+    if (filtro === "hoje")   query += `&data_fim=${hoje}`;
     if (filtro === "semana") query += `&data_fim=${addDaysISO(hoje, 7)}`;
+    if (filtro === "mes")    query += `&data_fim=${addDaysISO(hoje, 30)}`;
 
     api
       .get(`/agendamentos?${query}`)
@@ -49,6 +140,8 @@ export default function Agenda() {
     <>
       <TopBar title="Agenda" />
       <div className="page">
+
+        {/* Filtros */}
         <div className="field-filter">
           {FILTROS.map((f) => (
             <button
@@ -68,30 +161,13 @@ export default function Agenda() {
           <div className="empty-state">Nenhum agendamento encontrado.</div>
         )}
 
-        {grupos.map(([data, itens]) => (
-          <div key={data}>
-            <h3 className="section-title">{formatDateLabel(data)}</h3>
-            {itens.map((ag) => (
-              <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item" style={{ borderLeft: `4px solid ${STATUS_CORES[ag.status] || "var(--color-border)"}` }}>
-                <div className="list-item-top">
-                  <div className="list-item-title">{ag.cliente}</div>
-                  <span className="list-item-time">{ag.hora}</span>
-                </div>
-                <div className="list-item-meta">{ag.titulo}</div>
-                {ag.endereco || ag.cidade ? (
-                  <div className="list-item-meta">
-                    <FiMapPin style={{ verticalAlign: "-2px" }} /> {ag.endereco || `${ag.cidade} - ${ag.estado}`}
-                  </div>
-                ) : null}
-                <div className="list-item-meta" style={{ marginTop: 6 }}>
-                  <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>
-                  {" "}
-                  {ag.tipo && <span style={{ marginLeft: 6 }}><FiClock style={{ verticalAlign: "-2px" }} /> {ag.tipo}</span>}
-                </div>
-              </Link>
-            ))}
-          </div>
-        ))}
+        {/* Lista estilo Google Calendar */}
+        <div className="gcal-lista">
+          {grupos.map(([data, itens]) => (
+            <GrupoData key={data} data={data} itens={itens} />
+          ))}
+        </div>
+
       </div>
     </>
   );
