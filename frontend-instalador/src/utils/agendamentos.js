@@ -1,25 +1,25 @@
 export const STATUS_CORES = {
-  pre_agendado:  "#6B9AB8",
-  agendado:      "#6B9AB8",
-  aguardando:    "#D4A843",
-  andamento:     "#D4A843",
-  concluido:     "#7FB069",
-  nao_concluido: "#C0614A",
-  cancelado:     "#C0614A",
-  retorno:       "#9A9080",
-  atrasado:      "#C0614A",
+  pre_agendado:  "#94a3b8",
+  agendado:      "#3b82f6",
+  aguardando:    "#eab308",
+  andamento:     "#eab308",
+  concluido:     "#22c55e",
+  nao_concluido: "#f97316",
+  cancelado:     "#ef4444",
+  retorno:       "#a855f7",
+  atrasado:      "#ef4444",
 };
 
 export const STATUS_LABELS = {
-  pre_agendado: "Pré-agendado",
-  agendado: "Agendado",
-  aguardando: "Aguardando",
-  andamento: "Em andamento",
-  concluido: "Concluído",
+  pre_agendado:  "Pré-agendado",
+  agendado:      "Agendado",
+  aguardando:    "Aguardando",
+  andamento:     "Em andamento",
+  concluido:     "Concluído",
   nao_concluido: "Não concluído",
-  cancelado: "Cancelado",
-  retorno: "Retorno",
-  atrasado: "Atrasado",
+  cancelado:     "Cancelado",
+  retorno:       "Retorno",
+  atrasado:      "Atrasado",
 };
 
 export function statusLabel(status) {
@@ -27,6 +27,8 @@ export function statusLabel(status) {
 }
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DIAS_SEMANA_FULL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MESES = ["jan.", "fev.", "mar.", "abr.", "mai.", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
 
 /** "YYYY-MM-DD" -> Date local (meia-noite) */
 function parseDate(dataStr) {
@@ -38,6 +40,25 @@ export function formatDateBR(dataStr) {
   if (!dataStr) return "";
   const [y, m, d] = dataStr.split("-");
   return `${d}/${m}/${y}`;
+}
+
+/** Retorna { diaSemana, dia, mes, isHoje, isAmanha } para cabeçalho estilo Google */
+export function parseDateInfo(dataStr) {
+  if (!dataStr) return {};
+  const data = parseDate(dataStr);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate() + 1);
+
+  return {
+    diaSemana: DIAS_SEMANA[data.getDay()],
+    diaSemanaFull: DIAS_SEMANA_FULL[data.getDay()],
+    dia: data.getDate(),
+    mes: MESES[data.getMonth()],
+    isHoje: data.getTime() === hoje.getTime(),
+    isAmanha: data.getTime() === amanha.getTime(),
+  };
 }
 
 /** Rótulo amigável: "Hoje", "Amanhã" ou "DD/MM (Seg)" */
@@ -82,7 +103,7 @@ export function enderecoCompleto(ag) {
   return partes.join(", ");
 }
 
-/** Link de navegação no Google Maps (coordenadas se houver, senão endereço) */
+/** Link de navegação no Google Maps */
 export function mapsUrl(ag) {
   if (ag?.lat && ag?.lng) {
     return `https://www.google.com/maps/dir/?api=1&destination=${ag.lat},${ag.lng}`;
@@ -94,9 +115,8 @@ export function mapsUrl(ag) {
   return null;
 }
 
-/** Status que o instalador pode escolher como próxima ação */
 export const STATUS_INSTALADOR_ACOES = {
-  podeIniciar: (status) => ["agendado", "pre_agendado", "atrasado", "aguardando", "retorno"].includes(status),
-  podeFinalizar: (status) => status === "andamento",
-  finalizado: (status) => ["concluido", "nao_concluido", "cancelado"].includes(status),
+  podeIniciar:  (status) => ["agendado", "pre_agendado", "atrasado", "aguardando", "retorno"].includes(status),
+  podeFinalizar:(status) => status === "andamento",
+  finalizado:   (status) => ["concluido", "nao_concluido", "cancelado"].includes(status),
 };
