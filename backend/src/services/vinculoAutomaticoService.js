@@ -36,6 +36,41 @@ function encontrarPares(itens) {
   return pares;
 }
 
+const RE_CANAIS = /(\d+)\s*(?:canais|canal)/i;
+
+function encontrarVinculosControle(itens) {
+  const grupos = new Map();
+
+  for (const it of itens) {
+    if (!it.ambiente) continue;
+    if (!grupos.has(it.ambiente)) grupos.set(it.ambiente, { controles: [], motorizados: [] });
+    const g = grupos.get(it.ambiente);
+    if (it.distribui_canais) g.controles.push(it);
+    if (it.recebe_vinculo_automatico && it.acionamento === 'motorizado') g.motorizados.push(it);
+  }
+
+  const pares = [];
+  const insuficientes = [];
+
+  for (const [ambiente, { controles, motorizados }] of grupos) {
+    if (motorizados.length === 0) continue;
+    for (const controle of controles) {
+      const match = RE_CANAIS.exec(controle.descricao || '');
+      if (!match) continue;
+      const canais = parseInt(match[1], 10);
+      if (motorizados.length <= canais) {
+        for (const mot of motorizados) {
+          pares.push({ acessorioId: controle.id, principalId: mot.id });
+        }
+      } else {
+        insuficientes.push({ ambiente, motorizados: motorizados.length, canais });
+      }
+    }
+  }
+
+  return { pares, insuficientes };
+}
+
 async function processarPedido(pedidoId, empresaId, userId) {
   const client = await db.connect();
   try {
@@ -91,4 +126,4 @@ async function processarPedido(pedidoId, empresaId, userId) {
   }
 }
 
-module.exports = { encontrarPares, processarPedido };
+module.exports = { encontrarPares, encontrarVinculosControle, processarPedido };

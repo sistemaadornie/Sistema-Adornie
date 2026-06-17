@@ -121,6 +121,138 @@ describe('encontrarPares', () => {
   });
 });
 
+const { encontrarVinculosControle } = require('../services/vinculoAutomaticoService');
+
+function itemControle(overrides) {
+  return {
+    id: 99,
+    ambiente: 'Sala',
+    descricao: 'Controle 5 canais',
+    distribui_canais: true,
+    recebe_vinculo_automatico: false,
+    acionamento: null,
+    ja_vinculado: false,
+    ...overrides,
+  };
+}
+
+function itemMotorizado(overrides) {
+  return {
+    id: 1,
+    ambiente: 'Sala',
+    descricao: 'Cortina Wave Motorizada',
+    distribui_canais: false,
+    recebe_vinculo_automatico: true,
+    acionamento: 'motorizado',
+    ja_vinculado: false,
+    ...overrides,
+  };
+}
+
+describe('encontrarVinculosControle', () => {
+  test('1 controle 5 canais + 3 motorizados -> 3 pares, sem insuficientes', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle 5 canais' }),
+      itemMotorizado({ id: 1 }),
+      itemMotorizado({ id: 2 }),
+      itemMotorizado({ id: 3 }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toHaveLength(3);
+    expect(pares.every(p => p.acessorioId === 10)).toBe(true);
+    expect(pares.map(p => p.principalId).sort()).toEqual([1, 2, 3]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('1 controle 2 canais + 5 motorizados -> 0 pares, 1 insuficiente', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle 2 canais' }),
+      itemMotorizado({ id: 1 }),
+      itemMotorizado({ id: 2 }),
+      itemMotorizado({ id: 3 }),
+      itemMotorizado({ id: 4 }),
+      itemMotorizado({ id: 5 }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([{ ambiente: 'Sala', motorizados: 5, canais: 2 }]);
+  });
+
+  test('controle sem "N canais" na descricao -> ignorado, sem pares nem insuficientes', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle remoto' }),
+      itemMotorizado({ id: 1 }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('ambiente sem controle mas com motorizados -> nenhum insuficiente', () => {
+    const itens = [
+      itemMotorizado({ id: 1 }),
+      itemMotorizado({ id: 2 }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('controle exato 1 canal + 1 motorizado -> 1 par', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle 1 canal' }),
+      itemMotorizado({ id: 1 }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([{ acessorioId: 10, principalId: 1 }]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('dois ambientes independentes: Sala ok, Quarto insuficiente', () => {
+    const itens = [
+      itemControle({ id: 10, ambiente: 'Sala',   descricao: 'Controle 3 canais' }),
+      itemMotorizado({ id: 1, ambiente: 'Sala' }),
+      itemMotorizado({ id: 2, ambiente: 'Sala' }),
+      itemControle({ id: 20, ambiente: 'Quarto', descricao: 'Controle 1 canal' }),
+      itemMotorizado({ id: 3, ambiente: 'Quarto' }),
+      itemMotorizado({ id: 4, ambiente: 'Quarto' }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toHaveLength(2);
+    expect(insuficientes).toEqual([{ ambiente: 'Quarto', motorizados: 2, canais: 1 }]);
+  });
+
+  test('item motorizado nao-vinculavel (recebe_vinculo_automatico=false) -> ignorado', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle 5 canais' }),
+      itemMotorizado({ id: 1, recebe_vinculo_automatico: false }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('item com acionamento=manual -> nao entra como motorizado', () => {
+    const itens = [
+      itemControle({ id: 10, descricao: 'Controle 5 canais' }),
+      itemMotorizado({ id: 1, acionamento: 'manual' }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([]);
+  });
+
+  test('ambiente nulo/vazio -> item ignorado', () => {
+    const itens = [
+      itemControle({ id: 10, ambiente: '', descricao: 'Controle 5 canais' }),
+      itemMotorizado({ id: 1, ambiente: '' }),
+    ];
+    const { pares, insuficientes } = encontrarVinculosControle(itens);
+    expect(pares).toEqual([]);
+    expect(insuficientes).toEqual([]);
+  });
+});
+
 describe('processarPedido', () => {
   afterEach(() => jest.clearAllMocks());
 
