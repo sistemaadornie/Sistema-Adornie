@@ -1,5 +1,6 @@
 "use strict";
 const db = require("../database/db");
+const { encontrarVinculosControle } = require('./vinculoAutomaticoService');
 
 function calcNivelAlerta(diasParaPrazo) {
   if (diasParaPrazo == null) return null;
@@ -460,6 +461,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     { rows: agendadoRows },
     { rows: produtoOkRows },
     { rows: itensPersianaPendentesRows },
+    { rows: itensControleRows },
   ] = await Promise.all([
     db.query(
       `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
@@ -540,6 +542,17 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
          AND pi.modelo IS NULL`,
       [pedidoId]
     ),
+    db.query(
+      `SELECT pi.id, pi.ambiente, pi.descricao,
+              COALESCE(c.distribui_canais, false)          AS distribui_canais,
+              COALESCE(c.recebe_vinculo_automatico, false) AS recebe_vinculo_automatico,
+              pi.especificacoes->>'acionamento'            AS acionamento
+       FROM pedido_itens pi
+       LEFT JOIN categorias c ON c.id = pi.categoria_id
+       WHERE pi.pedido_id = $1
+         AND pi.ambiente IS NOT NULL AND pi.ambiente <> ''`,
+      [pedidoId]
+    ),
   ]);
 
   const totalItens = totalItensRows[0]?.total ?? 0;
@@ -551,6 +564,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const genitoresAgendados = agendadoRows[0]?.agendados ?? 0;
   const itensComProdutoOk = produtoOkRows[0]?.produto_ok ?? 0;
   const itensPersianaPendentes = itensPersianaPendentesRows[0]?.pendentes ?? 0;
+  const { insuficientes: ambientesCanaisInsuficientes } = encontrarVinculosControle(itensControleRows);
 
   if (!genitoresRaw.length) {
     const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok } = calcularEtapaAtual({
@@ -575,7 +589,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido,
       etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, itens_persiana_pendentes: itensPersianaPendentes } },
+        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes } },
         { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
@@ -710,6 +724,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
         total_itens: totalItens,
         itens_cobertos: itensCobertos,
         itens_persiana_pendentes: itensPersianaPendentes,
+        ambientes_canais_insuficientes: ambientesCanaisInsuficientes,
       },
     },
     {

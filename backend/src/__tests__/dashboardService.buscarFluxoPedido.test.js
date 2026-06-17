@@ -28,7 +28,8 @@ describe('buscarFluxoPedido — itens_persiana_pendentes', () => {
       .mockResolvedValueOnce({ rows: [{ em_confeccao: 0, confeccao_ok: 0 }] }) // prodRows
       .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })            // agendadoRows
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
-      .mockResolvedValueOnce({ rows: [{ pendentes: 2 }] });           // itensPersianaPendentesRows
+      .mockResolvedValueOnce({ rows: [{ pendentes: 2 }] })            // itensPersianaPendentesRows
+      .mockResolvedValueOnce({ rows: [] });                           // itensControleRows (nova)
 
     const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
 
@@ -66,6 +67,7 @@ describe('buscarFluxoPedido — itens_cobertos filtra por tipo Instalação e pr
       .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })            // agendadoRows
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
       .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })            // itensPersianaPendentesRows
+      .mockResolvedValueOnce({ rows: [] })                           // itensControleRows (nova)
       .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
       .mockResolvedValueOnce({ rows: [] }) // herdeirosRaw
       .mockResolvedValueOnce({ rows: [] }); // separacaoRows
@@ -76,5 +78,45 @@ describe('buscarFluxoPedido — itens_cobertos filtra por tipo Instalação e pr
     expect(queryItensCobertos).toContain("a.tipo = 'Instalação'");
 
     expect(resultado.pre_agendamentos[0].tipo).toBe('Conferência');
+  });
+});
+
+describe('buscarFluxoPedido — ambientes_canais_insuficientes', () => {
+  test('inclui ambientes_canais_insuficientes no progresso da etapa 1', async () => {
+    // Early-return branch (genitoresRaw vazio): 15 queries originais + 1 nova = 16 total.
+    // Ordem exata das queries:
+    //   0: pedido
+    //   1-4: Promise.all #1 [anexos, vinculos, allItems, itensRows]
+    //   5: genitoresRaw (vazio -> branch sem genitores)
+    //   6-14: Promise.all #2 [totalItens, itensCobertos, itensSemCat, itensSemVinculo, confRows, prodRows, agendadoRows, produtoOkRows, itensPersianaPendentes]
+    //   15: itensControleRows (nova, última no Promise.all #2)
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1, numero_sequencial: 1, numero_origem: null, status: 'pendente', verificacao_ok: false, categorizacao_ok: false, total: '0', criado_em: '2026-01-01T00:00:00.000Z', cliente_id: null, cep: null, rua: null, numero_rua: null, complemento: null, bairro: null, cidade: null, estado: null, cliente_nome: 'Test', consultor_nome: null, consultor_id: 99 }] }) // 0: pedido
+      .mockResolvedValueOnce({ rows: [] }) // 1: anexos
+      .mockResolvedValueOnce({ rows: [] }) // 2: vinculos
+      .mockResolvedValueOnce({ rows: [] }) // 3: allItems
+      .mockResolvedValueOnce({ rows: [] }) // 4: itensRows
+      .mockResolvedValueOnce({ rows: [] }) // 5: genitoresRaw (vazio -> early return)
+      .mockResolvedValueOnce({ rows: [{ total: 2 }] })              // 6: totalItensRows
+      .mockResolvedValueOnce({ rows: [{ cobertos: 0 }] })           // 7: itensCobertosRows
+      .mockResolvedValueOnce({ rows: [{ sem_cat: 0 }] })            // 8: itensSemCatRows
+      .mockResolvedValueOnce({ rows: [{ sem_vinc: 0 }] })           // 9: itensSemVinculoRows
+      .mockResolvedValueOnce({ rows: [{ total: 0, conferidos: 0 }] }) // 10: confRows
+      .mockResolvedValueOnce({ rows: [{ em_confeccao: 0, confeccao_ok: 0 }] }) // 11: prodRows
+      .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })          // 12: agendadoRows
+      .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })         // 13: produtoOkRows
+      .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })          // 14: itensPersianaPendentesRows
+      // Nova query: itens para encontrarVinculosControle
+      .mockResolvedValueOnce({ rows: [                              // 15: itensControleRows
+        { id: 10, ambiente: 'Sala', descricao: 'Controle 1 canal', distribui_canais: true, recebe_vinculo_automatico: false, acionamento: null },
+        { id: 1,  ambiente: 'Sala', descricao: 'Cortina Motorizada', distribui_canais: false, recebe_vinculo_automatico: true, acionamento: 'motorizado' },
+        { id: 2,  ambiente: 'Sala', descricao: 'Forro Motorizado', distribui_canais: false, recebe_vinculo_automatico: true, acionamento: 'motorizado' },
+      ]});
+
+    const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
+    const etapa1 = resultado.etapas.find(e => e.numero === 1);
+    expect(etapa1.progresso.ambientes_canais_insuficientes).toEqual([
+      { ambiente: 'Sala', motorizados: 2, canais: 1 }
+    ]);
   });
 });
