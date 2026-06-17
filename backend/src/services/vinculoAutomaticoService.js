@@ -73,14 +73,17 @@ function encontrarVinculosControle(itens) {
 
 async function processarPedido(pedidoId, empresaId, userId) {
   const client = await db.connect();
+  let ambientesInsuficientes = [];
   try {
     await client.query("BEGIN");
 
     const itensRes = await client.query(
       `SELECT pi.id, pi.ambiente, pi.largura, pi.descricao,
-              COALESCE(c.vinculavel, false)               AS vinculavel,
-              COALESCE(c.recebe_vinculos, false)          AS recebe_vinculos,
+              COALESCE(c.vinculavel, false)                AS vinculavel,
+              COALESCE(c.recebe_vinculos, false)           AS recebe_vinculos,
               COALESCE(c.recebe_vinculo_automatico, false) AS recebe_vinculo_automatico,
+              COALESCE(c.distribui_canais, false)          AS distribui_canais,
+              pi.especificacoes->>'acionamento'            AS acionamento,
               EXISTS (
                 SELECT 1 FROM pedido_item_vinculos piv WHERE piv.item_id = pi.id
               ) AS ja_vinculado
@@ -90,30 +93,44 @@ async function processarPedido(pedidoId, empresaId, userId) {
       [pedidoId]
     );
 
+    // ─── Vínculos Trilho → Cortina/Forro (por largura) ───────────────────────────
     const pares = encontrarPares(itensRes.rows);
     const itensPorId = new Map(itensRes.rows.map((it) => [it.id, it]));
 
     for (const { acessorioId, principalId } of pares) {
       const acessorio = itensPorId.get(acessorioId);
       const principal = itensPorId.get(principalId);
-
       await client.query(
         `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
-         VALUES ($1, $2, 'acessorio')
-         ON CONFLICT DO NOTHING`,
+         VALUES ($1, $2, 'acessorio') ON CONFLICT DO NOTHING`,
         [acessorioId, principalId]
       );
-      await client.query(
-        `UPDATE pedido_itens SET sem_vinculo = false WHERE id = $1`,
-        [acessorioId]
-      );
+      await client.query(`UPDATE pedido_itens SET sem_vinculo = false WHERE id = $1`, [acessorioId]);
       await auditSvc.registrarAuditoria(client, {
-        pedidoId,
-        empresaId,
-        usuarioId: userId,
-        etapa: "dados_pedido",
-        acao: "vinculo_automatico",
+        pedidoId, empresaId, usuarioId: userId,
+        etapa: "dados_pedido", acao: "vinculo_automatico",
         descricao: `Vínculo automático: "${acessorio.descricao}" → "${principal.descricao}" (ambiente: ${acessorio.ambiente}, largura: ${acessorio.largura}m)`,
+      });
+    }
+
+    // ─── Vínculos Controle → Itens Motorizados (por canal) ───────────────────────
+    let paresControle;
+    ({ pares: paresControle, insuficientes: ambientesInsuficientes } =
+      encontrarVinculosControle(itensRes.rows));
+
+    for (const { acessorioId, principalId } of paresControle) {
+      const acessorio = itensPorId.get(acessorioId);
+      const principal = itensPorId.get(principalId);
+      await client.query(
+        `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
+         VALUES ($1, $2, 'controle_canal') ON CONFLICT DO NOTHING`,
+        [acessorioId, principalId]
+      );
+      await client.query(`UPDATE pedido_itens SET sem_vinculo = false WHERE id = $1`, [acessorioId]);
+      await auditSvc.registrarAuditoria(client, {
+        pedidoId, empresaId, usuarioId: userId,
+        etapa: "dados_pedido", acao: "vinculo_automatico",
+        descricao: `Vínculo automático (controle): "${acessorio.descricao}" → "${principal.descricao}" (ambiente: ${acessorio.ambiente})`,
       });
     }
 
@@ -124,6 +141,7 @@ async function processarPedido(pedidoId, empresaId, userId) {
   } finally {
     client.release();
   }
+  return { ambientesInsuficientes };
 }
 
 module.exports = { encontrarPares, encontrarVinculosControle, processarPedido };

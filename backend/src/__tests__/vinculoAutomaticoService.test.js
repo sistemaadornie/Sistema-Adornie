@@ -335,6 +335,94 @@ describe('processarPedido', () => {
     expect(client.release).toHaveBeenCalled();
   });
 
+  test('cria vinculo controle_canal para 1 controle 2 canais + 2 motorizados', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 10, ambiente: 'Sala', largura: null, descricao: 'Controle 2 canais',
+              distribui_canais: true, recebe_vinculo_automatico: false,
+              acionamento: null, vinculavel: false, recebe_vinculos: false,
+              ja_vinculado: false,
+            },
+            {
+              id: 1, ambiente: 'Sala', largura: '2.0000', descricao: 'Cortina Wave Motorizada',
+              distribui_canais: false, recebe_vinculo_automatico: true,
+              acionamento: 'motorizado', vinculavel: false, recebe_vinculos: true,
+              ja_vinculado: false,
+            },
+            {
+              id: 2, ambiente: 'Sala', largura: '1.5000', descricao: 'Forro Blackout Motorizado',
+              distribui_canais: false, recebe_vinculo_automatico: true,
+              acionamento: 'motorizado', vinculavel: false, recebe_vinculos: true,
+              ja_vinculado: false,
+            },
+          ],
+        }) // SELECT itens
+        // encontrarPares: nenhum par (sem Trilho)
+        // encontrarVinculosControle: 2 pares (controle→cortina, controle→forro)
+        .mockResolvedValueOnce(undefined) // INSERT controle_canal 1
+        .mockResolvedValueOnce(undefined) // UPDATE sem_vinculo controle 1
+        .mockResolvedValueOnce(undefined) // INSERT auditoria 1
+        .mockResolvedValueOnce(undefined) // INSERT controle_canal 2
+        .mockResolvedValueOnce(undefined) // UPDATE sem_vinculo controle 2
+        .mockResolvedValueOnce(undefined) // INSERT auditoria 2
+        .mockResolvedValueOnce(undefined), // COMMIT
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValue(client);
+
+    const result = await processarPedido(1, 10, 99);
+
+    // Dois INSERTs de controle_canal
+    const inserts = client.query.mock.calls.filter(c => c[0]?.includes?.('controle_canal'));
+    expect(inserts).toHaveLength(2);
+    expect(inserts[0][1]).toEqual([10, 1]);
+    expect(inserts[1][1]).toEqual([10, 2]);
+    expect(result.ambientesInsuficientes).toEqual([]);
+  });
+
+  test('processarPedido retorna ambientesInsuficientes quando canais insuficientes', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce(undefined) // BEGIN
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 10, ambiente: 'Sala', largura: null, descricao: 'Controle 1 canal',
+              distribui_canais: true, recebe_vinculo_automatico: false,
+              acionamento: null, vinculavel: false, recebe_vinculos: false,
+              ja_vinculado: false,
+            },
+            {
+              id: 1, ambiente: 'Sala', largura: '2.0000', descricao: 'Cortina Motorizada',
+              distribui_canais: false, recebe_vinculo_automatico: true,
+              acionamento: 'motorizado', vinculavel: false, recebe_vinculos: true,
+              ja_vinculado: false,
+            },
+            {
+              id: 2, ambiente: 'Sala', largura: '1.5000', descricao: 'Forro Motorizado',
+              distribui_canais: false, recebe_vinculo_automatico: true,
+              acionamento: 'motorizado', vinculavel: false, recebe_vinculos: true,
+              ja_vinculado: false,
+            },
+          ],
+        }) // SELECT itens
+        .mockResolvedValueOnce(undefined), // COMMIT
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValue(client);
+
+    const result = await processarPedido(1, 10, 99);
+
+    expect(result.ambientesInsuficientes).toEqual([{ ambiente: 'Sala', motorizados: 2, canais: 1 }]);
+    // Nenhum INSERT de vinculos
+    const inserts = client.query.mock.calls.filter(c => c[0]?.includes?.('controle_canal'));
+    expect(inserts).toHaveLength(0);
+  });
+
   test('rollback e propaga erro quando a busca de itens falha', async () => {
     const client = {
       query: jest.fn()
