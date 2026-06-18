@@ -185,33 +185,37 @@ describe("listarPedidosDashboard", () => {
       .mockResolvedValueOnce({ rows: [] })
       // 3) total de itens por pedido
       .mockResolvedValueOnce({ rows: [{ pedido_id: 1, total: 2 }] })
-      // 4) itens cobertos por pedido
+      // 4) itens cobertos por instalação por pedido
       .mockResolvedValueOnce({ rows: [{ pedido_id: 1, cobertos: 2 }] })
-      // 5) itens sem categoria por pedido
+      // 5) total itens que necessitam conferência por pedido
       .mockResolvedValueOnce({ rows: [] })
-      // 6) itens sem vinculo por pedido
+      // 6) itens cobertos por conferência por pedido
       .mockResolvedValueOnce({ rows: [] })
-      // 7) conferencia por pedido
+      // 7) itens sem categoria por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 8) itens sem vinculo por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 9) conferencia por pedido
       .mockResolvedValueOnce({ rows: [{ pedido_id: 1, total: 2, conferidos: 2 }] })
-      // 8) confeccao por pedido
+      // 10) confeccao por pedido
       .mockResolvedValueOnce({ rows: [{ pedido_id: 1, em_confeccao: 2, confeccao_ok: 1 }] })
-      // 9) genitores agendados por pedido
+      // 11) genitores agendados por pedido
       .mockResolvedValueOnce({ rows: [] })
-      // 10) produto_ok por pedido
+      // 12) produto_ok por pedido
       .mockResolvedValueOnce({ rows: [] })
-      // 11) instalacoes por pedido
+      // 13) instalacoes por pedido
       .mockResolvedValueOnce({ rows: [] })
-      // 12) separacao por pedido
+      // 14) separacao por pedido
       .mockResolvedValueOnce({ rows: [] });
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
 
-    // Etapa 1: itens sem vinculo (6ª query) deve filtrar por categoria vinculavel
-    const querySemVinculo = db.query.mock.calls[5][0];
+    // Etapa 1: itens sem vinculo (8ª query) deve filtrar por categoria vinculavel
+    const querySemVinculo = db.query.mock.calls[7][0];
     expect(querySemVinculo).toContain("cat.vinculavel");
 
     expect(resultado).toHaveLength(1);
-    // etapa1_ok true (verificacao_ok + 2/2 cobertos), etapa2_ok true (2/2 conferidos),
+    // etapa1_ok true (verificacao_ok + 0 itens necessitam conferência), etapa2_ok true (2/2 conferidos),
     // etapa3_ok false (1/2 confeccao_ok) -> etapa_atual = 3
     expect(resultado[0].estagio.etapa_atual).toBe(3);
   });
@@ -240,7 +244,9 @@ describe("listarPedidosDashboard", () => {
       })
       .mockResolvedValueOnce({ rows: [] }) // preAgs
       .mockResolvedValueOnce({ rows: [] }) // total itens
-      .mockResolvedValueOnce({ rows: [] }) // itens cobertos
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos (instalação)
+      .mockResolvedValueOnce({ rows: [] }) // total itens conferência
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos conferência
       .mockResolvedValueOnce({ rows: [] }) // sem categoria
       .mockResolvedValueOnce({ rows: [] }) // sem vinculo
       .mockResolvedValueOnce({ rows: [] }) // conferencia
@@ -279,7 +285,9 @@ describe("listarPedidosDashboard", () => {
       })
       .mockResolvedValueOnce({ rows: [] }) // preAgs
       .mockResolvedValueOnce({ rows: [] }) // total itens
-      .mockResolvedValueOnce({ rows: [] }) // itens cobertos
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos (instalação)
+      .mockResolvedValueOnce({ rows: [] }) // total itens conferência
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos conferência
       .mockResolvedValueOnce({ rows: [] }) // sem categoria
       .mockResolvedValueOnce({ rows: [] }) // sem vinculo
       .mockResolvedValueOnce({ rows: [] }) // conferencia

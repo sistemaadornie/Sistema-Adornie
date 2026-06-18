@@ -36,10 +36,18 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
 
-  const temConferenciaAgendada = (preAgendamentos || []).some(
+  const todasConferenciasFeitasOuDesnecessarias =
+    (p.total_itens_conferencia ?? 0) === 0 ||
+    (p.itens_cobertos_conferencia ?? 0) >= (p.total_itens_conferencia ?? 1);
+
+  const temItensPendentesEntrega = (p.itens_cobertos ?? 0) < (p.total_itens ?? 0);
+
+  const conferencias = (preAgendamentos || []).filter(
     (ag) => ag.tipo === "Conferência" && ag.status !== "cancelado" && ag.status !== "rejeitado"
   );
-  const temItensPendentesEntrega = (p.itens_cobertos ?? 0) < (p.total_itens ?? 0);
+  const entregas = (preAgendamentos || []).filter(
+    (ag) => ag.tipo === "Instalação" && ag.status !== "cancelado" && ag.status !== "rejeitado"
+  );
 
   function handleAgendarInstalacao(itensSel) {
     setInstalacao(null);
@@ -132,25 +140,30 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             <CriterioItem ok={(p.itens_sem_vinculo ?? 1) === 0 && (p.total_itens ?? 0) > 0} texto="Todos os itens com vínculo" />
             <CriterioItem ok={p.verificacao_ok} texto="Pedido verificado" />
             <CriterioItem
-              ok={(p.itens_cobertos ?? 0) >= (p.total_itens ?? 1) && (p.total_itens ?? 0) > 0}
-              texto={`Todos os itens com data de entrega definida (${p.itens_cobertos ?? 0}/${p.total_itens ?? 0})`}
+              ok={todasConferenciasFeitasOuDesnecessarias}
+              texto={`Todos os itens com data de conferência definida (${p.itens_cobertos_conferencia ?? 0}/${p.total_itens_conferencia ?? 0})`}
             />
           </div>
 
           <hr className="pf-separador" />
 
-          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE ENTREGA (PRÉ AGENDAMENTO)</div>
+          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE CONFERÊNCIA</div>
 
-          {(!preAgendamentos || preAgendamentos.length === 0) && (
-            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 16 }}>
-              Nenhum pré-agendamento criado ainda.
+          {conferencias.length === 0 && (p.total_itens_conferencia ?? 0) > 0 && (
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+              Nenhuma conferência agendada ainda.
+            </div>
+          )}
+          {(p.total_itens_conferencia ?? 0) === 0 && (
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+              Nenhum item deste pedido necessita de conferência.
             </div>
           )}
 
-          {(preAgendamentos || []).map((ag) => (
+          {conferencias.map((ag) => (
             <div key={ag.id} style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, marginBottom: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Entrega: {fmtData(ag.data_inicio)}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Conferência: {fmtData(ag.data_inicio)}</span>
                 <span className={`pf-badge ${ag.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>
                   {ag.status}
                 </span>
@@ -161,16 +174,43 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             </div>
           ))}
 
-          {!temConferenciaAgendada && (
+          {!todasConferenciasFeitasOuDesnecessarias && (
             <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={handleDefinirDataEntrega}>
-              DEFINIR DATA DE ENTREGA
+              DEFINIR DATA DE CONFERÊNCIA
             </button>
           )}
 
-          {temConferenciaAgendada && temItensPendentesEntrega && (
-            <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={() => setInstalacao(pedido)}>
-              DEFINIR PRÉ-AGENDAMENTO DE ENTREGA
-            </button>
+          {todasConferenciasFeitasOuDesnecessarias && (
+            <>
+              <hr className="pf-separador" style={{ marginTop: 16 }} />
+              <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE ENTREGA (PRÉ AGENDAMENTO)</div>
+
+              {entregas.length === 0 && (
+                <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+                  Nenhum pré-agendamento de entrega criado ainda.
+                </div>
+              )}
+
+              {entregas.map((ag) => (
+                <div key={ag.id} style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Entrega: {fmtData(ag.data_inicio)}</span>
+                    <span className={`pf-badge ${ag.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>
+                      {ag.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>
+                    {(ag.itens || []).length} itens vinculados
+                  </div>
+                </div>
+              ))}
+
+              {temItensPendentesEntrega && (
+                <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={() => setInstalacao(pedido)}>
+                  DEFINIR PRÉ-AGENDAMENTO DE ENTREGA
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -16,6 +16,8 @@ function calcularEtapaAtual({
   itensSemVinculo,
   totalItens,
   itensCobertos,
+  totalItensConferencia,
+  itensCobertosConferencia,
   totalItensConf,
   itensConferidos,
   totalEmConf,
@@ -28,11 +30,13 @@ function calcularEtapaAtual({
   itensSeparados,
   status,
 }) {
+  const conferenciaOk = (totalItensConferencia ?? 0) === 0 ||
+                        (itensCobertosConferencia ?? 0) >= totalItensConferencia;
   const etapa1_ok = verificacaoOk &&
                     itensSemCategoria === 0 &&
                     itensSemVinculo === 0 &&
                     totalItens > 0 &&
-                    itensCobertos >= totalItens;
+                    conferenciaOk;
 
   const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;
 
@@ -134,6 +138,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     { rows: preAgs },
     { rows: totalItensRows },
     { rows: itensCobertosRows },
+    { rows: totalConferenciaRows },
+    { rows: itensCobertosConferenciaRows },
     { rows: itensSemCatRows },
     { rows: itensSemVincRows },
     { rows: confRows },
@@ -160,7 +166,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        GROUP BY pedido_id`,
       [pedidoIds]
     ),
-    // Etapa 1: itens cobertos por agendamento (genitor) por pedido
+    // Etapa 1: itens cobertos por agendamento de Instalação (genitor) por pedido
     db.query(
       `SELECT a.pedido_id, COUNT(DISTINCT ai.pedido_item_id)::int AS cobertos
        FROM agendamento_itens ai
@@ -170,6 +176,31 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
          AND a.status NOT IN ('cancelado','rejeitado')
          AND a.agendamento_pai_id IS NULL
          AND a.tipo = 'Instalação'
+       GROUP BY a.pedido_id`,
+      [pedidoIds, empresaId]
+    ),
+    // Etapa 1: total de itens que necessitam conferência por pedido
+    db.query(
+      `SELECT pi.pedido_id, COUNT(DISTINCT pi.id)::int AS total
+       FROM pedido_itens pi
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.pedido_id = ANY($1) AND cat.necessita_conferencia = true
+       GROUP BY pi.pedido_id`,
+      [pedidoIds]
+    ),
+    // Etapa 1: itens cobertos por agendamento de Conferência por pedido
+    db.query(
+      `SELECT a.pedido_id, COUNT(DISTINCT ai.pedido_item_id)::int AS cobertos
+       FROM agendamento_itens ai
+       JOIN agendamentos a ON a.id = ai.agendamento_id
+       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
+         AND ai.pedido_item_id IS NOT NULL
+         AND a.status NOT IN ('cancelado','rejeitado')
+         AND a.agendamento_pai_id IS NULL
+         AND a.tipo = 'Conferência'
+         AND cat.necessita_conferencia = true
        GROUP BY a.pedido_id`,
       [pedidoIds, empresaId]
     ),
@@ -282,6 +313,12 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
   const itensCobertosPorPedido = {};
   for (const r of itensCobertosRows) itensCobertosPorPedido[r.pedido_id] = Number(r.cobertos);
 
+  const totalConferenciaPorPedido = {};
+  for (const r of totalConferenciaRows) totalConferenciaPorPedido[r.pedido_id] = Number(r.total);
+
+  const itensCobertosConferenciaPorPedido = {};
+  for (const r of itensCobertosConferenciaRows) itensCobertosConferenciaPorPedido[r.pedido_id] = Number(r.cobertos);
+
   const itensSemCatPorPedido = {};
   for (const r of itensSemCatRows) itensSemCatPorPedido[r.pedido_id] = Number(r.sem_cat);
 
@@ -340,6 +377,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       itensSemVinculo: itensSemVincPorPedido[p.id] || 0,
       totalItens: totalItensPorPedido[p.id] || 0,
       itensCobertos: itensCobertosPorPedido[p.id] || 0,
+      totalItensConferencia: totalConferenciaPorPedido[p.id] || 0,
+      itensCobertosConferencia: itensCobertosConferenciaPorPedido[p.id] || 0,
       totalItensConf: conf.total,
       itensConferidos: conf.conferidos,
       totalEmConf: prod.em_confeccao,
@@ -454,6 +493,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const [
     { rows: totalItensRows },
     { rows: itensCobertosRows },
+    { rows: totalConferenciaRows },
+    { rows: itensCobertosConferenciaRows },
     { rows: itensSemCatRows },
     { rows: itensSemVinculoRows },
     { rows: confRows },
@@ -476,6 +517,27 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
          AND a.status NOT IN ('cancelado','rejeitado')
          AND a.agendamento_pai_id IS NULL
          AND a.tipo = 'Instalação'`,
+      [pedidoId, empresaId]
+    ),
+    db.query(
+      `SELECT COUNT(DISTINCT pi.id)::int AS total
+       FROM pedido_itens pi
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.pedido_id = $1 AND cat.necessita_conferencia = true`,
+      [pedidoId]
+    ),
+    db.query(
+      `SELECT COUNT(DISTINCT ai.pedido_item_id)::int AS cobertos
+       FROM agendamento_itens ai
+       JOIN agendamentos a ON a.id = ai.agendamento_id
+       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE a.pedido_id = $1 AND a.empresa_id = $2
+         AND ai.pedido_item_id IS NOT NULL
+         AND a.status NOT IN ('cancelado','rejeitado')
+         AND a.agendamento_pai_id IS NULL
+         AND a.tipo = 'Conferência'
+         AND cat.necessita_conferencia = true`,
       [pedidoId, empresaId]
     ),
     db.query(
@@ -557,6 +619,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
 
   const totalItens = totalItensRows[0]?.total ?? 0;
   const itensCobertos = itensCobertosRows[0]?.cobertos ?? 0;
+  const totalItensConferencia = totalConferenciaRows[0]?.total ?? 0;
+  const itensCobertosConferencia = itensCobertosConferenciaRows[0]?.cobertos ?? 0;
   const itensSemCategoria = itensSemCatRows[0]?.sem_cat ?? 0;
   const itensSemVinculo = itensSemVinculoRows[0]?.sem_vinc ?? 0;
   const { total: totalItensConf, conferidos: itensConferidos } = confRows[0] ?? { total: 0, conferidos: 0 };
@@ -573,6 +637,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       itensSemVinculo,
       totalItens,
       itensCobertos,
+      totalItensConferencia,
+      itensCobertosConferencia,
       totalItensConf,
       itensConferidos,
       totalEmConf,
@@ -589,7 +655,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido,
       etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes } },
+        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes } },
         { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
@@ -699,6 +765,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     itensSemVinculo,
     totalItens,
     itensCobertos,
+    totalItensConferencia,
+    itensCobertosConferencia,
     totalItensConf,
     itensConferidos,
     totalEmConf,
@@ -723,6 +791,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
         itens_sem_vinculo: itensSemVinculo,
         total_itens: totalItens,
         itens_cobertos: itensCobertos,
+        total_itens_conferencia: totalItensConferencia,
+        itens_cobertos_conferencia: itensCobertosConferencia,
         itens_persiana_pendentes: itensPersianaPendentes,
         ambientes_canais_insuficientes: ambientesCanaisInsuficientes,
       },
