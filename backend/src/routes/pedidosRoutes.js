@@ -389,6 +389,7 @@ const CATEGORIA_KEYWORDS_PEDIDO = [
   { keywords: ["almofada"],                                                         nome: "Almofadas"        },
   { keywords: ["motor", "motoriza", "motorizado"],                                  nome: "Motorização"      },
   { keywords: ["controle", "comando", "acionador"],                                 nome: "Controles"        },
+  { keywords: ["xale"],                                                             nome: "Xales"            },
 ];
 
 function detectarNomeCategoriaPedido(descricao) {
@@ -892,9 +893,12 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
       for (const c of catRes.rows) catMap[c.nome_lower] = c.id;
     } catch (_) {}
 
+    const catOutrosId = catMap["outros"] ?? null;
     const itensComCategoria = itens.map((it) => {
       const nomeCategoria = detectarNomeCategoriaPedido(it.descricao);
-      const categoria_id = nomeCategoria ? (catMap[nomeCategoria.toLowerCase()] ?? null) : null;
+      const categoria_id = nomeCategoria
+        ? (catMap[nomeCategoria.toLowerCase()] ?? catOutrosId)
+        : catOutrosId;
       const { modelo, especificacoes } = detectarModeloEEspecificacoes(it.descricao, nomeCategoria);
       return { ...it, categoria_id, modelo, especificacoes };
     });
