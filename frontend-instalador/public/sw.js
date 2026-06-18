@@ -1,4 +1,4 @@
-const CACHE_STATIC = "instalador-static-v1";
+const CACHE_STATIC = "instalador-static-v2";
 const CACHE_API = "instalador-api-v1";
 const CACHE_TILES = "instalador-tiles-v1";
 const CACHES = [CACHE_STATIC, CACHE_API, CACHE_TILES];
@@ -62,7 +62,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // App shell e assets estáticos (mesma origem)
+  // App shell (HTML/navegação): sempre busca a versão nova quando online,
+  // senão o cliente nunca descobre o novo bundle hasheado após um deploy
+  if (request.mode === "navigate" || request.destination === "document") {
+    event.respondWith(networkFirst(request, CACHE_STATIC));
+    return;
+  }
+
+  // Assets com hash no nome (/assets/*.js, *.css, etc.): imutáveis, cache-first
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirst(request, CACHE_STATIC));
   }
