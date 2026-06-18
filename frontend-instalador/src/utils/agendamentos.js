@@ -116,7 +116,7 @@ export function mapsUrl(ag) {
 }
 
 export const STATUS_INSTALADOR_ACOES = {
-  podeIniciar:  (status) => ["agendado", "pre_agendado", "atrasado", "aguardando", "retorno"].includes(status),
+  podeIniciar:  (status) => ["agendado", "atrasado", "aguardando", "retorno"].includes(status),
   podeFinalizar:(status) => status === "andamento",
   finalizado:   (status) => ["concluido", "nao_concluido", "cancelado"].includes(status),
 };
