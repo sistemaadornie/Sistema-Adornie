@@ -678,6 +678,13 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
   );
   if (existe.rows.length === 0) { const e = new Error("Agendamento não encontrado."); e.status = 404; throw e; }
 
+  const ACOES_BLOQUEADAS_DE_PRE_AGENDADO = ["andamento", "concluido", "nao_concluido"];
+  if (existe.rows[0].status_anterior === "pre_agendado" && ACOES_BLOQUEADAS_DE_PRE_AGENDADO.includes(status)) {
+    const e = new Error("Agendamentos pré-agendados são somente para visualização — confirme o agendamento antes de iniciar ou concluir.");
+    e.status = 400;
+    throw e;
+  }
+
   if (status === "concluido" && existe.rows[0]?.tipo === "Conferência") {
     const pendentesCheck = await db.query(
       `SELECT COUNT(*) FILTER (WHERE os.dados_tecnicos IS NULL) AS pendentes, COUNT(*) AS total
