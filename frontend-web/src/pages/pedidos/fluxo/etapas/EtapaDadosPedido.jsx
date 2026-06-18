@@ -145,6 +145,31 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
             />
           </div>
 
+          {(p.ambientes_canais_insuficientes?.length ?? 0) > 0 && (
+            <div style={{ margin: "12px 0 0 0" }}>
+              {p.ambientes_canais_insuficientes.map((a) => (
+                <div
+                  key={a.ambiente}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 8,
+                    padding: "8px 12px", borderRadius: 8, marginBottom: 6,
+                    background: "rgba(255, 160, 0, 0.12)",
+                    border: "1px solid rgba(255, 160, 0, 0.35)",
+                    fontSize: 13, color: "var(--pf-modal-text)",
+                  }}
+                >
+                  <span style={{ flexShrink: 0 }}>⚠️</span>
+                  <span>
+                    <strong>{a.ambiente}</strong>: {a.motorizados}{" "}
+                    {a.motorizados === 1 ? "item motorizado" : "itens motorizados"}, apenas{" "}
+                    {a.canais} {a.canais === 1 ? "canal" : "canais"} no controle.
+                    Verifique o controle ou adicione outro.
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <hr className="pf-separador" />
 
           <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE CONFERÊNCIA</div>
