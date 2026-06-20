@@ -149,6 +149,12 @@ async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
 }
 
 async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
+  const { rows: osRows } = await db.query(`SELECT dados_confeccao FROM ordem_servico WHERE id = $1`, [id]);
+  if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
+  if (!osRows[0].dados_confeccao) {
+    throw Object.assign(new Error('Ficha de Confecção precisa ser preenchida antes da Conferência Técnica.'), { status: 400 });
+  }
+
   // Validações estritas dos dados reais (dados verdadeiros)
   const {
     largura, altura_esq, altura_meio, altura_dir,
