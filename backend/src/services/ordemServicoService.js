@@ -2,13 +2,35 @@ const db = require('../database/db');
 const { fmtNumeroOrigem } = require('./pedidoService');
 
 async function criar({ pedidoItemId, responsavelId }) {
-  const { rows } = await db.query(
-    `INSERT INTO ordem_servico (pedido_item_id, responsavel_id)
-     VALUES ($1, $2)
-     RETURNING *`,
-    [pedidoItemId, responsavelId]
+  const { rows: catRows } = await db.query(
+    `SELECT cat.tipo_confeccao
+     FROM pedido_itens pi
+     LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+     WHERE pi.id = $1`,
+    [pedidoItemId]
   );
-  return rows[0];
+  if (!catRows.length) {
+    throw Object.assign(new Error('Item do pedido não encontrado'), { status: 404 });
+  }
+  const tipoConfeccao = catRows[0].tipo_confeccao;
+  if (!tipoConfeccao) {
+    throw Object.assign(new Error('Esta categoria não possui ficha de confecção.'), { status: 400 });
+  }
+
+  const { rows } = await db.query(
+    `INSERT INTO ordem_servico (pedido_item_id, responsavel_id, tipo)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (pedido_item_id) DO NOTHING
+     RETURNING *`,
+    [pedidoItemId, responsavelId, tipoConfeccao]
+  );
+  if (rows[0]) return rows[0];
+
+  const { rows: existentes } = await db.query(
+    `SELECT * FROM ordem_servico WHERE pedido_item_id = $1`,
+    [pedidoItemId]
+  );
+  return existentes[0];
 }
 
 async function listarPorPedido(pedidoId) {

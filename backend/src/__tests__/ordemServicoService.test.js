@@ -5,17 +5,41 @@ const svc = require('../services/ordemServicoService');
 afterEach(() => jest.clearAllMocks());
 
 describe('criar', () => {
-  test('insere e retorna a OS criada', async () => {
-    const fakeOs = { id: 1, pedido_item_id: 5, status: 'aberta', responsavel_id: 2 };
-    db.query.mockResolvedValueOnce({ rows: [fakeOs] });
+  test('cria a OS com o tipo da categoria do item', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo_confeccao: 'cortina' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, pedido_item_id: 5, status: 'aberta', tipo: 'cortina' }] });
 
     const result = await svc.criar({ pedidoItemId: 5, responsavelId: 2 });
 
-    expect(db.query).toHaveBeenCalledWith(
+    expect(db.query).toHaveBeenNthCalledWith(2,
       expect.stringContaining('INSERT INTO ordem_servico'),
-      [5, 2]
+      [5, 2, 'cortina']
     );
-    expect(result).toEqual(fakeOs);
+    expect(result.tipo).toBe('cortina');
+  });
+
+  test('retorna a OS existente em vez de duplicar (idempotente)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo_confeccao: 'forro' }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 9, pedido_item_id: 5, status: 'em_andamento', tipo: 'forro' }] });
+
+    const result = await svc.criar({ pedidoItemId: 5, responsavelId: 2 });
+
+    expect(result.id).toBe(9);
+  });
+
+  test('lança erro 400 quando a categoria do item não tem ficha de confecção', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo_confeccao: null }] });
+
+    await expect(svc.criar({ pedidoItemId: 5, responsavelId: 2 })).rejects.toMatchObject({ status: 400 });
+  });
+
+  test('lança erro 404 quando o item do pedido não existe', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await expect(svc.criar({ pedidoItemId: 999, responsavelId: 2 })).rejects.toMatchObject({ status: 404 });
   });
 });
 
