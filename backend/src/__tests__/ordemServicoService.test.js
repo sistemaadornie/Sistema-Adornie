@@ -79,13 +79,17 @@ describe('atualizarStatus', () => {
 });
 
 describe('buscar', () => {
-  test('retorna a OS detalhada se existir', async () => {
-    const fakeOs = { id: 1, status: 'aberta', pedido_id: 10, pedido_numero_sequencial: 4, cliente_nome: 'Teste Cliente' };
+  test('retorna a OS detalhada com dados de confecção', async () => {
+    const fakeOs = {
+      id: 1, status: 'aberta', pedido_id: 10, pedido_numero_sequencial: 4, cliente_nome: 'Teste Cliente',
+      tipo: 'cortina', dados_confeccao: { larguraTrilho: 4.92 }, confeccao_preenchido_em: '2026-06-20T10:00:00.000Z',
+    };
     db.query.mockResolvedValueOnce({ rows: [fakeOs] });
-    
+
     const res = await svc.buscar(1);
     expect(res.pedido_numero).toBe('SIS-00000004');
-    expect(res.cliente_nome).toBe('Teste Cliente');
+    expect(res.dados_confeccao).toEqual({ larguraTrilho: 4.92 });
+    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('os.dados_confeccao'), [1]);
   });
 
   test('retorna null se não existir', async () => {

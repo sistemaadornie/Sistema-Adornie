@@ -67,8 +67,9 @@ async function atualizarStatus(id, status) {
 
 async function buscar(id) {
   const { rows } = await db.query(
-    `SELECT os.id, os.status, os.aberta_em, os.encerrada_em, os.tipo, os.dados_tecnicos,
-            os.preenchido_em, os.preenchido_por,
+    `SELECT os.id, os.status, os.aberta_em, os.encerrada_em, os.tipo,
+            os.dados_tecnicos, os.preenchido_em, os.preenchido_por,
+            os.dados_confeccao, os.confeccao_preenchido_em, os.confeccao_preenchido_por,
             os.pedido_item_id,
             pi.pedido_id,
             pi.ambiente AS item_ambiente,
