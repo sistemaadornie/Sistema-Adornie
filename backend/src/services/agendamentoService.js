@@ -1323,15 +1323,18 @@ async function listarConferenciaItens(agendamentoId, empresaId) {
        pi.id AS pedido_item_id,
        pi.descricao,
        pi.ambiente,
+       cat.tipo_confeccao,
        COALESCE(ci.status, 'pendente') AS status,
        ci.observacoes,
        ci.dados,
        ci.conferido_em,
        u.nome_completo AS conferido_por_nome,
        os.id AS ordem_servico_id,
+       (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
        (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
      FROM agendamento_itens ai
      JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+     LEFT JOIN categorias cat ON cat.id = pi.categoria_id
      LEFT JOIN conferencia_itens ci
        ON ci.agendamento_id = $1 AND ci.pedido_item_id = pi.id
      LEFT JOIN usuarios u ON u.id = ci.conferido_por
