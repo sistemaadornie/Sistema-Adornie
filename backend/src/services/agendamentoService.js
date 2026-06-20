@@ -75,7 +75,7 @@ async function notificarEquipe(agId, empresaId, tituloNotif, mensagemNotif, icon
 
 /* ── montar agendamento completo ── */
 async function montarAgendamento(id, empresaId) {
-  const [ag, equipe, itens, anexos] = await Promise.all([
+  const [ag, equipe, itens, itemFotos, anexos] = await Promise.all([
     db.query(
       `
       SELECT
@@ -124,7 +124,17 @@ async function montarAgendamento(id, empresaId) {
       `,
       [id]
     ),
-    db.query(`SELECT id, nome FROM agendamento_itens WHERE agendamento_id=$1 ORDER BY id`, [id]),
+    db.query(`SELECT id, nome, pedido_item_id FROM agendamento_itens WHERE agendamento_id=$1 ORDER BY id`, [id]),
+    db.query(
+      `
+      SELECT f.id, f.agendamento_item_id, f.url
+      FROM agendamento_item_fotos f
+      JOIN agendamento_itens ai ON ai.id = f.agendamento_item_id
+      WHERE ai.agendamento_id = $1
+      ORDER BY f.enviado_em ASC
+      `,
+      [id]
+    ),
     db.query(
       `
       SELECT aa.id, aa.nome, aa.url, aa.tipo, aa.enviado_em,
@@ -139,11 +149,17 @@ async function montarAgendamento(id, empresaId) {
   ]);
 
   if (ag.rows.length === 0) return null;
+
+  const fotosPorItem = {};
+  for (const f of itemFotos.rows) {
+    (fotosPorItem[f.agendamento_item_id] ||= []).push({ id: f.id, url: f.url });
+  }
+
   return {
     ...ag.rows[0],
     equipe: equipe.rows,
     itens: itens.rows.map((i) => i.nome),
-    itens_raw: itens.rows,
+    itens_raw: itens.rows.map((i) => ({ ...i, fotos: fotosPorItem[i.id] || [] })),
     anexos: anexos.rows,
   };
 }
@@ -981,6 +997,33 @@ async function adicionarAnexos(id, empresaId, userId, files) {
   return uploadados;
 }
 
+async function adicionarFotoItem(agendamentoId, itemId, empresaId, userId, files) {
+  const existe = await db.query(
+    `SELECT ai.id
+     FROM agendamento_itens ai
+     JOIN agendamentos a ON a.id = ai.agendamento_id
+     WHERE ai.id = $1 AND ai.agendamento_id = $2 AND a.empresa_id = $3
+     LIMIT 1`,
+    [itemId, agendamentoId, empresaId]
+  );
+  if (existe.rows.length === 0) { const e = new Error("Item de agendamento não encontrado."); e.status = 404; throw e; }
+  if (!files?.length)           { const e = new Error("Nenhum arquivo recebido.");             e.status = 400; throw e; }
+
+  const fotos = [];
+  for (const file of files) {
+    const uploaded = await uploadToCloudinary(
+      file.buffer,
+      `operon/empresas/${empresaId}/agendamentos/${agendamentoId}/itens/${itemId}`
+    );
+    const inserted = await db.query(
+      `INSERT INTO agendamento_item_fotos (agendamento_item_id, url, enviado_por) VALUES ($1,$2,$3) RETURNING id, url`,
+      [itemId, uploaded.secure_url, userId]
+    );
+    fotos.push(inserted.rows[0]);
+  }
+  return fotos;
+}
+
 async function excluir(id, empresaId, userId, nomeCompleto, permissoes) {
   const agResult = await db.query(
     `SELECT id, titulo, criado_por, status FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
@@ -1343,7 +1386,7 @@ async function confirmarCliente(agendamentoId, empresaId, usuarioId) {
 
 module.exports = {
   getEquipe, listar, buscar, criar, atualizar, reagendar,
-  alterarStatus, adicionarAnexos, excluir,
+  alterarStatus, adicionarAnexos, adicionarFotoItem, excluir,
   getLogs, criarSugestao, listarSugestoes, responderSugestao,
   geocodificarTodos,
   decidirAprovacao, listarPendentesAprovacao, notificarAdminsAprovacao,
