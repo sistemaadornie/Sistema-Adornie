@@ -718,6 +718,23 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     }
   }
 
+  if ((status === "concluido" || status === "nao_concluido")
+      && ["Instalação", "Retorno/Finalização"].includes(existe.rows[0]?.tipo)) {
+    const pendentesFoto = await db.query(
+      `SELECT ai.nome
+       FROM agendamento_itens ai
+       WHERE ai.agendamento_id = $1 AND ai.pedido_item_id IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM agendamento_item_fotos f WHERE f.agendamento_item_id = ai.id)`,
+      [id]
+    );
+    if (pendentesFoto.rows.length > 0) {
+      const nomes = pendentesFoto.rows.map((r) => r.nome).join(", ");
+      const e = new Error(`Falta foto de ${pendentesFoto.rows.length} item(ns): ${nomes}. Adicione uma foto de cada item antes de concluir o agendamento.`);
+      e.status = 400;
+      throw e;
+    }
+  }
+
   /* uploads Cloudinary ANTES da transação (não pode ser dentro — operação externa) */
   const anexosParaInserir = [];
   if (files?.length > 0) {

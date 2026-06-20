@@ -52,7 +52,9 @@ describe('alterarStatus — bloqueio de transição a partir de pre_agendado', (
 
   test('andamento -> nao_concluido (status atual não é pre_agendado) continua permitido', async () => {
     const AG_ANDAMENTO = { ...AG_PRE_AGENDADO, status_anterior: 'andamento' };
-    db.query.mockResolvedValueOnce({ rows: [AG_ANDAMENTO] }); // busca inicial
+    db.query
+      .mockResolvedValueOnce({ rows: [AG_ANDAMENTO] }) // busca inicial
+      .mockResolvedValueOnce({ rows: [] }); // validação de foto por item (nenhum pendente)
     db.connect.mockRejectedValueOnce(new Error('SENTINEL_PASSOU_DA_VALIDACAO'));
     await expect(
       svc.alterarStatus(1, 1, 99, 'Admin', [], 'nao_concluido', null, [], [])
