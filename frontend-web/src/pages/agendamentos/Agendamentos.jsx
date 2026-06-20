@@ -71,6 +71,16 @@ const STATUS_META = {
 
 const TIPOS = ["Instalação", "Manutenção", "Retorno/Finalização", "Conferência"];
 
+const ROTULO_ITENS = {
+  "Instalação":          "Itens para instalar",
+  "Conferência":         "Itens para conferir",
+  "Manutenção":          "Itens para manutenção",
+  "Retorno/Finalização": "Itens para verificar",
+};
+function rotuloItens(tipo) {
+  return ROTULO_ITENS[tipo] || "Itens para levar";
+}
+
 const TIPO_COR = {
   "Pré Agendamento": "var(--ag-tipo-pre)",
   "Conferência":     "var(--ag-tipo-conferencia)",
@@ -1934,7 +1944,7 @@ function NovoAgendamentoModal({ onClose, onSalvar, equipe, salvando, agendamento
 
           {/* Itens para levar */}
           <div className="ag-form-field">
-            <label>Itens para levar</label>
+            <label>{rotuloItens(form.tipo)}</label>
             <div className="ag-itens-list">
               {itens.map((it, i) => (
                 <div key={i} className="ag-item-tag">
@@ -2411,7 +2421,7 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
           {/* Itens */}
           {ag.itens?.length > 0 && (
             <div className="ag-form-field">
-              <label>Itens para levar</label>
+              <label>{rotuloItens(ag.tipo)}</label>
               <div className="ag-itens-list">
                 {ag.itens.map((it, i) => (
                   <div key={i} className="ag-item-tag" style={{ cursor: "default" }}>📦 {it}</div>
