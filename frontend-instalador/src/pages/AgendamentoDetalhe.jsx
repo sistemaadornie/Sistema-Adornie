@@ -85,6 +85,54 @@ function FilePicker({ files, setFiles }) {
   );
 }
 
+/* ── ItemComFoto ── */
+function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada }) {
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function onChange(e) {
+    const arquivos = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!arquivos.length) return;
+    setEnviando(true);
+    setErro("");
+    try {
+      const fd = new FormData();
+      arquivos.forEach((f) => fd.append("arquivos", f));
+      const data = await api.post(`/agendamentos/${agendamentoId}/itens/${item.id}/fotos`, fd, true);
+      onFotoEnviada(item.id, data.fotos);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <li className="item-row">
+      <span className="item-row-nome">{item.nome}</span>
+      {item.fotos?.length > 0 && (
+        <div className="item-row-fotos">
+          {item.fotos.map((f) => (
+            <img key={f.id} src={f.url} alt="" className="item-row-foto-mini" />
+          ))}
+        </div>
+      )}
+      {podeFotografar && (
+        <label
+          className="item-row-cam-btn"
+          title="Adicionar foto"
+          style={{ opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto" }}
+        >
+          <FiCamera size={14} />
+          <input type="file" accept="image/*" capture="environment" multiple onChange={onChange} style={{ display: "none" }} />
+        </label>
+      )}
+      {erro && <span className="item-row-erro">{erro}</span>}
+    </li>
+  );
+}
+
 /* ── BottomSheet ── */
 function BottomSheet({ open, onClose, children }) {
   if (!open) return null;
@@ -122,6 +170,15 @@ export default function AgendamentoDetalhe() {
   }, [id]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  function atualizarFotosItem(itemId, novasFotos) {
+    setAg((prev) => ({
+      ...prev,
+      itens_raw: (prev.itens_raw || []).map((it) =>
+        it.id === itemId ? { ...it, fotos: [...(it.fotos || []), ...novasFotos] } : it
+      ),
+    }));
+  }
 
   function abrirSheet(status) {
     setSheetStatus(status);
@@ -265,14 +322,22 @@ export default function AgendamentoDetalhe() {
         )}
 
         {/* Itens */}
-        {ag.itens?.length > 0 && (
+        {ag.itens_raw?.length > 0 && (
           <div className="card">
             <div className="detail-row" style={{ marginBottom: 6 }}>
               <FiPackage className="detail-icon" />
               <span className="detail-label">{rotuloItens(ag.tipo)}</span>
             </div>
-            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14 }}>
-              {ag.itens.map((item, i) => <li key={i}>{item}</li>)}
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              {ag.itens_raw.map((item) => (
+                <ItemComFoto
+                  key={item.id}
+                  agendamentoId={ag.id}
+                  item={item}
+                  podeFotografar={ag.status === "andamento"}
+                  onFotoEnviada={atualizarFotosItem}
+                />
+              ))}
             </ul>
           </div>
         )}

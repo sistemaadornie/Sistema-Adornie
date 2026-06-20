@@ -630,6 +630,56 @@ textarea.input-base {
   line-height: 1.55;
 }
 
+/* ── Item com foto ───────────────────────────────────────── */
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-row-nome {
+  flex: 1;
+  font-size: 14px;
+}
+
+.item-row-fotos {
+  display: flex;
+  gap: 4px;
+}
+
+.item-row-foto-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+}
+
+.item-row-cam-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.item-row-erro {
+  font-size: 11px;
+  color: var(--color-danger);
+}
+
 /* ── Extra badges ────────────────────────────────────────── */
 
 .badge-aguardando { background: var(--color-warning-soft); color: var(--color-warning); }
