@@ -193,7 +193,12 @@ export default function AgendamentoDetalhe() {
   }
 
   async function confirmarAcao() {
-    if (!sheetFiles.length) {
+    if (exigeFotoPorItem) {
+      if (itensSemFoto.length > 0) {
+        setSheetMsg("Adicione uma foto em cada item antes de continuar.");
+        return;
+      }
+    } else if (!sheetFiles.length) {
       setSheetMsg("Adicione pelo menos uma foto para continuar.");
       return;
     }
@@ -203,7 +208,7 @@ export default function AgendamentoDetalhe() {
       const fd = new FormData();
       fd.append("status", sheetStatus);
       if (sheetMotivo.trim()) fd.append("motivo", sheetMotivo.trim());
-      sheetFiles.forEach((f) => fd.append("arquivos", f));
+      if (!exigeFotoPorItem) sheetFiles.forEach((f) => fd.append("arquivos", f));
       await api.put(`/agendamentos/${id}/status`, fd, true);
       setSheetStatus(null);
       carregar();
@@ -237,6 +242,12 @@ export default function AgendamentoDetalhe() {
   const endereco  = enderecoCompleto(ag);
   const link      = mapsUrl(ag);
   const statusCor = STATUS_CORES[ag.status] || "var(--color-border)";
+
+  const exigeFotoPorItem = sheetStatus !== "andamento"
+    && (ag.tipo === "Instalação" || ag.tipo === "Retorno/Finalização");
+  const itensSemFoto = (ag.itens_raw || []).filter(
+    (it) => it.pedido_item_id != null && !(it.fotos?.length)
+  );
 
   return (
     <>
@@ -419,20 +430,57 @@ export default function AgendamentoDetalhe() {
               <button className="bs-close" onClick={fecharSheet}><FiX /></button>
             </div>
 
-            {AVISO_FOTO[sheetStatus] && (
-              <div className="bs-aviso">
-                <strong>{AVISO_FOTO[sheetStatus].titulo}</strong>
-                <p>{AVISO_FOTO[sheetStatus].texto}</p>
-              </div>
-            )}
+            {exigeFotoPorItem ? (
+              <>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
+                }}>
+                  Foto de cada item <span style={{ color: "var(--color-danger)" }}>*</span>
+                </div>
+                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                  {(ag.itens_raw || [])
+                    .filter((it) => it.pedido_item_id != null)
+                    .map((item) => (
+                      <ItemComFoto
+                        key={item.id}
+                        agendamentoId={ag.id}
+                        item={item}
+                        podeFotografar
+                        onFotoEnviada={atualizarFotosItem}
+                      />
+                    ))}
+                </ul>
+                {itensSemFoto.length > 0 && (
+                  <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
+                    Falta foto em {itensSemFoto.length} item(ns): {itensSemFoto.map((it) => it.nome).join(", ")}.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                {AVISO_FOTO[sheetStatus] && (
+                  <div className="bs-aviso">
+                    <strong>{AVISO_FOTO[sheetStatus].titulo}</strong>
+                    <p>{AVISO_FOTO[sheetStatus].texto}</p>
+                  </div>
+                )}
 
-            <div style={{
-              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-              letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
-            }}>
-              Fotos <span style={{ color: "var(--color-danger)" }}>*</span>
-            </div>
-            <FilePicker files={sheetFiles} setFiles={setSheetFiles} />
+                <div style={{
+                  fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
+                }}>
+                  Fotos <span style={{ color: "var(--color-danger)" }}>*</span>
+                </div>
+                <FilePicker files={sheetFiles} setFiles={setSheetFiles} />
+
+                {sheetFiles.length === 0 && (
+                  <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
+                    Adicione pelo menos uma foto para continuar.
+                  </p>
+                )}
+              </>
+            )}
 
             {sheetStatus === "nao_concluido" && (
               <div className="form-group" style={{ marginTop: 14 }}>
@@ -447,11 +495,6 @@ export default function AgendamentoDetalhe() {
               </div>
             )}
 
-            {sheetFiles.length === 0 && (
-              <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
-                Adicione pelo menos uma foto para continuar.
-              </p>
-            )}
             {sheetMsg && (
               <div className="banner banner-danger" style={{ marginTop: 8 }}>{sheetMsg}</div>
             )}
@@ -459,7 +502,7 @@ export default function AgendamentoDetalhe() {
             <button
               className="btn btn-primary btn-block"
               style={{ marginTop: 16 }}
-              disabled={sheetEnviando || sheetFiles.length === 0}
+              disabled={sheetEnviando || (exigeFotoPorItem ? itensSemFoto.length > 0 : sheetFiles.length === 0)}
               onClick={confirmarAcao}
             >
               {sheetEnviando ? "Enviando..." : `Confirmar — ${statusLabel(sheetStatus)}`}
