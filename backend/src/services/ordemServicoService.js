@@ -104,6 +104,50 @@ async function buscar(id) {
   };
 }
 
+function validarDadosConfeccaoCortina(dados) {
+  const { larguraTrilho, tipoWave, espacador, abertura, feitaPor } = dados || {};
+  if (!larguraTrilho || parseFloat(String(larguraTrilho).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error('Largura do trilho é obrigatória e deve ser maior que zero.'), { status: 400 });
+  }
+  if (!tipoWave) throw Object.assign(new Error('Tipo wave é obrigatório.'), { status: 400 });
+  if (!espacador) throw Object.assign(new Error('Espaçador é obrigatório.'), { status: 400 });
+  if (!abertura) throw Object.assign(new Error('Abertura é obrigatória.'), { status: 400 });
+  if (!feitaPor) throw Object.assign(new Error('Campo "Cortina feita por" é obrigatório.'), { status: 400 });
+}
+
+function validarDadosConfeccaoForro(dados) {
+  const { tecidoForro, larguraForro, forroCosturado } = dados || {};
+  if (!tecidoForro?.trim()) throw Object.assign(new Error('Tecido do forro é obrigatório.'), { status: 400 });
+  if (!larguraForro || parseFloat(String(larguraForro).replace(',', '.')) <= 0) {
+    throw Object.assign(new Error('Largura do forro é obrigatória e deve ser maior que zero.'), { status: 400 });
+  }
+  if (!forroCosturado) throw Object.assign(new Error('Campo "Forro costurado" é obrigatório.'), { status: 400 });
+}
+
+async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
+  const { rows: osRows } = await db.query(`SELECT tipo FROM ordem_servico WHERE id = $1`, [id]);
+  if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
+
+  if (osRows[0].tipo === 'cortina') {
+    validarDadosConfeccaoCortina(dadosConfeccao);
+  } else if (osRows[0].tipo === 'forro') {
+    validarDadosConfeccaoForro(dadosConfeccao);
+  }
+
+  const { rows } = await db.query(
+    `UPDATE ordem_servico
+     SET dados_confeccao = $1,
+         confeccao_preenchido_em = NOW(),
+         confeccao_preenchido_por = $2,
+         status = CASE WHEN status = 'aberta' THEN 'em_andamento' ELSE status END,
+         updated_at = NOW()
+     WHERE id = $3
+     RETURNING *`,
+    [JSON.stringify(dadosConfeccao), userId, id]
+  );
+  return rows[0];
+}
+
 async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
   // Validações estritas dos dados reais (dados verdadeiros)
   const {
@@ -151,4 +195,4 @@ async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
   return rows[0];
 }
 
-module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosTecnicos };
+module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosTecnicos };

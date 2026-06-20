@@ -99,6 +99,75 @@ describe('buscar', () => {
   });
 });
 
+describe('atualizarStatus', () => {
+  test('atualiza status e seta encerrada_em quando status=encerrada', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 1, status: 'encerrada', encerrada_em: new Date() }] });
+    const result = await svc.atualizarStatus(1, 'encerrada');
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining('encerrada_em'),
+      expect.arrayContaining(['encerrada', 1])
+    );
+    expect(result.status).toBe('encerrada');
+  });
+
+  test('não seta encerrada_em para outros status', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ id: 1, status: 'em_andamento', encerrada_em: null }] });
+    await svc.atualizarStatus(1, 'em_andamento');
+    const sql = db.query.mock.calls[0][0];
+    expect(sql).not.toContain('encerrada_em = NOW()');
+  });
+
+  test('lança erro 404 quando OS não existe', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    await expect(svc.atualizarStatus(999, 'encerrada')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('salvarDadosConfeccao', () => {
+  test('salva dados de confecção de cortina quando válidos', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, dados_confeccao: { larguraTrilho: '4,92' }, status: 'em_andamento' }] });
+
+    const dados = { larguraTrilho: '4,92', tipoWave: 'G', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
+    const result = await svc.salvarDadosConfeccao(1, 2, dados);
+
+    expect(db.query).toHaveBeenNthCalledWith(2,
+      expect.stringContaining('dados_confeccao = $1'),
+      [JSON.stringify(dados), 2, 1]
+    );
+    expect(result.status).toBe('em_andamento');
+  });
+
+  test('lança erro 400 se largura do trilho for inválida para cortina', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] });
+    const dados = { larguraTrilho: '0', tipoWave: 'G', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
+    await expect(svc.salvarDadosConfeccao(1, 2, dados)).rejects.toThrow('trilho');
+  });
+
+  test('salva dados de confecção de forro quando válidos', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 2, dados_confeccao: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] });
+
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'SEPARADO' };
+    const result = await svc.salvarDadosConfeccao(2, 3, dados);
+
+    expect(result.status).toBe('em_andamento');
+  });
+
+  test('lança erro 400 se tecido do forro não for informado', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'forro' }] });
+    const dados = { tecidoForro: '', larguraForro: '3,00', forroCosturado: 'SEPARADO' };
+    await expect(svc.salvarDadosConfeccao(2, 3, dados)).rejects.toThrow('Tecido do forro');
+  });
+
+  test('lança erro 404 quando OS não existe', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    await expect(svc.salvarDadosConfeccao(999, 2, {})).rejects.toMatchObject({ status: 404 });
+  });
+});
+
 describe('salvarDadosTecnicos', () => {
   const validData = {
     largura: '4.20',
