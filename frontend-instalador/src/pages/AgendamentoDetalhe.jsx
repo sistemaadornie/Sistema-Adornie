@@ -20,6 +20,16 @@ const ANEXO_LABELS = {
   documento:    "Documento",
 };
 
+const ROTULO_ITENS = {
+  "Instalação":          "Itens para instalar",
+  "Conferência":         "Itens para conferir",
+  "Manutenção":          "Itens para manutenção",
+  "Retorno/Finalização": "Itens para verificar",
+};
+function rotuloItens(tipo) {
+  return ROTULO_ITENS[tipo] || "Itens";
+}
+
 const AVISO_FOTO = {
   andamento: {
     titulo: "📷 Foto obrigatória antes de iniciar",
@@ -259,7 +269,7 @@ export default function AgendamentoDetalhe() {
           <div className="card">
             <div className="detail-row" style={{ marginBottom: 6 }}>
               <FiPackage className="detail-icon" />
-              <span className="detail-label">Itens</span>
+              <span className="detail-label">{rotuloItens(ag.tipo)}</span>
             </div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14 }}>
               {ag.itens.map((item, i) => <li key={i}>{item}</li>)}
