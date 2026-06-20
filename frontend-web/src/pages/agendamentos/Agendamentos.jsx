@@ -2316,6 +2316,11 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
               </div>
             )}
 
+            {/* Itens */}
+            {ag.itens_raw?.length > 0 && (
+              <ItensComFotos itensRaw={ag.itens_raw} rotulo={rotuloItens(ag.tipo)} />
+            )}
+
             {/* Anexos — seções Antes / Depois */}
             {!detalhe ? (
               <p style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Carregando anexos...</p>
@@ -2419,15 +2424,8 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
           )}
 
           {/* Itens */}
-          {ag.itens?.length > 0 && (
-            <div className="ag-form-field">
-              <label>{rotuloItens(ag.tipo)}</label>
-              <div className="ag-itens-list">
-                {ag.itens.map((it, i) => (
-                  <div key={i} className="ag-item-tag" style={{ cursor: "default" }}>📦 {it}</div>
-                ))}
-              </div>
-            </div>
+          {ag.itens_raw?.length > 0 && (
+            <ItensComFotos itensRaw={ag.itens_raw} rotulo={rotuloItens(ag.tipo)} />
           )}
 
           {/* Equipe */}
@@ -2635,6 +2633,30 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
           )}
 
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ItensComFotos({ itensRaw, rotulo }) {
+  return (
+    <div className="ag-form-field">
+      <label>{rotulo}</label>
+      <div className="ag-itens-list">
+        {itensRaw.map((it) => (
+          <div key={it.id} className="ag-item-tag" style={{ cursor: "default" }}>
+            📦 {it.nome}
+            {it.fotos?.length > 0 && (
+              <div className="ag-item-fotos">
+                {it.fotos.map((f) => (
+                  <a key={f.id} href={f.url} target="_blank" rel="noreferrer">
+                    <img src={f.url} alt="" className="ag-item-foto-mini" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1218,6 +1218,20 @@
   color: var(--ag-cancelado);
 }
 
+.ag-item-fotos {
+  display: flex;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.ag-item-foto-mini {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+  border: 1px solid var(--color-border-strong);
+}
+
 .ag-add-item-row {
   display: flex;
   gap: 6px;
