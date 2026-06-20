@@ -240,6 +240,17 @@ router.post("/:id/anexos", authMiddleware, upload.array("arquivos", 20), validar
   }
 });
 
+router.post("/:id/itens/:itemId/fotos", authMiddleware, upload.array("arquivos", 5), validarMagicBytes, async (req, res) => {
+  try {
+    const { empresa_id, id: userId } = req.user;
+    const fotos = await svc.adicionarFotoItem(req.params.id, req.params.itemId, empresa_id, userId, req.files);
+    return res.status(201).json({ ok: true, fotos });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao salvar foto do item." });
+  }
+});
+
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const { empresa_id, id: userId, nome_completo } = req.user;
