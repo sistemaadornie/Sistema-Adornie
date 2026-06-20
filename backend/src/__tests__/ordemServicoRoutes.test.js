@@ -57,3 +57,24 @@ describe('GET /api/pedidos/:pedidoId/os', () => {
     expect(res.body).toHaveLength(1);
   });
 });
+
+describe('PUT /api/os/:id/confeccao', () => {
+  test('200 ao salvar dados de confecção', async () => {
+    svc.salvarDadosConfeccao.mockResolvedValueOnce({ id: 1, dados_confeccao: { larguraTrilho: 4.92 } });
+    const res = await request(app).put('/api/os/1/confeccao').send({ larguraTrilho: 4.92 });
+    expect(res.status).toBe(200);
+    expect(res.body.dados_confeccao).toEqual({ larguraTrilho: 4.92 });
+  });
+
+  test('400 quando o serviço rejeita os dados', async () => {
+    const err = Object.assign(new Error('Largura do trilho é obrigatória e deve ser maior que zero.'), { status: 400 });
+    svc.salvarDadosConfeccao.mockRejectedValueOnce(err);
+    const res = await request(app).put('/api/os/1/confeccao').send({});
+    expect(res.status).toBe(400);
+  });
+
+  test('400 para id inválido', async () => {
+    const res = await request(app).put('/api/os/abc/confeccao').send({});
+    expect(res.status).toBe(400);
+  });
+});

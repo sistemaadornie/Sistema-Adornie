@@ -31,6 +31,17 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
   }
 });
 
+router.put('/:id/confeccao', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'id inválido' });
+    const os = await svc.salvarDadosConfeccao(id, req.user.id, req.body);
+    res.json(os);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+});
+
 router.get('/pedidos/:pedidoId/os', authMiddleware, async (req, res) => {
   try {
     const pedidoId = Number(req.params.pedidoId);
