@@ -2317,8 +2317,8 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
             )}
 
             {/* Itens */}
-            {ag.itens_raw?.length > 0 && (
-              <ItensComFotos itensRaw={ag.itens_raw} rotulo={rotuloItens(ag.tipo)} />
+            {detalhe?.itens_raw?.length > 0 && (
+              <ItensComFotos itensRaw={detalhe.itens_raw} rotulo={rotuloItens(ag.tipo)} />
             )}
 
             {/* Anexos — seções Antes / Depois */}
@@ -2424,8 +2424,8 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
           )}
 
           {/* Itens */}
-          {ag.itens_raw?.length > 0 && (
-            <ItensComFotos itensRaw={ag.itens_raw} rotulo={rotuloItens(ag.tipo)} />
+          {detalhe?.itens_raw?.length > 0 && (
+            <ItensComFotos itensRaw={detalhe.itens_raw} rotulo={rotuloItens(ag.tipo)} />
           )}
 
           {/* Equipe */}
