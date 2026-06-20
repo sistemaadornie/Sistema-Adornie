@@ -674,10 +674,13 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const [{ rows: itensPorGenitor }, { rows: herdeirosRaw }] = await Promise.all([
     db.query(
       `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao,
+              cat.tipo_confeccao,
               os.id AS ordem_servico_id,
+              (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
               (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
        FROM agendamento_itens ai
        JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
        LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE ai.agendamento_id = ANY($1) AND ai.pedido_item_id IS NOT NULL`,
       [genitoreIds]
@@ -697,7 +700,9 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     itensPorAg[item.agendamento_id].push({
       pedido_item_id: item.pedido_item_id,
       descricao: item.descricao,
+      tipo_confeccao: item.tipo_confeccao,
       ordem_servico_id: item.ordem_servico_id,
+      confeccao_preenchida: item.confeccao_preenchida,
       ficha_preenchida: item.ficha_preenchida,
     });
   }
