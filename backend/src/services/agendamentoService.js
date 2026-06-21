@@ -189,15 +189,25 @@ async function criarOSSeNaoExistir(itens, client = db) {
     }
     if (!pedido_item_id) continue;
 
+    const { rows: catRows } = await client.query(
+      `SELECT cat.tipo_confeccao
+       FROM pedido_itens pi
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.id = $1`,
+      [pedido_item_id]
+    );
+    const tipoConfeccao = catRows[0]?.tipo_confeccao;
+    if (!tipoConfeccao) continue;
+
     const check = await client.query(
       `SELECT id FROM ordem_servico WHERE pedido_item_id = $1 LIMIT 1`,
       [pedido_item_id]
     );
     if (check.rows.length === 0) {
       await client.query(
-        `INSERT INTO ordem_servico (pedido_item_id, status, aberta_em, created_at, updated_at)
-         VALUES ($1, 'aberta', NOW(), NOW(), NOW())`,
-        [pedido_item_id]
+        `INSERT INTO ordem_servico (pedido_item_id, status, tipo, aberta_em, created_at, updated_at)
+         VALUES ($1, 'aberta', $2, NOW(), NOW(), NOW())`,
+        [pedido_item_id, tipoConfeccao]
       );
     }
   }
@@ -1413,4 +1423,5 @@ module.exports = {
   listarConferenciaItens,
   upsertConferenciaItem,
   confirmarCliente,
+  criarOSSeNaoExistir,
 };
