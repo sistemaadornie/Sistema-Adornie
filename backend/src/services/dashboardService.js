@@ -673,7 +673,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
 
   const [{ rows: itensPorGenitor }, { rows: herdeirosRaw }] = await Promise.all([
     db.query(
-      `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao,
+      `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao, pi.ordem, pi.medidas,
               cat.tipo_confeccao,
               os.id AS ordem_servico_id,
               (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
@@ -700,6 +700,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     itensPorAg[item.agendamento_id].push({
       pedido_item_id: item.pedido_item_id,
       descricao: item.descricao,
+      ordem: item.ordem,
+      medidas: item.medidas,
       tipo_confeccao: item.tipo_confeccao,
       ordem_servico_id: item.ordem_servico_id,
       confeccao_preenchida: item.confeccao_preenchida,
