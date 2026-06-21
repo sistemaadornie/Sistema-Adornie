@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   FiMapPin, FiClock, FiUser, FiFileText, FiCamera,
   FiExternalLink, FiUsers, FiPackage, FiTag, FiX,
 } from "react-icons/fi";
 import { api } from "../services/api";
+import { estadoFichaTecnica } from "../utils/fichaTecnica";
 import TopBar from "../components/TopBar";
 import {
   statusLabel, formatDateBR, enderecoCompleto, mapsUrl,
@@ -86,7 +87,7 @@ function FilePicker({ files, setFiles }) {
 }
 
 /* ── ItemComFoto ── */
-function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada }) {
+function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada, estado, onAbrirFicha }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -110,7 +111,16 @@ function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada }) {
 
   return (
     <li className="item-row">
-      <span className="item-row-nome">{item.nome}</span>
+      <div className="item-row-info">
+        <span className="item-row-nome">{item.nome}</span>
+        {estado && (estado.acao ? (
+          <button type="button" className="item-row-ficha-btn" onClick={() => onAbrirFicha(item)}>
+            {estado.label}
+          </button>
+        ) : (
+          <span className="item-row-ficha-aguardando">{estado.texto}</span>
+        ))}
+      </div>
       {item.fotos?.length > 0 && (
         <div className="item-row-fotos">
           {item.fotos.map((f) => (
@@ -150,6 +160,7 @@ function BottomSheet({ open, onClose, children }) {
 /* ── Página principal ── */
 export default function AgendamentoDetalhe() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [ag, setAg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -159,6 +170,7 @@ export default function AgendamentoDetalhe() {
   const [sheetMotivo,   setSheetMotivo]   = useState("");
   const [sheetEnviando, setSheetEnviando] = useState(false);
   const [sheetMsg,      setSheetMsg]      = useState("");
+  const [fichaPorItem, setFichaPorItem] = useState({});
 
   const carregar = useCallback(() => {
     setLoading(true);
@@ -170,6 +182,17 @@ export default function AgendamentoDetalhe() {
   }, [id]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  useEffect(() => {
+    if (!ag || ag.tipo !== "Conferência") return;
+    api.get(`/agendamentos/${ag.id}/conferencia-itens`)
+      .then((r) => {
+        const mapa = {};
+        (r.itens || []).forEach((it) => { mapa[it.pedido_item_id] = it; });
+        setFichaPorItem(mapa);
+      })
+      .catch(() => {});
+  }, [ag?.id, ag?.tipo]);
 
   function atualizarFotosItem(itemId, novasFotos) {
     setAg((prev) => ({
@@ -248,6 +271,7 @@ export default function AgendamentoDetalhe() {
   const itensSemFoto = (ag.itens_raw || []).filter(
     (it) => it.pedido_item_id != null && !(it.fotos?.length)
   );
+  const exigeFotoGeral = !(sheetStatus === "andamento" && ag.tipo === "Conferência");
 
   return (
     <>
@@ -340,15 +364,23 @@ export default function AgendamentoDetalhe() {
               <span className="detail-label">{rotuloItens(ag.tipo)}</span>
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-              {ag.itens_raw.map((item) => (
-                <ItemComFoto
-                  key={item.id}
-                  agendamentoId={ag.id}
-                  item={item}
-                  podeFotografar={ag.status === "andamento"}
-                  onFotoEnviada={atualizarFotosItem}
-                />
-              ))}
+              {ag.itens_raw.map((item) => {
+                const ficha = item.pedido_item_id != null ? fichaPorItem[item.pedido_item_id] : null;
+                const estado = ficha ? estadoFichaTecnica(ficha) : null;
+                return (
+                  <ItemComFoto
+                    key={item.id}
+                    agendamentoId={ag.id}
+                    item={item}
+                    podeFotografar={ag.status === "andamento"}
+                    onFotoEnviada={atualizarFotosItem}
+                    estado={estado}
+                    onAbrirFicha={() => {
+                      if (ficha?.ordem_servico_id) navigate(`/agenda/${ag.id}/os/${ficha.ordem_servico_id}`);
+                    }}
+                  />
+                );
+              })}
             </ul>
           </div>
         )}
@@ -459,7 +491,7 @@ export default function AgendamentoDetalhe() {
               </>
             ) : (
               <>
-                {AVISO_FOTO[sheetStatus] && (
+                {exigeFotoGeral && AVISO_FOTO[sheetStatus] && (
                   <div className="bs-aviso">
                     <strong>{AVISO_FOTO[sheetStatus].titulo}</strong>
                     <p>{AVISO_FOTO[sheetStatus].texto}</p>
@@ -470,11 +502,11 @@ export default function AgendamentoDetalhe() {
                   fontSize: 11, fontWeight: 700, textTransform: "uppercase",
                   letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
                 }}>
-                  Fotos <span style={{ color: "var(--color-danger)" }}>*</span>
+                  Fotos {exigeFotoGeral && <span style={{ color: "var(--color-danger)" }}>*</span>}
                 </div>
                 <FilePicker files={sheetFiles} setFiles={setSheetFiles} />
 
-                {sheetFiles.length === 0 && (
+                {exigeFotoGeral && sheetFiles.length === 0 && (
                   <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
                     Adicione pelo menos uma foto para continuar.
                   </p>
@@ -502,7 +534,7 @@ export default function AgendamentoDetalhe() {
             <button
               className="btn btn-primary btn-block"
               style={{ marginTop: 16 }}
-              disabled={sheetEnviando || (exigeFotoPorItem ? itensSemFoto.length > 0 : sheetFiles.length === 0)}
+              disabled={sheetEnviando || (exigeFotoPorItem ? itensSemFoto.length > 0 : (exigeFotoGeral && sheetFiles.length === 0))}
               onClick={confirmarAcao}
             >
               {sheetEnviando ? "Enviando..." : `Confirmar — ${statusLabel(sheetStatus)}`}
