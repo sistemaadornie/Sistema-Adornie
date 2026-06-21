@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { acaoFichaConferencia, abrirOsDoItem } from "../../../../utils/fichaConferencia";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -9,6 +10,7 @@ function fmtData(iso) {
 
 export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
+  const [criandoId, setCriandoId] = useState(null);
 
   const etapa2 = etapas.find((e) => e.numero === 2) || {};
   const p = etapa2.progresso || {};
@@ -70,19 +72,31 @@ export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
               )}
               {(g.itens || []).length > 0 && (
                 <div style={{ padding: "10px 14px" }}>
-                  {g.itens.map((item) => (
-                    <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
-                      <div style={{ fontSize: 13 }}>{item.descricao}</div>
-                      {item.ficha_preenchida ? (
-                        <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
-                          onClick={() => navigate(`/pedidos/os/${item.ordem_servico_id}`)}>
-                          Visualizar Ficha
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando técnico</span>
-                      )}
-                    </div>
-                  ))}
+                  {g.itens.map((item) => {
+                    const acao = acaoFichaConferencia(item);
+                    return (
+                      <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
+                        <div style={{ fontSize: 13 }}>{item.descricao}</div>
+                        {acao ? (
+                          <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
+                            disabled={criandoId === item.pedido_item_id}
+                            onClick={async () => {
+                              setCriandoId(item.pedido_item_id);
+                              try {
+                                const osId = await abrirOsDoItem(item);
+                                navigate(acao.rota === "confeccao" ? `/pedidos/os/${osId}/confeccao` : `/pedidos/os/${osId}`);
+                              } finally {
+                                setCriandoId(null);
+                              }
+                            }}>
+                            {criandoId === item.pedido_item_id ? "Abrindo..." : acao.label}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Sem ficha de confecção</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
