@@ -11,7 +11,7 @@ import {
 import "./OrdemServicoModal.css";
 
 const VAZIO = {
-  feitaPor: "", espacador: "", tipoWave: "", abertura: "", componente: "", ladoMotor: "",
+  feitaPor: "", espacador: "", tipoWave: "", abertura: "", componente: "", ladoMotor: "n/a",
   larguraTrilho: "", larguraTecido: "", nomeTecido: "", vendeuBarraAplicada: "",
   alturaCortina: "", alturaBarra: "", quantTomas: "", tamanhoTomas: "",
   cortinaLadoALado: "", detalheBarra: "",
@@ -191,7 +191,11 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
                 </div>
                 <div className="os-field">
                   <label>Lado do motor</label>
-                  <input type="text" placeholder="Ex: Esquerdo" value={dados.ladoMotor} onChange={(e) => setCampo("ladoMotor", e.target.value)} />
+                  <select value={dados.ladoMotor} onChange={(e) => setCampo("ladoMotor", e.target.value)}>
+                    <option value="n/a">Sem motor</option>
+                    <option value="esquerdo">Esquerdo</option>
+                    <option value="direito">Direito</option>
+                  </select>
                 </div>
               </div>
 
