@@ -6,6 +6,7 @@ import { api } from "../../services/api";
 import useAuth from "../../hooks/useAuth";
 import FiltroStatus from "./FiltroStatus";
 import { faixaHora } from "../../utils/horario";
+import { acaoFichaConferencia, abrirOsDoItem } from "../../utils/fichaConferencia";
 
 /* ── qualidade do endereço para geocodificação ── */
 function qualidadeEndereco({ rua, bairro, cidade, estado }) {
@@ -1192,8 +1193,9 @@ function AgendamentosOperador() {
         <ConferenciaItensModal
           ag={conferenciaItensAg}
           onClose={() => setConferenciaItensAg(null)}
-          onAbrirOS={(osId, agendamentoId) => {
-            navigate(`/pedidos/os/${osId}`, { state: { voltarConferenciaAgendamentoId: agendamentoId } });
+          onAbrirOS={(osId, agendamentoId, rota) => {
+            const caminho = rota === "confeccao" ? `/pedidos/os/${osId}/confeccao` : `/pedidos/os/${osId}`;
+            navigate(caminho, { state: { voltarConferenciaAgendamentoId: agendamentoId } });
           }}
         />
       )}
@@ -2762,6 +2764,7 @@ function AnexosSecoes({ anexos, tipoArquivo, TIPO_ANEXO_LABEL, statusAg }) {
 function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
   const [itens,   setItens]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [criandoId, setCriandoId] = useState(null);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -2795,28 +2798,41 @@ function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
               Nenhum item vinculado a este agendamento.
             </div>
           ) : (
-            itens.map((item) => (
-              <button
-                key={item.pedido_item_id}
-                onClick={() => item.ordem_servico_id && onAbrirOS(item.ordem_servico_id, ag.id)}
-                disabled={!item.ordem_servico_id}
-                style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  width: "100%", textAlign: "left", padding: "12px 14px",
-                  background: "var(--color-surface-soft)", border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-md)", cursor: item.ordem_servico_id ? "pointer" : "not-allowed",
-                  opacity: item.ordem_servico_id ? 1 : 0.6,
-                }}
-              >
-                <span>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{item.descricao}</div>
-                  {item.ambiente && <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.ambiente}</div>}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: item.ficha_preenchida ? "#22c55e" : "#94a3b8" }}>
-                  {item.ficha_preenchida ? "Conferido" : "Pendente"}
-                </span>
-              </button>
-            ))
+            itens.map((item) => {
+              const acao = acaoFichaConferencia(item);
+              const ocupado = criandoId === item.pedido_item_id;
+              return (
+                <button
+                  key={item.pedido_item_id}
+                  disabled={!acao || ocupado}
+                  onClick={async () => {
+                    if (!acao) return;
+                    setCriandoId(item.pedido_item_id);
+                    try {
+                      const osId = await abrirOsDoItem(item);
+                      onAbrirOS(osId, ag.id, acao.rota);
+                    } finally {
+                      setCriandoId(null);
+                    }
+                  }}
+                  style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    width: "100%", textAlign: "left", padding: "12px 14px",
+                    background: "var(--color-surface-soft)", border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)", cursor: acao && !ocupado ? "pointer" : "not-allowed",
+                    opacity: acao ? 1 : 0.6, color: "var(--color-text)",
+                  }}
+                >
+                  <span>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>{item.descricao}</div>
+                    {item.ambiente && <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.ambiente}</div>}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: item.ficha_preenchida ? "#22c55e" : "#94a3b8" }}>
+                    {ocupado ? "Abrindo..." : (acao ? acao.label : "Sem ficha de confecção")}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
       </div>
@@ -2839,7 +2855,10 @@ function StatusModal({ ag, novoStatus, onClose, onConfirmar, salvando }) {
     concluido:     { titulo: "Marcar como concluído", req: "Anexe fotos ou vídeo do resultado final.", obrigatorio: true, pedirMotivo: false },
     nao_concluido: { titulo: "Marcar como não concluído", req: "Informe o motivo e anexe uma foto ou vídeo da situação atual. Um aviso de reagendamento será enviado.", obrigatorio: true, pedirMotivo: true },
   };
-  const info = mensagens[novoStatus] || { titulo: "Alterar status", req: "", obrigatorio: false, pedirMotivo: false };
+  let info = mensagens[novoStatus] || { titulo: "Alterar status", req: "", obrigatorio: false, pedirMotivo: false };
+  if (novoStatus === "andamento" && ag.tipo === "Conferência") {
+    info = { ...info, req: "", obrigatorio: false };
+  }
 
   async function handleFiles(files) {
     const validos = [];
