@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema Adornie — Guia de Uso</title>
+<meta name="description" content="Guia de uso do Sistema Adornie: como funciona o fluxo do pedido, o painel administrativo e o aplicativo do instalador." />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-wordmark">Sistema <span>Adornie</span></div>
+  <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+    <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke-linecap="round"/></svg>
+    <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke-linejoin="round"/></svg>
+  </button>
+</nav>
+
+<div class="progress-dots" id="progressDots"></div>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="slide-hero">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <span class="eyebrow">Guia de uso do sistema</span>
+    <h1>Como o Sistema Adornie funciona,<br/>do pedido <em>à instalação</em>.</h1>
+    <p class="hero-sub">
+      Um passo a passo de cada módulo — pedidos, conferência, produção, agendamento e o
+      aplicativo do instalador — para usar o sistema com confiança desde o primeiro dia.
+    </p>
+    <div class="hero-cta">
+      <a href="#slide-pilares" class="btn btn-primary">Ver os módulos</a>
+      <a href="#slide-contato" class="btn">Tirar uma dúvida</a>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><strong>8</strong><span>Etapas do pedido<br/>acompanhadas</span></div>
+    <div class="stat"><strong>2</strong><span>Aplicativos:<br/>painel web + PWA</span></div>
+    <div class="stat"><strong>100%</strong><span>Multiempresa<br/>e multiusuário</span></div>
+    <div class="stat"><strong>real</strong><span>Já em uso<br/>na operação</span></div>
+  </div>
+
+  <div class="scroll-cue">Role para começar</div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ POR QUE FUNCIONA ASSIM ============ -->
+<section class="section" id="slide-problema">
+  <div class="section-head reveal">
+    <span class="eyebrow">Antes de começar</span>
+    <h2>Por que o sistema separa<br/>cada etapa do pedido.</h2>
+    <p>Cortina e persiana têm medidas técnicas, modelos de wave, barrados e prazos de produção
+      que se perdem fácil entre a venda e a instalação. Cada módulo existe para fechar uma
+      dessas brechas — é por isso que o sistema é organizado assim.</p>
+  </div>
+
+  <div class="pain-grid reveal-stagger reveal">
+    <div class="pain-card">
+      <span class="num">01</span>
+      <h3>Medida perdida no caminho</h3>
+      <p>A consultora mede na venda, a fábrica corta, o técnico instala — cada etapa registrada
+        no sistema, não em caderno ou WhatsApp separado.</p>
+    </div>
+    <div class="pain-card">
+      <span class="num">02</span>
+      <h3>Confecção com cálculo</h3>
+      <p>Metragem de tecido, entretela, forro e clipes calculados automaticamente, validados
+        antes de qualquer corte.</p>
+    </div>
+    <div class="pain-card">
+      <span class="num">03</span>
+      <h3>Equipe de campo informada</h3>
+      <p>O instalador abre o aplicativo e já sabe se a ficha técnica foi preenchida e o que vai
+        instalar.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ MÓDULOS ============ -->
+<section class="section" id="slide-pilares">
+  <div class="section-head reveal">
+    <span class="eyebrow">Módulos do sistema</span>
+    <h2>Conheça os módulos antes<br/>de entrar em cada um.</h2>
+    <p>Visão rápida de cada parte. Nas próximas seções vamos abrir os dois principais: o painel
+      administrativo e o aplicativo do instalador.</p>
+  </div>
+
+  <div class="feature-grid reveal-stagger reveal">
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5zM9 9h6M9 13h6M9 17h3" stroke-linecap="round"/></svg></div>
+      <h3>Pedidos de Venda</h3>
+      <p>Importação de PDF, categorização automática de itens e cálculo de pagamentos em um fluxo só.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4" stroke-linecap="round"/></svg></div>
+      <h3>Agendamentos &amp; Rotas</h3>
+      <p>Conferência, instalação, manutenção e retorno organizados em agenda com mapa de rotas do dia.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V8l8-5 8 5v11M9 19v-6h6v6" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
+      <h3>Catálogo de Produtos</h3>
+      <p>Cortinas, persianas, trilhos, motorização e acessórios — com categorias e vínculos automáticos.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17l4-9 4 6 3-4 5 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Ficha de Confecção</h3>
+      <p>Cálculo automático de metragem de tecido, entretela, forro e clipes — direto da planilha real da produção.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3 8-8M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Conferência Técnica</h3>
+      <p>Medidas reais aferidas em campo e assinatura digital do técnico antes de liberar a instalação.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg></div>
+      <h3>App do Instalador</h3>
+      <p>PWA leve, funciona em campo: agenda, fotos por item, ficha técnica e modo claro/escuro.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke-linecap="round"/></svg></div>
+      <h3>Permissões por setor</h3>
+      <p>Cada usuário vê só o que precisa: comercial, produção, instalação, financeiro e gestão.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h4l3 8 4-16 3 8h4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Multiempresa</h3>
+      <p>Mesmo sistema atende mais de uma empresa, com dados, usuários e catálogos isolados.</p>
+    </div>
+
+  </div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ FLUXO 8 ETAPAS ============ -->
+<section class="section section--tight" id="slide-fluxo">
+  <div class="section-head reveal">
+    <span class="eyebrow">Como o pedido caminha</span>
+    <h2>Da venda à pós-venda, em 8 etapas.</h2>
+    <p>Cada pedido avança por essas 8 etapas. É a tela que você vai abrir com mais frequência —
+      ela mostra sempre onde cada pedido está e o que falta para seguir adiante.</p>
+  </div>
+
+  <figure class="screenshot-frame reveal">
+    <img src="screenshots/fluxo.png" alt="Tela real do fluxo de um pedido, mostrando as etapas Pedidos, Conferência de Medidas, Produção/Compras, Conferência do Produto, Agendamento e Separação" loading="lazy" />
+    <figcaption>Tela real: fluxo de um pedido em andamento (Etapa 2 — Conferência de Medidas).</figcaption>
+  </figure>
+
+  <div class="flow-strip reveal">
+    <div class="flow-step"><span class="flow-num">01</span><h4>Dados do Pedido</h4><p>Cliente, itens, categorização e medidas iniciais.</p></div>
+    <div class="flow-step"><span class="flow-num">02</span><h4>Conferência</h4><p>Ficha de confecção e conferência técnica antes da produção.</p></div>
+    <div class="flow-step"><span class="flow-num">03</span><h4>Produção</h4><p>Confecção acompanhada item a item.</p></div>
+    <div class="flow-step"><span class="flow-num">04</span><h4>Conferência do Produto</h4><p>Validação do que saiu da fábrica.</p></div>
+    <div class="flow-step"><span class="flow-num">05</span><h4>Agendamento</h4><p>Data de instalação definida com o cliente.</p></div>
+    <div class="flow-step"><span class="flow-num">06</span><h4>Separação</h4><p>Itens conferidos antes de saírem para a rua.</p></div>
+    <div class="flow-step"><span class="flow-num">07</span><h4>Entrega</h4><p>Instalação em campo, com fotos por item.</p></div>
+    <div class="flow-step"><span class="flow-num">08</span><h4>Pós-venda</h4><p>Satisfação do cliente e encerramento do ciclo.</p></div>
+  </div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ PAINEL WEB ============ -->
+<section class="section" id="slide-painel">
+  <div class="panel-showcase">
+
+    <div class="panel-copy reveal">
+      <span class="eyebrow">Painel administrativo</span>
+      <h2>O que você vê (e faz)<br/>no painel web.</h2>
+      <p>É aqui que o escritório acompanha cada pedido. Ao abrir a lista, cada um mostra a etapa
+        atual, o status e o prazo de entrega — sem precisar perguntar para ninguém.</p>
+      <ul class="checklist">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Acompanhe o fluxo do pedido, etapa por etapa</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Filtre por status: pendente, em andamento, atrasado, concluído</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Preencha a Ficha de Confecção com cálculo automático de metragem</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Gerencie catálogo, financeiro e permissões por setor</li>
+      </ul>
+    </div>
+
+    <div class="browser-frame reveal">
+      <div class="browser-bar">
+        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+        <span class="url">agenda.adornie.com.br</span>
+      </div>
+      <img src="screenshots/pedidos.png" alt="Tela de Pedidos de Venda, com lista de pedidos, status e etapa atual de cada um" loading="lazy" style="width:100%; display:block;" />
+    </div>
+
+  </div>
+
+  <figure class="screenshot-frame reveal" style="margin-top:48px;">
+    <img src="screenshots/agenda.png" alt="Tela de Agenda, com visão mensal de todos os agendamentos por tipo e status" loading="lazy" />
+    <figcaption>Agenda — visão mensal de todos os agendamentos, por tipo e status.</figcaption>
+  </figure>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ PWA INSTALADOR ============ -->
+<section class="section" id="slide-pwa">
+  <div class="section-head reveal" style="margin-left:auto; margin-right:auto; text-align:center;">
+    <span class="eyebrow">App do instalador</span>
+    <h2>O que o técnico vê<br/>no aplicativo em campo.</h2>
+    <p style="margin-left:auto; margin-right:auto;">Um aplicativo próprio (PWA), leve, que funciona em campo — com tema claro e escuro,
+      pensado para uso ao ar livre, sob sol ou já no fim do dia.</p>
+  </div>
+
+  <div class="phone-row reveal-stagger reveal">
+
+    <div class="phone-col">
+      <div class="phone-frame phone-frame--photo">
+        <div class="phone-notch"></div>
+        <img src="screenshots/rotas.png" alt="Mapa de rotas do dia no aplicativo do instalador" loading="lazy" />
+      </div>
+      <p class="phone-caption">Mapa de rotas do dia,<br/>gerado automaticamente.</p>
+    </div>
+
+    <div class="phone-col">
+      <div class="phone-frame is-light">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-top"><strong>Conferência Técnica</strong></div>
+          <p class="phone-sub">Cortina Wave — Sala 2 · Pedido #1643</p>
+
+          <div class="field-label">Largura real (m)</div>
+          <div class="field-box"></div>
+          <div class="field-row" style="margin-top:8px;">
+            <div>
+              <div class="field-label" style="margin-bottom:5px;">Altura esq.</div>
+              <div class="field-box"></div>
+            </div>
+            <div>
+              <div class="field-label" style="margin-bottom:5px;">Altura meio</div>
+              <div class="field-box"></div>
+            </div>
+            <div>
+              <div class="field-label" style="margin-bottom:5px;">Altura dir.</div>
+              <div class="field-box"></div>
+            </div>
+          </div>
+
+          <div class="field-label">Assinatura do técnico</div>
+          <div class="sig-box">
+            <svg viewBox="0 0 60 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 16c4-10 7-12 9-6s4 9 7 3 5-11 8-5 5 8 7 3 5-9 7-4 4 7 6 2 4-8 6-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+      </div>
+      <p class="phone-caption">Ficha de Conferência Técnica,<br/>com assinatura digital.</p>
+    </div>
+
+  </div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ TECNOLOGIA ============ -->
+<section class="section section--tight" id="slide-tech">
+  <div class="section-head reveal" style="margin-left:auto; margin-right:auto; text-align:center;">
+    <span class="eyebrow">Por baixo do capô</span>
+    <h2>Tecnologia que sustenta o sistema.</h2>
+    <p style="margin-left:auto; margin-right:auto;">Para quem for dar manutenção, ou simplesmente quiser entender como o sistema é
+      construído por dentro.</p>
+  </div>
+
+  <div class="tech-strip reveal">
+    <span class="tech-pill">React 19</span>
+    <span class="tech-pill">Node.js / Express</span>
+    <span class="tech-pill">PostgreSQL</span>
+    <span class="tech-pill">Supabase</span>
+    <span class="tech-pill">PWA / Service Worker</span>
+    <span class="tech-pill">Vite</span>
+    <span class="tech-pill">Autenticação por permissão e setor</span>
+    <span class="tech-pill">Multiempresa nativo</span>
+  </div>
+</section>
+
+<hr class="hairline" />
+
+<!-- ============ QUEM USA O QUÊ ============ -->
+<section class="section" id="slide-papeis">
+  <div class="section-head reveal">
+    <span class="eyebrow">Por papel</span>
+    <h2>Quem usa o quê<br/>no dia a dia.</h2>
+  </div>
+
+  <div class="diff-grid reveal-stagger reveal">
+    <div class="diff-card">
+      <span class="diff-num">01</span>
+      <div><h3>Comercial / Consultora</h3><p>Cadastra o pedido, define os itens e preenche a Ficha de Confecção antes da produção.</p></div>
+    </div>
+    <div class="diff-card">
+      <span class="diff-num">02</span>
+      <div><h3>Produção</h3><p>Acompanha a confecção item a item e libera a Conferência do Produto.</p></div>
+    </div>
+    <div class="diff-card">
+      <span class="diff-num">03</span>
+      <div><h3>Instalador / Técnico</h3><p>Usa o aplicativo em campo: agenda, fotos por item e Ficha de Conferência Técnica com assinatura.</p></div>
+    </div>
+    <div class="diff-card">
+      <span class="diff-num">04</span>
+      <div><h3>Gestão / Admin</h3><p>Acompanha o fluxo completo, gerencia permissões, catálogo e financeiro.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DÚVIDAS ============ -->
+<section class="section cta-section" id="slide-contato">
+  <span class="eyebrow">Dúvidas?</span>
+  <h2>Ficou alguma dúvida sobre<br/>como usar o sistema?</h2>
+  <p>Esse guia cobre o caminho principal. Para qualquer detalhe que não ficou claro, é só perguntar.</p>
+  <div class="cta-actions">
+    <a href="mailto:soprasabermsm@gmail.com" class="btn btn-primary">Tirar uma dúvida</a>
+  </div>
+</section>
+
+<footer>Sistema Adornie · Guia de uso interno</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
