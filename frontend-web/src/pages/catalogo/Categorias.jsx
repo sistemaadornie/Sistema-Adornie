@@ -11,7 +11,7 @@ const CORES_PREDEFINIDAS = [
   "#9B59B6", // roxo
   "#E74C3C", // vermelho
   "#2E86AB", // azul petróleo
-  "#6C757D", // cinza
+  "#9A9080", // cinza (tom neutro quente do tema)
 ];
 
 const CATEGORIAS_PADRAO = [
@@ -21,9 +21,9 @@ const CATEGORIAS_PADRAO = [
   { nome: "Tecidos",          cor: "#E07B54" },
   { nome: "Papel de Parede",  cor: "#4CAF7D" },
   { nome: "Tapetes",          cor: "#C9A96E" },
-  { nome: "Serviços",         cor: "#6C757D" },
+  { nome: "Serviços",         cor: "#9A9080" },
   { nome: "Acessórios",       cor: "#E74C3C" },
-  { nome: "Outros",           cor: "#6C757D" },
+  { nome: "Outros",           cor: "#9A9080" },
 ];
 
 /* ── Modal de criação/edição ── */
@@ -53,69 +53,98 @@ function CategoriaModal({ categoria, prazos, onClose, onSalvar, salvando }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-box" style={{ maxWidth: 420 }}>
+      <div className="modal-box cat-modal" style={{ maxWidth: 460 }}>
         <div className="modal-header">
           <h2 className="modal-title">{categoria ? "Editar Categoria" : "Nova Categoria"}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <form className="modal-body" onSubmit={handleSubmit}>
-          <div className="ag-form-field">
-            <label>Nome *</label>
-            <input value={nome} onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Persianas" autoFocus />
+          <div className="cat-section">
+            <div className="ag-section-divider">Identificação</div>
+            <div className="ag-form-field">
+              <label>Nome *</label>
+              <input value={nome} onChange={(e) => setNome(e.target.value)}
+                placeholder="Ex: Persianas" autoFocus />
+            </div>
+
+            <div className="ag-form-field" style={{ marginTop: 14 }}>
+              <label>Cor do badge</label>
+              <div className="cat-cores-grid">
+                {CORES_PREDEFINIDAS.map((c) => (
+                  <button key={c} type="button"
+                    className={`cat-cor-btn${cor === c ? " cat-cor-ativa" : ""}`}
+                    style={{ background: c }}
+                    onClick={() => setCor(c)}
+                    title={c}
+                  >
+                    {cor === c && <span className="cat-cor-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="cat-preview-row">
+              <span className="cat-preview-label">Pré-visualização</span>
+              <span className="cat-preview-badge" style={{ background: cor + "22", color: cor, borderColor: cor + "44" }}>
+                {nome || "Prévia"}
+              </span>
+            </div>
           </div>
 
-          <div className="ag-form-field" style={{ marginTop: 12 }}>
-            <label>Cor do badge</label>
-            <div className="cat-cores-grid">
-              {CORES_PREDEFINIDAS.map((c) => (
-                <button key={c} type="button"
-                  className={`cat-cor-btn${cor === c ? " cat-cor-ativa" : ""}`}
-                  style={{ background: c }}
-                  onClick={() => setCor(c)}
-                  title={c}
-                />
-              ))}
-            </div>
-            <div className="cat-preview-badge" style={{ background: cor + "22", color: cor, borderColor: cor + "44" }}>
-              {nome || "Prévia"}
-            </div>
-          </div>
+          <div className="cat-section">
+            <div className="ag-section-divider">Comportamento</div>
 
-          <div className="ag-form-field" style={{ marginTop: 12 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
-              <input type="checkbox" checked={vinculavel} onChange={(e) => setVinculavel(e.target.checked)} />
-              Item vinculável?
+            <label className="cat-toggle-row">
+              <span className="cat-toggle-icon">🔗</span>
+              <span className="cat-toggle-copy">
+                <span className="cat-toggle-title">Item vinculável</span>
+                <span className="cat-toggle-desc">Pode ser vinculado a um item principal (ex: Trilho → Cortina).</span>
+              </span>
+              <input type="checkbox" className="cat-toggle-input" checked={vinculavel} onChange={(e) => setVinculavel(e.target.checked)} />
+              <span className="cat-toggle-switch"><span className="cat-toggle-knob" /></span>
             </label>
-            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
-              Itens desta categoria podem ser vinculados a um item principal (ex: Trilho → Cortina).
-            </p>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, marginTop: 8 }}>
-              <input type="checkbox" checked={recebeVinculos} onChange={(e) => setRecebeVinculos(e.target.checked)} />
-              Deve receber itens vinculados?
+            <label className="cat-toggle-row">
+              <span className="cat-toggle-icon">⚓</span>
+              <span className="cat-toggle-copy">
+                <span className="cat-toggle-title">Recebe itens vinculados</span>
+                <span className="cat-toggle-desc">Pode ser "principal" e receber outros itens vinculados a ela.</span>
+              </span>
+              <input type="checkbox" className="cat-toggle-input" checked={recebeVinculos} onChange={(e) => setRecebeVinculos(e.target.checked)} />
+              <span className="cat-toggle-switch"><span className="cat-toggle-knob" /></span>
             </label>
-            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
-              Itens desta categoria podem ser "principais" e receber outros itens vinculados a eles.
-            </p>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, marginTop: 8 }}>
-              <input type="checkbox" checked={necessitaConferencia} onChange={(e) => setNecessitaConferencia(e.target.checked)} />
-              Item com necessidade de conferência?
+            <label className="cat-toggle-row">
+              <span className="cat-toggle-icon">🔍</span>
+              <span className="cat-toggle-copy">
+                <span className="cat-toggle-title">Precisa de conferência</span>
+                <span className="cat-toggle-desc">Exige visita de conferência agendada antes de definir a data de entrega.</span>
+              </span>
+              <input type="checkbox" className="cat-toggle-input" checked={necessitaConferencia} onChange={(e) => setNecessitaConferencia(e.target.checked)} />
+              <span className="cat-toggle-switch"><span className="cat-toggle-knob" /></span>
             </label>
-            <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 0 24px" }}>
-              Itens desta categoria precisam de uma visita de conferência agendada antes de definir a data de entrega.
-            </p>
           </div>
 
           {categoria?.id && (
-            <div className="ag-form-field" style={{ marginTop: 12 }}>
-              <label>Prazos de instalação (dias úteis)</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <label style={{ fontSize: 12 }}>Logística<input type="number" min="0" value={logistica} onChange={(e) => setLogistica(e.target.value)} /></label>
-                <label style={{ fontSize: 12 }}>Confecção<input type="number" min="0" value={confeccao} onChange={(e) => setConfeccao(e.target.value)} /></label>
-                <label style={{ fontSize: 12 }}>Expedição<input type="number" min="0" value={expedicao} onChange={(e) => setExpedicao(e.target.value)} /></label>
-                <label style={{ fontSize: 12 }}>Outros<input type="number" min="0" value={outros} onChange={(e) => setOutros(e.target.value)} /></label>
+            <div className="cat-section">
+              <div className="ag-section-divider">Prazos de instalação (dias úteis)</div>
+              <div className="cat-prazos-grid">
+                <div className="ag-form-field">
+                  <label>Logística</label>
+                  <input type="number" min="0" value={logistica} onChange={(e) => setLogistica(e.target.value)} />
+                </div>
+                <div className="ag-form-field">
+                  <label>Confecção</label>
+                  <input type="number" min="0" value={confeccao} onChange={(e) => setConfeccao(e.target.value)} />
+                </div>
+                <div className="ag-form-field">
+                  <label>Expedição</label>
+                  <input type="number" min="0" value={expedicao} onChange={(e) => setExpedicao(e.target.value)} />
+                </div>
+                <div className="ag-form-field">
+                  <label>Outros</label>
+                  <input type="number" min="0" value={outros} onChange={(e) => setOutros(e.target.value)} />
+                </div>
               </div>
             </div>
           )}
@@ -255,10 +284,10 @@ export default function Categorias({ onCategoriasChange }) {
                 {cat.nome}
               </span>
               <div className="cat-item-actions">
-                <button className="arq-btn-edit" title="Editar" onClick={() => setModal(cat)}>
+                <button className="cat-icon-btn" title="Editar" onClick={() => setModal(cat)}>
                   <FaEdit />
                 </button>
-                <button className="arq-btn-del" title="Excluir" onClick={() => setConfirmDelete(cat)}>
+                <button className="cat-icon-btn danger" title="Excluir" onClick={() => setConfirmDelete(cat)}>
                   <FaTrash />
                 </button>
               </div>
