@@ -230,57 +230,11 @@ async function criarOrcamento(empresaId, userId, userName, dados) {
 
   const orcId = res.rows[0].id;
 
-  // Cria projeto no pipeline automaticamente para orçamentos de venda
-  if (tipo === "venda") {
-    // Busca nome do arquiteto e vendedora para desnormalizar no projeto
-    let arquitetoNome = null;
-    let vendedoraNome = null;
-
-    if (arquiteto_id) {
-      const arqRes = await db.query(`SELECT nome FROM arquitetos WHERE id = $1 AND empresa_id = $2`, [arquiteto_id, empresaId]);
-      arquitetoNome = arqRes.rows[0]?.nome || null;
-    }
-    if (vendedora_id) {
-      const vendRes = await db.query(`SELECT nome_completo FROM usuarios WHERE id = $1 AND empresa_id = $2`, [vendedora_id, empresaId]);
-      vendedoraNome = vendRes.rows[0]?.nome_completo || null;
-    }
-
-    const seqProjRes = await db.query(
-      `SELECT COUNT(*) AS total FROM pipeline_projetos WHERE empresa_id = $1`,
-      [empresaId]
-    );
-    const seqProj = parseInt(seqProjRes.rows[0].total, 10) + 1;
-    const numeroProj = `PROJ-${String(seqProj).padStart(4, "0")}`;
-
-    const projRes = await db.query(`
-      INSERT INTO pipeline_projetos
-        (empresa_id, numero, titulo, cliente_id, orcamento_id, valor_estimado, etapa,
-         arquiteto_id, arquiteto_nome, vendedora_id, vendedora_nome, criado_por, criado_por_nome)
-      VALUES ($1, $2, $3, $4, $5, $6, 'orcamento', $7, $8, $9, $10, $11, $12)
-      RETURNING id
-    `, [empresaId, numeroProj, titulo, cliente_id || null, orcId, valor || 0,
-        arquiteto_id || null, arquitetoNome, vendedora_id || null, vendedoraNome,
-        userId, userName]);
-
-    await db.query(`
-      INSERT INTO pipeline_historico (projeto_id, tipo, etapa_nova, observacao, usuario_id, usuario_nome)
-      VALUES ($1, 'avanco', 'orcamento', $2, $3, $4)
-    `, [projRes.rows[0].id, `Projeto criado a partir do orçamento ${numero}`, userId, userName]);
-  }
-
   return buscarOrcamento(orcId, empresaId);
 }
 
 async function atualizarOrcamento(id, empresaId, dados, userId = null, userName = null) {
   const { cliente_id, fornecedor_id, titulo, descricao, valor, status, arquiteto_id, vendedora_id } = dados;
-
-  // Busca status atual para detectar transição para 'aprovado'
-  const atual = await db.query(
-    `SELECT status FROM crm_orcamentos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
-    [id, empresaId]
-  );
-  if (!atual.rows.length) throw new Error("Orçamento não encontrado.");
-  const statusAnterior = atual.rows[0].status;
 
   const res = await db.query(`
     UPDATE crm_orcamentos
@@ -299,27 +253,6 @@ async function atualizarOrcamento(id, empresaId, dados, userId = null, userName 
       arquiteto_id || null, vendedora_id || null]);
 
   if (res.rows.length === 0) throw new Error("Orçamento não encontrado.");
-
-  // Orçamento aprovado → avança o projeto no pipeline para 'venda'
-  if (status === "aprovado" && statusAnterior !== "aprovado") {
-    const projRes = await db.query(
-      `SELECT id, etapa FROM pipeline_projetos WHERE orcamento_id = $1 AND empresa_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [id, empresaId]
-    );
-    if (projRes.rows.length > 0) {
-      const proj = projRes.rows[0];
-      if (proj.etapa === "orcamento") {
-        await db.query(
-          `UPDATE pipeline_projetos SET etapa = 'venda', updated_at = NOW() WHERE id = $1`,
-          [proj.id]
-        );
-        await db.query(`
-          INSERT INTO pipeline_historico (projeto_id, tipo, etapa_anterior, etapa_nova, observacao, usuario_id, usuario_nome)
-          VALUES ($1, 'avanco', 'orcamento', 'venda', 'Orçamento aprovado no CRM', $2, $3)
-        `, [proj.id, userId, userName]);
-      }
-    }
-  }
 
   return buscarOrcamento(id, empresaId);
 }

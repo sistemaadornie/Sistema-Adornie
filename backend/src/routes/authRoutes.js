@@ -225,41 +225,6 @@ db.query(
       modulo: "Administração",
       ordem: 5,
     },
-    {
-      codigo: "KANBAN_VIEW",
-      nome_exibicao: "Kanban — Visualizar",
-      descricao: "Visualiza o Kanban de Fluxo de Vendas e todos os projetos.",
-      modulo: "Kanban",
-      ordem: 6,
-    },
-    {
-      codigo: "KANBAN_COMPRAS",
-      nome_exibicao: "Kanban — Compras",
-      descricao: "Marca itens como chegados em loja e define prazos de entrega.",
-      modulo: "Kanban",
-      ordem: 7,
-    },
-    {
-      codigo: "KANBAN_CONFECCAO",
-      nome_exibicao: "Kanban — Confecção",
-      descricao: "Marca itens em confecção como concluídos.",
-      modulo: "Kanban",
-      ordem: 8,
-    },
-    {
-      codigo: "KANBAN_ADMIN",
-      nome_exibicao: "Kanban — Admin",
-      descricao: "Reencaminha projetos para etapas anteriores e aprova na verificação admin.",
-      modulo: "Kanban",
-      ordem: 9,
-    },
-    {
-      codigo: "KANBAN_CONFIG",
-      nome_exibicao: "Kanban — Configuração",
-      descricao: "Acessa a tela de configuração de prazos do Kanban.",
-      modulo: "Kanban",
-      ordem: 10,
-    },
   ];
 
   try {
