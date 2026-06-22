@@ -5,7 +5,7 @@ import { api } from "../services/api";
 import TopBar from "../components/TopBar";
 import {
   statusLabel, formatDateBR, todayISO, addDaysISO,
-  STATUS_CORES, parseDateInfo,
+  STATUS_CORES, TIPO_CORES, parseDateInfo,
 } from "../utils/agendamentos";
 
 const FILTROS = [
@@ -35,6 +35,12 @@ function EventoCard({ ag }) {
       className="gcal-evento"
       style={{ backgroundColor: `${cor}18`, borderLeft: `3px solid ${cor}` }}
     >
+      {ag.tipo && (
+        <span className="tipo-corner" style={{ background: TIPO_CORES[ag.tipo] || "var(--color-text-secondary)" }}>
+          {ag.tipo}
+        </span>
+      )}
+
       <div className="gcal-evento-titulo">{ag.titulo || ag.cliente}</div>
 
       {ag.hora && (
@@ -154,7 +160,7 @@ export default function Agenda() {
           ))}
         </div>
 
-        {loading && <div className="spinner-wrap">Carregando...</div>}
+        {loading && <div className="spinner-wrap"><span className="spinner" /> Carregando...</div>}
         {erro && <div className="banner banner-danger">{erro}</div>}
 
         {!loading && !erro && agendamentos.length === 0 && (

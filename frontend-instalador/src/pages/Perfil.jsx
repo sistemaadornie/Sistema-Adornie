@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiMail, FiBriefcase, FiUser } from "react-icons/fi";
+import { FiLogOut, FiMail, FiBriefcase, FiUser, FiSun, FiMoon } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import TopBar from "../components/TopBar";
 
 export default function Perfil() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -59,6 +61,11 @@ export default function Perfil() {
             </div>
           )}
         </div>
+
+        <button className="btn btn-block" style={{ marginBottom: "var(--space-1)" }} onClick={toggleTheme}>
+          {theme === "dark" ? <FiSun /> : <FiMoon />}
+          {theme === "dark" ? "Modo claro" : "Modo escuro"}
+        </button>
 
         <button className="btn btn-danger btn-block" onClick={handleLogout}>
           <FiLogOut /> Sair

@@ -215,7 +215,7 @@ export default function FichaTecnicaInstalador() {
     return (
       <>
         <TopBar title="Conferência Técnica" back />
-        <div className="page"><div className="spinner-wrap">Carregando...</div></div>
+        <div className="page"><div className="spinner-wrap"><span className="spinner" /> Carregando...</div></div>
       </>
     );
   }

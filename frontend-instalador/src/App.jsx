@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -14,27 +15,29 @@ import Perfil from "./pages/Perfil";
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route
-            element={
-              <PrivateRoute>
-                <Layout />
-              </PrivateRoute>
-            }
-          >
-            <Route path="/" element={<Home />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/agenda/:id" element={<AgendamentoDetalhe />} />
-            <Route path="/agenda/:agendamentoId/os/:osId" element={<FichaTecnicaInstalador />} />
-            <Route path="/rotas" element={<Rotas />} />
-            <Route path="/abastecimento" element={<Abastecimento />} />
-            <Route path="/perfil" element={<Perfil />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
+            <Route
+              element={
+                <PrivateRoute>
+                  <Layout />
+                </PrivateRoute>
+              }
+            >
+              <Route path="/" element={<Home />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/agenda/:id" element={<AgendamentoDetalhe />} />
+              <Route path="/agenda/:agendamentoId/os/:osId" element={<FichaTecnicaInstalador />} />
+              <Route path="/rotas" element={<Rotas />} />
+              <Route path="/abastecimento" element={<Abastecimento />} />
+              <Route path="/perfil" element={<Perfil />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

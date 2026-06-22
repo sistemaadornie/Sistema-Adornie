@@ -19,17 +19,10 @@ export default function Login() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      padding: "var(--space-3)",
-      maxWidth: 420,
-      margin: "0 auto",
-    }}>
-      <div style={{ textAlign: "center", marginBottom: "var(--space-3)" }}>
-        <img src="/icon-192.png" alt="Adornie" style={{ width: 80, height: 80, margin: "0 auto var(--space-2)", borderRadius: "var(--radius-lg)" }} />
+    <div className="login-shell">
+      <div className="login-brand">
+        <div className="login-glow" />
+        <img src="/icon-192.png" alt="Adornie" className="login-logo" />
         <h1 className="page-title" style={{ marginBottom: 4 }}>Adornie Instalador</h1>
         <p className="page-subtitle">Acesse com seu login da equipe de campo</p>
       </div>

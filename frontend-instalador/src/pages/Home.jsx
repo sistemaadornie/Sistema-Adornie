@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCalendar, FiMap, FiDroplet, FiClock, FiMapPin } from "react-icons/fi";
+import { FiCalendar, FiMap, FiDroplet, FiClock, FiMapPin, FiUser } from "react-icons/fi";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
-import { statusLabel, formatDateLabel, todayISO, STATUS_CORES } from "../utils/agendamentos";
+import { statusLabel, formatDateLabel, todayISO, STATUS_CORES, TIPO_CORES } from "../utils/agendamentos";
 
 export default function Home() {
   const { user } = useAuth();
@@ -57,7 +57,7 @@ export default function Home() {
             <span>Registrar combustível</span>
           </Link>
           <Link to="/perfil" className="shortcut-card">
-            <FiClock className="shortcut-icon" />
+            <FiUser className="shortcut-icon" />
             <strong>Perfil</strong>
             <span>Conta e sessão</span>
           </Link>
@@ -65,7 +65,7 @@ export default function Home() {
 
         <h3 className="section-title">Próximos atendimentos</h3>
 
-        {loading && <div className="spinner-wrap">Carregando...</div>}
+        {loading && <div className="spinner-wrap"><span className="spinner" /> Carregando...</div>}
         {erro && <div className="banner banner-danger">{erro}</div>}
 
         {!loading && !erro && agendamentos.length === 0 && (
@@ -74,9 +74,13 @@ export default function Home() {
 
         {agendamentos.map((ag) => (
           <Link to={`/agenda/${ag.id}`} key={ag.id} className="list-item" style={{ borderLeft: `4px solid ${STATUS_CORES[ag.status] || "var(--color-border)"}` }}>
+            {ag.tipo && (
+              <span className="tipo-corner" style={{ background: TIPO_CORES[ag.tipo] || "var(--color-text-secondary)" }}>
+                {ag.tipo}
+              </span>
+            )}
             <div className="list-item-top">
               <div className="list-item-title">{ag.cliente}</div>
-              <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>
             </div>
             <div className="list-item-meta">
               <FiClock style={{ verticalAlign: "-2px" }} /> {formatDateLabel(ag.data)} · {ag.hora}
@@ -86,6 +90,9 @@ export default function Home() {
                 <FiMapPin style={{ verticalAlign: "-2px" }} /> {ag.endereco || `${ag.cidade} - ${ag.estado}`}
               </div>
             ) : null}
+            <span className="gcal-evento-status" style={{ color: STATUS_CORES[ag.status] || "var(--color-text-muted)" }}>
+              {statusLabel(ag.status)}
+            </span>
           </Link>
         ))}
       </div>

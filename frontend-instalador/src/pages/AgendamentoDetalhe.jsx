@@ -246,7 +246,7 @@ export default function AgendamentoDetalhe() {
     return (
       <>
         <TopBar title="Agendamento" back />
-        <div className="page"><div className="spinner-wrap">Carregando...</div></div>
+        <div className="page"><div className="spinner-wrap"><span className="spinner" /> Carregando...</div></div>
       </>
     );
   }

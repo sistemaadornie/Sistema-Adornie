@@ -1,5 +1,5 @@
 /* ============================================================
-   ADORNIE INSTALADOR — tema (dark, fixo)
+   ADORNIE INSTALADOR — tema (dark + light, igual ao sistema web)
    Subconjunto das variáveis do frontend-web/src/styles/theme.css
    ============================================================ */
 
@@ -57,4 +57,35 @@
 
   --transition-fast:   0.13s ease;
   --transition-normal: 0.22s ease;
+}
+
+/* ============================================================
+   LIGHT MODE — tons quentes claros (mesma paleta do sistema web)
+   ============================================================ */
+
+[data-theme="light"] {
+  --color-bg:           #F5F0E8;
+  --color-bg-secondary: #FDFAF4;
+
+  --color-surface:        #FDFAF4;
+  --color-surface-strong: #F0EAE0;
+  --color-surface-soft:   #EDE8DF;
+  --color-card:           #FDFAF4;
+
+  --color-primary:          #A07840;
+  --color-primary-hover:    #8B6535;
+  --color-primary-soft:     rgba(160, 120, 64, 0.10);
+  --color-primary-btn-text: #FDFAF4;
+  --color-primary-rgb:      160, 120, 64;
+
+  --color-text:           #1A1612;
+  --color-text-secondary: #6B5F50;
+  --color-text-muted:     #A09080;
+
+  --color-border:        #DED8CE;
+  --color-border-strong: #C8C0B4;
+
+  --shadow-sm:     0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-soft:   0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 28px rgba(0, 0, 0, 0.10);
 }

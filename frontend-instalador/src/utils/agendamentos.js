@@ -10,6 +10,13 @@ export const STATUS_CORES = {
   atrasado:      "#ef4444",
 };
 
+export const TIPO_CORES = {
+  "Instalação":          "#3b82f6",
+  "Conferência":         "#a855f7",
+  "Manutenção":          "#f97316",
+  "Retorno/Finalização": "#14b8a6",
+};
+
 export const STATUS_LABELS = {
   pre_agendado:  "Pré-agendado",
   agendado:      "Agendado",
