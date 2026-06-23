@@ -699,7 +699,11 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
   }
 
   const existe = await db.query(
-    `SELECT id, titulo, cliente, tipo, criado_por, status AS status_anterior FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
+    `SELECT a.id, a.titulo, a.cliente, a.tipo, a.criado_por, a.status AS status_anterior,
+            a.pedido_id, p.consultor_id AS pedido_consultor_id
+     FROM agendamentos a
+     LEFT JOIN pedidos p ON p.id = a.pedido_id
+     WHERE a.id=$1 AND a.empresa_id=$2 LIMIT 1`,
     [id, empresaId]
   );
   if (existe.rows.length === 0) { const e = new Error("Agendamento não encontrado."); e.status = 404; throw e; }
@@ -967,16 +971,44 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     let notifs;
     if (status === "nao_concluido") {
       /* Caso especial: uma única notificação combinada para não duplicar */
+      const tipoAg = existe.rows[0]?.tipo;
+      const dentroDoEscopoRemarcacao = ["Conferência", "Instalação"].includes(tipoAg);
+      const pedidoId   = dentroDoEscopoRemarcacao ? (existe.rows[0]?.pedido_id || null) : null;
+      const consultorId = dentroDoEscopoRemarcacao ? (existe.rows[0]?.pedido_consultor_id || null) : null;
+      const linkReagendar = pedidoId ? `/pedidos/${pedidoId}/fluxo` : link;
+
       const tituloUnico = `Reagendar: ${titulo}`;
       const msgUnica    = `${cliente ? cliente + " — " : ""}Serviço não concluído. Reagendamento necessário.`;
       notifs = [
         db.query(
           `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
            VALUES ($1, NULL, 'reagendamento_pendente', $2, $3, $4, 'alerta', $5)`,
-          [empresaId, tituloUnico, msgUnica, link, id]
+          [empresaId, tituloUnico, msgUnica, linkReagendar, id]
         ),
         notificarEquipe(id, empresaId, tituloUnico, msgUnica, "alerta", userId),
       ];
+
+      if (consultorId) {
+        notifs.push(
+          db.query(
+            `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
+             VALUES ($1, $2, 'reagendamento_pendente', $3, $4, $5, 'alerta', $6)`,
+            [empresaId, consultorId, tituloUnico, msgUnica, linkReagendar, id]
+          )
+        );
+      }
+
+      if (pedidoId) {
+        const etapaAuditoria = tipoAg === "Conferência" ? "conferencia" : "entrega";
+        const descricaoAuditoria = `Agendamento #${id} (${tipoAg}) marcado como não concluído.${motivo ? ` Motivo: ${motivo}` : ""}`;
+        notifs.push(
+          db.query(
+            `INSERT INTO pedido_auditoria (pedido_id, empresa_id, usuario_id, etapa, acao, descricao)
+             VALUES ($1, $2, $3, $4, 'agendamento_nao_concluido', $5)`,
+            [pedidoId, empresaId, userId || null, etapaAuditoria, descricaoAuditoria]
+          )
+        );
+      }
     } else {
       notifs = [
         db.query(
