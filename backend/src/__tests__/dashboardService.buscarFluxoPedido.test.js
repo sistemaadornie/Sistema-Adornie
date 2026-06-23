@@ -161,3 +161,42 @@ describe('buscarFluxoPedido — agendamento nao_concluido não conta como cobert
     expect(etapa1.concluida).toBe(false);
   });
 });
+
+describe('buscarFluxoPedido — expõe observacoes_status do agendamento', () => {
+  test('pre_agendamentos inclui observacoes_status do genitor', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{
+        id: 1, numero_sequencial: 1, numero_origem: null, status: 'em_andamento',
+        verificacao_ok: true, categorizacao_ok: true, total: '0',
+        criado_em: '2026-01-01T00:00:00.000Z',
+        cliente_id: null, cep: null, rua: null, numero_rua: null, complemento: null,
+        bairro: null, cidade: null, estado: null,
+        cliente_nome: null, consultor_nome: 'Consultora', consultor_id: 99,
+      }] }) // pedido
+      .mockResolvedValueOnce({ rows: [] }) // anexos
+      .mockResolvedValueOnce({ rows: [] }) // vinculos
+      .mockResolvedValueOnce({ rows: [] }) // allItems
+      .mockResolvedValueOnce({ rows: [] }) // itensRows
+      .mockResolvedValueOnce({ rows: [{ id: 10, status: 'nao_concluido', tipo: 'Conferência', data_inicio: '2026-06-20', observacoes_status: 'Cliente ausente' }] }) // genitoresRaw
+      .mockResolvedValueOnce({ rows: [{ total: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ cobertos: 0 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ sem_cat: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ sem_vinc: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ total: 0, conferidos: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ em_confeccao: 0, confeccao_ok: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
+      .mockResolvedValueOnce({ rows: [{ id: 20, agendamento_pai_id: 10, tipo: 'Conferência', status: 'nao_concluido', data_inicio: '2026-06-21', observacoes_status: 'Item avariado' }] }) // herdeirosRaw
+      .mockResolvedValueOnce({ rows: [] }); // separacaoRows
+
+    const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
+
+    expect(resultado.pre_agendamentos[0].observacoes_status).toBe('Cliente ausente');
+    expect(resultado.pre_agendamentos[0].herdeiros[0].observacoes_status).toBe('Item avariado');
+  });
+});

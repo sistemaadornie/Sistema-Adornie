@@ -469,7 +469,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   pedido.itens = itensRows;
 
   const { rows: genitoresRaw } = await db.query(
-    `SELECT a.id, a.status, a.tipo, a.data AS data_inicio
+    `SELECT a.id, a.status, a.tipo, a.data AS data_inicio, a.observacoes_status
      FROM agendamentos a
      WHERE a.pedido_id = $1 AND a.empresa_id = $2
        AND a.agendamento_pai_id IS NULL
@@ -686,7 +686,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       [genitoreIds]
     ),
     db.query(
-      `SELECT id, agendamento_pai_id, tipo, status, data AS data_inicio
+      `SELECT id, agendamento_pai_id, tipo, status, data AS data_inicio, observacoes_status
        FROM agendamentos
        WHERE agendamento_pai_id = ANY($1) AND empresa_id = $2
        ORDER BY data`,
@@ -744,6 +744,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       tipo: h.tipo,
       status: h.status,
       data_inicio: h.data_inicio,
+      observacoes_status: h.observacoes_status,
       itens: itensSeparacaoPorAg[h.id] || [],
     });
   }
@@ -753,6 +754,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     data_inicio: g.data_inicio,
     status: g.status,
     tipo: g.tipo,
+    observacoes_status: g.observacoes_status,
     itens: itensPorAg[g.id] || [],
     herdeiros: herdeirosporPai[g.id] || [],
   }));
