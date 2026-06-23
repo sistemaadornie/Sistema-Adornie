@@ -488,10 +488,12 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
     }
 
     const query = `
-      SELECT 
+      SELECT
         pi.id,
+        pi.ordem,
         pi.ambiente,
         pi.descricao,
+        pi.medidas,
         pi.quantidade,
         pi.unidade,
         pi.valor,
@@ -513,7 +515,7 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
           JOIN agendamentos a ON a.id = ai.agendamento_id
           WHERE ai.pedido_item_id IS NOT NULL 
             AND a.tipo = 'Instalação'
-            AND a.status NOT IN ('cancelado','rejeitado')
+            AND a.status NOT IN ('cancelado','rejeitado','nao_concluido')
         )
       ORDER BY pi.ordem ASC, pi.id ASC
     `;
@@ -543,8 +545,10 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
     const query = `
       SELECT
         pi.id,
+        pi.ordem,
         pi.ambiente,
         pi.descricao,
+        pi.medidas,
         pi.quantidade,
         pi.unidade,
         COALESCE(pi.categoria_id, prod.categoria_id) AS categoria_id,
@@ -561,7 +565,7 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
           JOIN agendamentos a ON a.id = ai.agendamento_id
           WHERE ai.pedido_item_id IS NOT NULL
             AND a.tipo = 'Conferência'
-            AND a.status NOT IN ('cancelado','rejeitado')
+            AND a.status NOT IN ('cancelado','rejeitado','nao_concluido')
         )
       ORDER BY pi.ordem ASC, pi.id ASC
     `;

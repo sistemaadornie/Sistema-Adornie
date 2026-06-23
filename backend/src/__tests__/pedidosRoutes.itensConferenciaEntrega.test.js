@@ -62,4 +62,14 @@ describe('GET /api/pedidos/:id/itens-disponiveis-conferencia-entrega', () => {
     expect(res.status).toBe(200);
     expect(res.body.itens).toEqual([]);
   });
+
+  test('exclui nao_concluido da subquery de itens ja cobertos', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
+      .mockResolvedValueOnce({ rows: [] });
+
+    await request(app).get('/api/pedidos/1/itens-disponiveis-conferencia-entrega');
+
+    expect(db.query.mock.calls[1][0]).toContain("'cancelado','rejeitado','nao_concluido'");
+  });
 });
