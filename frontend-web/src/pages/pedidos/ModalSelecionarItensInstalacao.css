@@ -169,6 +169,20 @@
   gap: 8px;
 }
 
+.msi-card-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-surface-strong);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .msi-card-titulo {
   font-size: 15px;
   font-weight: 700;
@@ -202,4 +216,9 @@
 
 .msi-meta-ponto {
   color: var(--color-text-muted);
+}
+
+.msi-meta-medidas {
+  font-weight: 700;
+  color: var(--color-primary);
 }

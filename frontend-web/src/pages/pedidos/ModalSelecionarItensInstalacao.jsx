@@ -88,10 +88,17 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
                       </span>
                       <span className="msi-card-conteudo">
                         <span className="msi-card-topo">
+                          <span className="msi-card-num">{Number.isFinite(it.ordem) ? it.ordem + 1 : "—"}</span>
                           <strong className="msi-card-titulo">{it.descricao || `Item ${it.id}`}</strong>
                           {it.ambiente && <span className="msi-badge">{it.ambiente}</span>}
                         </span>
                         <span className="msi-card-meta">
+                          {it.medidas && (
+                            <>
+                              <span className="msi-meta-medidas">📐 {it.medidas}</span>
+                              <span className="msi-meta-ponto">·</span>
+                            </>
+                          )}
                           <span className="msi-meta-item">{it.categoria_nome || "Sem categoria"}</span>
                           {it.logistica_interna_dias != null && (
                             <>

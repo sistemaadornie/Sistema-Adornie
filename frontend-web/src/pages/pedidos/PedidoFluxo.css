@@ -256,6 +256,29 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 .pf-item-descricao { flex: 1; font-size: 14px; }
 .pf-item-ambiente { font-size: 12px; color: var(--pf-card-sub); }
 
+/* ── Item card (Etapa 2 - Conferência de Medidas) ── */
+.pf-item-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; margin-bottom: 8px;
+  border: 1px solid var(--pf-separador); border-radius: 8px;
+  background: var(--pf-card-bg);
+}
+.pf-item-card:last-child { margin-bottom: 0; }
+.pf-item-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--pf-btn-secondary-bg); color: var(--pf-card-sub);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.pf-item-card-conteudo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pf-item-card-desc { font-size: 13px; line-height: 1.35; }
+.pf-item-medidas {
+  align-self: flex-start;
+  font-size: 12px; font-weight: 700; color: var(--pf-aba-active-text);
+  background: var(--pf-btn-secondary-bg); border-radius: 6px;
+  padding: 2px 8px;
+}
+
 /* ── Vincular Itens (modal etapa 1) ── */
 .vim-grupo { margin-bottom: 20px; }
 .vim-grupo-titulo { font-weight: 700; margin-bottom: 8px; }

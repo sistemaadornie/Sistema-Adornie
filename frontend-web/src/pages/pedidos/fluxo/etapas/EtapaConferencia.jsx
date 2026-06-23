@@ -75,11 +75,11 @@ export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
                   {g.itens.map((item) => {
                     const acao = acaoFichaConferencia(item);
                     return (
-                      <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
-                        <div style={{ fontSize: 13 }}>
-                          <span style={{ color: "var(--pf-card-sub)" }}>Item {Number.isFinite(item.ordem) ? item.ordem + 1 : "—"}</span>
-                          {" — "}{item.descricao}
-                          {item.medidas && <span style={{ color: "var(--pf-card-sub)" }}> ({item.medidas})</span>}
+                      <div key={item.pedido_item_id} className="pf-item-card">
+                        <span className="pf-item-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : "—"}</span>
+                        <div className="pf-item-card-conteudo">
+                          <div className="pf-item-card-desc">{item.descricao}</div>
+                          {item.medidas && <span className="pf-item-medidas">📐 {item.medidas}</span>}
                         </div>
                         {acao ? (
                           <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
