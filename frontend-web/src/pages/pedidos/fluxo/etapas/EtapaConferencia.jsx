@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { acaoFichaConferencia, abrirOsDoItem } from "../../../../utils/fichaConferencia";
+import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
+import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -8,7 +10,7 @@ function fmtData(iso) {
   return d.toLocaleDateString("pt-BR");
 }
 
-export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
+export default function EtapaConferencia({ pedido, etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
   const [criandoId, setCriandoId] = useState(null);
 
@@ -16,6 +18,30 @@ export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
   const p = etapa2.progresso || {};
 
   const genitores = preAgendamentos || [];
+
+  function remarcarConferencia(g) {
+    navigate("/agendamentos", {
+      state: {
+        novoInstalacao: {
+          pedido_id:     pedido.id,
+          pedido_numero: numeroPedidoCompleto(pedido),
+          cliente:       pedido.cliente_nome || "",
+          cliente_id:    pedido.cliente_id || null,
+          cep:           pedido.cep,
+          rua:           pedido.rua,
+          numero:        pedido.numero_rua,
+          complemento:   pedido.complemento,
+          bairro:        pedido.bairro,
+          cidade:        pedido.cidade,
+          estado:        pedido.estado,
+          itens:         (g.itens || []).map((it) => ({ pedido_item_id: it.pedido_item_id, nome: it.descricao })),
+          tipo:          "Conferência",
+          status:        "agendado",
+          titulo:        `Conferência - ${primeiroEUltimoNome(pedido.cliente_nome)} - ${numeroPedidoCompleto(pedido)}`,
+        },
+      },
+    });
+  }
 
   return (
     <div className="pf-modal-overlay">
@@ -52,20 +78,42 @@ export default function EtapaConferencia({ etapas, preAgendamentos, onClose }) {
 
           {genitores.map((g) => (
             <div key={g.id} style={{ border: "1px solid var(--pf-separador)", borderRadius: 8, marginBottom: 12, overflow: "hidden" }}>
-              <div style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>
                     {g.tipo === "Conferência" ? "Conferência" : "Entrega"}: {fmtData(g.data_inicio)}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>{(g.itens || []).length} itens</div>
                 </div>
+                {g.status === "nao_concluido" && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                    <div>
+                      <span className="pf-badge pf-badge-err">Não concluído — necessário remarcar</span>
+                      {g.observacoes_status && (
+                        <div style={{ fontSize: 11, color: "var(--pf-card-sub)", marginTop: 2, textAlign: "right" }}>
+                          {g.observacoes_status}
+                        </div>
+                      )}
+                    </div>
+                    {g.tipo === "Conferência" && (
+                      <button className="pf-btn-primary" style={{ fontSize: 12, padding: "4px 10px" }}
+                        onClick={() => remarcarConferencia(g)}>
+                        🔁 Remarcar
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               {(g.herdeiros || []).filter((h) => h.tipo !== "Instalação").length > 0 && (
                 <div style={{ padding: "10px 14px" }}>
                   {g.herdeiros.filter((h) => h.tipo !== "Instalação").map((h) => (
                     <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--pf-separador)" }}>
                       <div style={{ fontSize: 13 }}>Conferência — {fmtData(h.data_inicio)}</div>
-                      <span className={`pf-badge ${h.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>{h.status}</span>
+                      {h.status === "nao_concluido" ? (
+                        <span className="pf-badge pf-badge-err" title={h.observacoes_status || ""}>Não concluído</span>
+                      ) : (
+                        <span className={`pf-badge ${h.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>{h.status}</span>
+                      )}
                     </div>
                   ))}
                 </div>
