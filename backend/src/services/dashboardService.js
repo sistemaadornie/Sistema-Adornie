@@ -514,7 +514,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        JOIN agendamentos a ON a.id = ai.agendamento_id
        WHERE a.pedido_id = $1 AND a.empresa_id = $2
          AND ai.pedido_item_id IS NOT NULL
-         AND a.status NOT IN ('cancelado','rejeitado')
+         AND a.status NOT IN ('cancelado','rejeitado','nao_concluido')
          AND a.agendamento_pai_id IS NULL
          AND a.tipo = 'Instalação'`,
       [pedidoId, empresaId]
@@ -534,7 +534,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        JOIN categorias cat ON cat.id = pi.categoria_id
        WHERE a.pedido_id = $1 AND a.empresa_id = $2
          AND ai.pedido_item_id IS NOT NULL
-         AND a.status NOT IN ('cancelado','rejeitado')
+         AND a.status NOT IN ('cancelado','rejeitado','nao_concluido')
          AND a.agendamento_pai_id IS NULL
          AND a.tipo = 'Conferência'
          AND cat.necessita_conferencia = true`,
