@@ -709,6 +709,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
               cat.tipo_confeccao,
               os.id AS ordem_servico_id,
               (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
+              (os.dados_conferencia_consultoras IS NOT NULL) AS conferencia_consultoras_preenchida,
               (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
        FROM agendamento_itens ai
        JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
@@ -737,6 +738,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       tipo_confeccao: item.tipo_confeccao,
       ordem_servico_id: item.ordem_servico_id,
       confeccao_preenchida: item.confeccao_preenchida,
+      conferencia_consultoras_preenchida: item.conferencia_consultoras_preenchida,
       ficha_preenchida: item.ficha_preenchida,
     });
   }
