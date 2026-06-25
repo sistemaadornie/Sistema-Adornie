@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import EditarPedidoModal from "./EditarPedidoModal";
@@ -8,6 +8,7 @@ import SelecionarTipoPersianaModal from "./SelecionarTipoPersianaModal";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
 import { api } from "../../../../services/api";
+import { abrirOsDoItem } from "../../../../utils/fichaConferencia";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -32,9 +33,21 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
   const [vinculando, setVinculando] = useState(false);
   const [selecionandoTipo, setSelecionandoTipo] = useState(false);
   const [definindoConferencia, setDefinindoConferencia] = useState(false);
+  const [pendentesConsultoras, setPendentesConsultoras] = useState([]);
+  const [carregandoPendentes, setCarregandoPendentes] = useState(true);
+  const [abrindoItemId, setAbrindoItemId] = useState(null);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
+
+  useEffect(() => {
+    let ativo = true;
+    setCarregandoPendentes(true);
+    api.get(`/pedidos/${pedidoId}/itens-pendentes-conferencia-consultoras`)
+      .then((res) => { if (ativo) setPendentesConsultoras(res.itens || []); })
+      .finally(() => { if (ativo) setCarregandoPendentes(false); });
+    return () => { ativo = false; };
+  }, [pedidoId]);
 
   const todasConferenciasFeitasOuDesnecessarias =
     (p.total_itens_conferencia ?? 0) === 0 ||
@@ -69,6 +82,16 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
         },
       },
     });
+  }
+
+  async function preencherConferenciaConsultoras(item) {
+    setAbrindoItemId(item.pedido_item_id);
+    try {
+      const osId = await abrirOsDoItem(item);
+      navigate(`/pedidos/os/${osId}/conferencia-consultoras`);
+    } finally {
+      setAbrindoItemId(null);
+    }
   }
 
   async function handleDefinirDataEntrega() {
@@ -143,6 +166,10 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
               ok={todasConferenciasFeitasOuDesnecessarias}
               texto={`Todos os itens com data de conferência definida (${p.itens_cobertos_conferencia ?? 0}/${p.total_itens_conferencia ?? 0})`}
             />
+            <CriterioItem
+              ok={(p.total_itens_conferencia ?? 0) === 0 || (p.itens_com_conferencia_consultoras ?? 0) >= (p.total_itens_conferencia ?? 0)}
+              texto={`Todos os itens com Conferência Consultoras preenchida (${p.itens_com_conferencia_consultoras ?? 0}/${p.total_itens_conferencia ?? 0})`}
+            />
           </div>
 
           {(p.ambientes_canais_insuficientes?.length ?? 0) > 0 && (
@@ -168,6 +195,33 @@ export default function EtapaDadosPedido({ pedidoId, pedido, etapas, preAgendame
                 </div>
               ))}
             </div>
+          )}
+
+          {(p.total_itens_conferencia ?? 0) > 0 && (
+            <>
+              <hr className="pf-separador" />
+              <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>CONFERÊNCIA CONSULTORAS</div>
+
+              {!carregandoPendentes && pendentesConsultoras.length === 0 && (
+                <div style={{ color: "var(--pf-badge-ok-text)", fontSize: 13, marginBottom: 12 }}>
+                  Todos os itens já têm Conferência Consultoras preenchida.
+                </div>
+              )}
+
+              {pendentesConsultoras.map((item) => (
+                <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{item.descricao}</div>
+                    {item.ambiente && <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>{item.ambiente}</div>}
+                  </div>
+                  <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
+                    disabled={abrindoItemId === item.pedido_item_id}
+                    onClick={() => preencherConferenciaConsultoras(item)}>
+                    {abrindoItemId === item.pedido_item_id ? "Abrindo..." : "Preencher Conferência Consultoras"}
+                  </button>
+                </div>
+              ))}
+            </>
           )}
 
           <hr className="pf-separador" />
