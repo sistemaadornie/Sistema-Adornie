@@ -1373,6 +1373,7 @@ async function listarConferenciaItens(agendamentoId, empresaId) {
        u.nome_completo AS conferido_por_nome,
        os.id AS ordem_servico_id,
        (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
+       (os.dados_conferencia_consultoras IS NOT NULL) AS conferencia_consultoras_preenchida,
        (os.dados_tecnicos IS NOT NULL) AS ficha_preenchida
      FROM agendamento_itens ai
      JOIN pedido_itens pi ON pi.id = ai.pedido_item_id

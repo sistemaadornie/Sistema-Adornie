@@ -1,0 +1,23 @@
+jest.mock('../database/db', () => ({ query: jest.fn() }));
+const db = require('../database/db');
+const svc = require('../services/agendamentoService');
+
+afterEach(() => jest.clearAllMocks());
+
+describe('listarConferenciaItens', () => {
+  test('expõe conferencia_consultoras_preenchida por item', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 5 }] }) // agCheck
+      .mockResolvedValueOnce({ rows: [{
+        pedido_item_id: 1, descricao: 'Cortina', ambiente: 'Sala', tipo_confeccao: 'cortina',
+        status: 'pendente', observacoes: null, dados: null, conferido_em: null, conferido_por_nome: null,
+        ordem_servico_id: 9, confeccao_preenchida: false, ficha_preenchida: false,
+        conferencia_consultoras_preenchida: true,
+      }] });
+
+    const itens = await svc.listarConferenciaItens(5, 10);
+
+    expect(itens[0].conferencia_consultoras_preenchida).toBe(true);
+    expect(db.query.mock.calls[1][0]).toContain('dados_conferencia_consultoras');
+  });
+});
