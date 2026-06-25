@@ -231,20 +231,20 @@ export default function FichaTecnicaInstalador() {
     );
   }
 
-  if (!osData.dados_confeccao) {
+  if (!osData.dados_conferencia_consultoras) {
     return (
       <>
         <TopBar title="Conferência Técnica" back />
         <div className="page">
           <div className="banner banner-warning">
-            Aguardando a Ficha de Confecção. A consultora ainda não preencheu a ficha de confecção deste item.
+            Aguardando a Ficha de Conferência Consultoras. A consultora ainda não preencheu a Ficha de Conferência Consultoras deste item, na Etapa 1 do pedido.
           </div>
         </div>
       </>
     );
   }
 
-  const campos = painelConfeccao(osData.dados_confeccao, osData.tipo);
+  const campos = painelConfeccao(osData.dados_conferencia_consultoras, osData.tipo);
 
   return (
     <>
@@ -253,7 +253,7 @@ export default function FichaTecnicaInstalador() {
         {erro && <div className="banner banner-danger">{erro}</div>}
 
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Ficha de Confecção (referência)</h3>
+          <h3 style={{ marginTop: 0 }}>Ficha de Conferência Consultoras (referência)</h3>
           {campos.map(([label, valor]) => (
             <div className="detail-row" key={label}>
               <div>
