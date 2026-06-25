@@ -25,6 +25,7 @@ const VeiculosHistorico      = lazy(() => import("./pages/veiculos/VeiculosHisto
 const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
 const OrdemServicoPage       = lazy(() => import("./pages/pedidos/OrdemServicoPage"));
 const FichaConfeccao         = lazy(() => import("./pages/pedidos/FichaConfeccao"));
+const FichaConferenciaConsultoras = lazy(() => import("./pages/pedidos/FichaConferenciaConsultoras"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
 const Produtos               = lazy(() => import("./pages/catalogo/Produtos"));
@@ -100,6 +101,7 @@ export default function App() {
                   <Route path="/pedidos" element={<Pedidos />} />
                   <Route path="/pedidos/os/:osId" element={<OrdemServicoPage />} />
                   <Route path="/pedidos/os/:osId/confeccao" element={<FichaConfeccao />} />
+                  <Route path="/pedidos/os/:osId/conferencia-consultoras" element={<FichaConferenciaConsultoras />} />
                   <Route path="/pedidos/:id/fluxo"    element={<PedidoFluxo />} />
                   <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
