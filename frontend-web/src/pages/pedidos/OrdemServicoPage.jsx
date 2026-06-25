@@ -244,19 +244,19 @@ export default function OrdemServicoPage() {
     );
   }
 
-  if (!osData.dados_confeccao) {
+  if (!osData.dados_conferencia_consultoras) {
     return (
       <div className="ek-page" style={{ padding: 24 }}>
         <div className="os-alert os-alert-danger" style={{ marginBottom: 16 }}>
-          Aguardando a Ficha de Confecção. A conferência técnica só pode ser preenchida depois que a consultora preencher a ficha de confecção deste item.
+          Aguardando a Ficha de Conferência Consultoras. A conferência técnica só pode ser preenchida depois que a consultora preencher a Ficha de Conferência Consultoras deste item, na Etapa 1 do pedido.
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="os-btn os-btn-secondary" onClick={voltar}>← Voltar</button>
           <button
             className="os-btn os-btn-primary"
-            onClick={() => navigate(`/pedidos/os/${osId}/confeccao`, { state: { voltarConferenciaAgendamentoId: voltarAgendamentoId } })}
+            onClick={() => navigate(`/pedidos/os/${osId}/conferencia-consultoras`, { state: { voltarConferenciaAgendamentoId: voltarAgendamentoId } })}
           >
-            Preencher Ficha de Confecção
+            Preencher Ficha de Conferência Consultoras
           </button>
         </div>
       </div>
@@ -264,7 +264,7 @@ export default function OrdemServicoPage() {
   }
 
   const pedidoNumero = osData.pedido_numero || osData.pedido_id;
-  const camposConfeccao = painelConfeccao(osData.dados_confeccao, osData.tipo);
+  const camposConfeccao = painelConfeccao(osData.dados_conferencia_consultoras, osData.tipo);
 
   return (
     <div className="ek-page os-page">
@@ -294,7 +294,7 @@ export default function OrdemServicoPage() {
       <div className="os-page-body">
         <div className="os-layout-cols">
           <div className="os-col-left">
-            <div className="os-section-title">Ficha de Confecção (referência)</div>
+            <div className="os-section-title">Ficha de Conferência Consultoras (referência)</div>
             <div className="os-card-visual">
               {camposConfeccao.map(([label, valor]) => (
                 <div className="os-visual-field" key={label}>
