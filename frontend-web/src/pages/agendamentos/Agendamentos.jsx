@@ -2828,7 +2828,7 @@ function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
                     {item.ambiente && <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.ambiente}</div>}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: item.ficha_preenchida ? "#22c55e" : "#94a3b8" }}>
-                    {ocupado ? "Abrindo..." : (acao ? acao.label : "Sem ficha de confecção")}
+                    {ocupado ? "Abrindo..." : (acao ? acao.label : (item.tipo_confeccao ? "Aguardando Conferência Consultoras (Etapa 1)" : "Sem ficha de confecção"))}
                   </span>
                 </button>
               );

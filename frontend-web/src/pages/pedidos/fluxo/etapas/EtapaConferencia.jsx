@@ -143,6 +143,8 @@ export default function EtapaConferencia({ pedido, etapas, preAgendamentos, onCl
                             }}>
                             {criandoId === item.pedido_item_id ? "Abrindo..." : acao.label}
                           </button>
+                        ) : item.tipo_confeccao ? (
+                          <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando Conferência Consultoras (Etapa 1)</span>
                         ) : (
                           <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Sem ficha de confecção</span>
                         )}
