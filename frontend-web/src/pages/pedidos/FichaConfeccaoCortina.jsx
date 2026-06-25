@@ -1,29 +1,49 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { api } from "../../services/api";
-import {
-  clipesAberturaCentral,
-  clipesSemAbertura,
-  calcularQuantTecidoCortina,
-  calcularQuantEntretela,
-  calcularQuantBarrado,
-  calcularSobraBarrado,
-} from "../../utils/calculoCortina";
 import "./OrdemServicoModal.css";
 
 const VAZIO = {
-  feitaPor: "", espacador: "", tipoWave: "", abertura: "", componente: "", ladoMotor: "n/a",
+  feitaPor: "", espacador: "", tipoWave: "", abertura: "", componente: "",
   larguraTrilho: "", larguraTecido: "", nomeTecido: "", vendeuBarraAplicada: "",
   alturaCortina: "", alturaBarra: "", quantTomas: "", tamanhoTomas: "",
   cortinaLadoALado: "", detalheBarra: "",
 };
+
+function formatNumeroBR(valor) {
+  if (valor === null || valor === undefined || valor === "") return "";
+  const n = typeof valor === "number" ? valor : parseFloat(String(valor).replace(",", "."));
+  return Number.isFinite(n) ? n.toFixed(2).replace(".", ",") : "";
+}
+
+function partesMedidas(itemMedidas) {
+  return String(itemMedidas || "").split(/[x×]/i).map((p) => p.trim()).filter(Boolean);
+}
+
+function formatMedidasVenda(itemMedidas) {
+  if (!itemMedidas) return null;
+  const partes = partesMedidas(itemMedidas);
+  return partes.length === 2 ? `${partes[0]} larg x ${partes[1]} alt` : itemMedidas;
+}
 
 function paraNumero(valor) {
   const n = parseFloat(String(valor ?? "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 }
 
-export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
-  const [dados, setDados] = useState({ ...VAZIO, ...(osData.dados_confeccao || {}) });
+export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSalvar, onVoltar }) {
+  const campoDados = modo === "conferencia_consultoras" ? "dados_conferencia_consultoras" : "dados_confeccao";
+  const endpointSalvar = modo === "conferencia_consultoras" ? "conferencia-consultoras" : "confeccao";
+  const tituloPagina = modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras — Cortina" : "Ficha de Confecção — Cortina";
+  const labelSalvar = modo === "conferencia_consultoras" ? "Salvar Ficha de Conferência Consultoras" : "Salvar Ficha de Confecção";
+
+  const [dados, setDados] = useState(() => {
+    const salvos = osData[campoDados] || {};
+    const alturaPadrao = osData.item_altura != null && osData.item_altura !== ""
+      ? formatNumeroBR(osData.item_altura)
+      : (partesMedidas(osData.item_medidas)[1] || "");
+    const nomeTecidoPadrao = `${osData.item_referencia || ""}${osData.item_cor ? ` (${osData.item_cor})` : ""}`.trim();
+    return { ...VAZIO, alturaCortina: alturaPadrao, nomeTecido: nomeTecidoPadrao, ...salvos };
+  });
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -31,34 +51,6 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
   function setCampo(chave, valor) {
     setDados((prev) => ({ ...prev, [chave]: valor }));
   }
-
-  const calculo = useMemo(() => {
-    const entrada = {
-      tipoOS: "CORTINA",
-      feitaPor: dados.feitaPor,
-      espacador: dados.espacador,
-      tipoWave: dados.tipoWave,
-      abertura: dados.abertura,
-      larguraTrilho: paraNumero(dados.larguraTrilho),
-      larguraTecido: paraNumero(dados.larguraTecido),
-      alturaCortina: paraNumero(dados.alturaCortina),
-      vendeuBarraAplicada: dados.vendeuBarraAplicada,
-      alturaBarra: paraNumero(dados.alturaBarra),
-      quantTomas: paraNumero(dados.quantTomas),
-      tamanhoTomas: paraNumero(dados.tamanhoTomas),
-    };
-
-    const clipes =
-      entrada.abertura === "COM ABERTURA"
-        ? clipesAberturaCentral(entrada)
-        : clipesSemAbertura(entrada);
-    const quantTecidoCortina = calcularQuantTecidoCortina(entrada);
-    const quantEntretela = calcularQuantEntretela(entrada);
-    const quantBarrado = calcularQuantBarrado(entrada);
-    const sobraBarrado = calcularSobraBarrado({ ...entrada, quantBarrado });
-
-    return { clipes, quantTecidoCortina, quantEntretela, quantBarrado, sobraBarrado };
-  }, [dados]);
 
   async function salvar() {
     setErro("");
@@ -74,11 +66,11 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
 
     setSalvando(true);
     try {
-      await api.put(`/os/${osData.id}/confeccao`, dados);
-      setSucesso("Ficha de Confecção salva com sucesso!");
+      await api.put(`/os/${osData.id}/${endpointSalvar}`, dados);
+      setSucesso(`${modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras" : "Ficha de Confecção"} salva com sucesso!`);
       setTimeout(onSalvar, 1200);
     } catch (err) {
-      setErro(err.message || "Erro ao salvar ficha de confecção.");
+      setErro(err.message || "Erro ao salvar ficha.");
     } finally {
       setSalvando(false);
     }
@@ -92,7 +84,7 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
         <div className="os-page-header-left">
           <button className="os-back-btn" onClick={onVoltar}>← Voltar</button>
           <div>
-            <h1 className="os-page-title">Ficha de Confecção — Cortina</h1>
+            <h1 className="os-page-title">{tituloPagina}</h1>
             <p className="os-page-subtitle">
               {osData.cliente_nome && <span>{osData.cliente_nome}</span>}
               {pedidoNumero && <span className="os-v-value tag-pedido" style={{ marginLeft: 8 }}>{pedidoNumero}</span>}
@@ -103,7 +95,7 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
         <div className="os-page-header-right">
           <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>Cancelar</button>
           <button className="os-btn os-btn-primary" onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando..." : "✓ Salvar Ficha de Confecção"}
+            {salvando ? "Salvando..." : `✓ ${labelSalvar}`}
           </button>
         </div>
       </div>
@@ -121,18 +113,8 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
               <div className="os-visual-field"><span className="os-v-label">Vendedor</span><span className="os-v-value">{osData.consultor_nome || "—"}</span></div>
               <hr className="os-divider" />
               <div className="os-visual-field"><span className="os-v-label">Ambiente</span><span className="os-v-value highlight-text">{osData.item_ambiente || "—"}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Item</span><span className="os-v-value">{osData.item_descricao || "—"}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Medidas venda</span><span className="os-v-value spec-box">{osData.item_medidas || "—"}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Tecido venda</span><span className="os-v-value spec-box">{osData.item_referencia || ""}{osData.item_cor ? ` (${osData.item_cor})` : ""}</span></div>
-            </div>
-
-            <div className="os-form-section">
-              <div className="os-section-title">Cálculos (atualizam ao digitar)</div>
-              <div className="os-field"><label>Clipes</label><div className="os-v-value spec-box">{calculo.clipes === "" ? "—" : calculo.clipes}</div></div>
-              <div className="os-field"><label>Quant. tecido cortina</label><div className="os-v-value spec-box">{calculo.quantTecidoCortina || "—"}</div></div>
-              <div className="os-field"><label>Quant. entretela</label><div className="os-v-value spec-box">{calculo.quantEntretela || "—"}</div></div>
-              <div className="os-field"><label>Quant. para barrado</label><div className="os-v-value spec-box">{calculo.quantBarrado || "—"}</div></div>
-              <div className="os-field"><label>Sobra de barrado</label><div className="os-v-value spec-box">{calculo.sobraBarrado || "—"}</div></div>
+              <div className="os-visual-field stacked"><span className="os-v-label">Item</span><span className="os-v-value">{osData.item_descricao || "—"}</span></div>
+              <div className="os-visual-field"><span className="os-v-label">Medidas venda</span><span className="os-v-value spec-box">{formatMedidasVenda(osData.item_medidas) || "—"}</span></div>
             </div>
           </div>
 
@@ -168,7 +150,7 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
                 </div>
               </div>
 
-              <div className="os-grid-3">
+              <div className="os-grid-2">
                 <div className="os-field">
                   <label>Abertura</label>
                   <select value={dados.abertura} onChange={(e) => setCampo("abertura", e.target.value)} className="input-highlight">
@@ -189,14 +171,6 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
                     <option value="Trilho Motorizado ADORNIE">Trilho Motorizado ADORNIE</option>
                   </select>
                 </div>
-                <div className="os-field">
-                  <label>Lado do motor</label>
-                  <select value={dados.ladoMotor} onChange={(e) => setCampo("ladoMotor", e.target.value)}>
-                    <option value="n/a">Sem motor</option>
-                    <option value="esquerdo">Esquerdo</option>
-                    <option value="direito">Direito</option>
-                  </select>
-                </div>
               </div>
 
               <div className="os-grid-2">
@@ -215,19 +189,13 @@ export default function FichaConfeccaoCortina({ osData, onSalvar, onVoltar }) {
                 <input type="text" placeholder="Nome/código do tecido" value={dados.nomeTecido} onChange={(e) => setCampo("nomeTecido", e.target.value)} />
               </div>
 
-              <div className="os-grid-2">
-                <div className="os-field">
-                  <label>Altura da cortina (m)</label>
-                  <input type="text" placeholder="Ex: 2,84" value={dados.alturaCortina} onChange={(e) => setCampo("alturaCortina", e.target.value)} className="input-highlight" />
-                </div>
-                <div className="os-field">
-                  <label>Vendeu barra aplicada?</label>
-                  <select value={dados.vendeuBarraAplicada} onChange={(e) => setCampo("vendeuBarraAplicada", e.target.value)}>
-                    <option value="">— Selecione —</option>
-                    <option value="SIM">Sim</option>
-                    <option value="NÃO">Não</option>
-                  </select>
-                </div>
+              <div className="os-field">
+                <label>Vendeu barra aplicada?</label>
+                <select value={dados.vendeuBarraAplicada} onChange={(e) => setCampo("vendeuBarraAplicada", e.target.value)}>
+                  <option value="">— Selecione —</option>
+                  <option value="SIM">Sim</option>
+                  <option value="NÃO">Não</option>
+                </select>
               </div>
 
               <div className="os-grid-3">

@@ -14,8 +14,13 @@ function paraNumero(valor) {
   return Number.isFinite(n) ? n : 0;
 }
 
-export default function FichaConfeccaoForro({ osData, onSalvar, onVoltar }) {
-  const [dados, setDados] = useState({ ...VAZIO, ...(osData.dados_confeccao || {}) });
+export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalvar, onVoltar }) {
+  const campoDados = modo === "conferencia_consultoras" ? "dados_conferencia_consultoras" : "dados_confeccao";
+  const endpointSalvar = modo === "conferencia_consultoras" ? "conferencia-consultoras" : "confeccao";
+  const tituloPagina = modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras — Forro" : "Ficha de Confecção — Forro";
+  const labelSalvar = modo === "conferencia_consultoras" ? "Salvar Ficha de Conferência Consultoras" : "Salvar Ficha de Confecção";
+
+  const [dados, setDados] = useState({ ...VAZIO, ...(osData[campoDados] || {}) });
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -51,11 +56,11 @@ export default function FichaConfeccaoForro({ osData, onSalvar, onVoltar }) {
 
     setSalvando(true);
     try {
-      await api.put(`/os/${osData.id}/confeccao`, dados);
-      setSucesso("Ficha de Confecção salva com sucesso!");
+      await api.put(`/os/${osData.id}/${endpointSalvar}`, dados);
+      setSucesso(`${modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras" : "Ficha de Confecção"} salva com sucesso!`);
       setTimeout(onSalvar, 1200);
     } catch (err) {
-      setErro(err.message || "Erro ao salvar ficha de confecção.");
+      setErro(err.message || "Erro ao salvar ficha.");
     } finally {
       setSalvando(false);
     }
@@ -69,7 +74,7 @@ export default function FichaConfeccaoForro({ osData, onSalvar, onVoltar }) {
         <div className="os-page-header-left">
           <button className="os-back-btn" onClick={onVoltar}>← Voltar</button>
           <div>
-            <h1 className="os-page-title">Ficha de Confecção — Forro</h1>
+            <h1 className="os-page-title">{tituloPagina}</h1>
             <p className="os-page-subtitle">
               {osData.cliente_nome && <span>{osData.cliente_nome}</span>}
               {pedidoNumero && <span className="os-v-value tag-pedido" style={{ marginLeft: 8 }}>{pedidoNumero}</span>}
@@ -80,7 +85,7 @@ export default function FichaConfeccaoForro({ osData, onSalvar, onVoltar }) {
         <div className="os-page-header-right">
           <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>Cancelar</button>
           <button className="os-btn os-btn-primary" onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando..." : "✓ Salvar Ficha de Confecção"}
+            {salvando ? "Salvando..." : `✓ ${labelSalvar}`}
           </button>
         </div>
       </div>
