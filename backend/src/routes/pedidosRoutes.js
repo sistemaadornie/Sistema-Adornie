@@ -578,6 +578,47 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
   }
 });
 
+// GET /pedidos/:id/itens-pendentes-conferencia-consultoras
+router.get("/:id/itens-pendentes-conferencia-consultoras", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const empresaId = req.user.empresa_id;
+
+    const pedCheck = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (pedCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    const query = `
+      SELECT
+        pi.id AS pedido_item_id,
+        pi.ordem,
+        pi.ambiente,
+        pi.descricao,
+        pi.medidas,
+        os.id AS ordem_servico_id
+      FROM pedido_itens pi
+      LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+      LEFT JOIN produtos prod ON prod.id = oi.produto_id
+      LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
+      WHERE pi.pedido_id = $1
+        AND cat.necessita_conferencia = true
+        AND (os.id IS NULL OR os.dados_conferencia_consultoras IS NULL)
+      ORDER BY pi.ordem ASC, pi.id ASC
+    `;
+
+    const { rows } = await db.query(query, [pedidoId]);
+    return res.json({ itens: rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar itens pendentes de Conferência Consultoras." });
+  }
+});
+
 // PATCH /pedidos/:id/producao-itens
 router.patch("/:id/producao-itens", authMiddleware, async (req, res) => {
   try {
