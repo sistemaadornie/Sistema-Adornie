@@ -70,6 +70,7 @@ async function buscar(id) {
     `SELECT os.id, os.status, os.aberta_em, os.encerrada_em, os.tipo,
             os.dados_tecnicos, os.preenchido_em, os.preenchido_por,
             os.dados_confeccao, os.confeccao_preenchido_em, os.confeccao_preenchido_por,
+            os.dados_conferencia_consultoras, os.conferencia_consultoras_preenchido_em, os.conferencia_consultoras_preenchido_por,
             os.pedido_item_id,
             pi.pedido_id,
             pi.ambiente AS item_ambiente,
@@ -79,6 +80,8 @@ async function buscar(id) {
             pi.referencia AS item_referencia,
             pi.cor AS item_cor,
             pi.medidas AS item_medidas,
+            pi.largura AS item_largura,
+            pi.altura AS item_altura,
             p.numero_origem AS pedido_numero_origem,
             p.numero_sequencial AS pedido_numero_sequencial,
             c.nome AS cliente_nome,
@@ -148,11 +151,35 @@ async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
   return rows[0];
 }
 
-async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
-  const { rows: osRows } = await db.query(`SELECT dados_confeccao FROM ordem_servico WHERE id = $1`, [id]);
+async function salvarDadosConferenciaConsultoras(id, userId, dados) {
+  const { rows: osRows } = await db.query(`SELECT tipo FROM ordem_servico WHERE id = $1`, [id]);
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
-  if (!osRows[0].dados_confeccao) {
-    throw Object.assign(new Error('Ficha de Confecção precisa ser preenchida antes da Conferência Técnica.'), { status: 400 });
+
+  if (osRows[0].tipo === 'cortina') {
+    validarDadosConfeccaoCortina(dados);
+  } else if (osRows[0].tipo === 'forro') {
+    validarDadosConfeccaoForro(dados);
+  }
+
+  const { rows } = await db.query(
+    `UPDATE ordem_servico
+     SET dados_conferencia_consultoras = $1,
+         conferencia_consultoras_preenchido_em = NOW(),
+         conferencia_consultoras_preenchido_por = $2,
+         status = CASE WHEN status = 'aberta' THEN 'em_andamento' ELSE status END,
+         updated_at = NOW()
+     WHERE id = $3
+     RETURNING *`,
+    [JSON.stringify(dados), userId, id]
+  );
+  return rows[0];
+}
+
+async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
+  const { rows: osRows } = await db.query(`SELECT dados_conferencia_consultoras FROM ordem_servico WHERE id = $1`, [id]);
+  if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
+  if (!osRows[0].dados_conferencia_consultoras) {
+    throw Object.assign(new Error('Ficha de Conferência Consultoras precisa ser preenchida antes da Conferência Técnica.'), { status: 400 });
   }
 
   // Validações estritas dos dados reais (dados verdadeiros)
@@ -201,4 +228,4 @@ async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
   return rows[0];
 }
 
-module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosTecnicos };
+module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosConferenciaConsultoras, salvarDadosTecnicos };
