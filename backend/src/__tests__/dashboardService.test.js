@@ -11,6 +11,9 @@ describe("calcularEtapaAtual", () => {
     itensSemVinculo: 0,
     totalItens: 2,
     itensCobertos: 0,
+    totalItensConferencia: 0,
+    itensCobertosConferencia: 0,
+    itensComConferenciaConsultorasPreenchida: 0,
     totalItensConf: 0,
     itensConferidos: 0,
     totalEmConf: 0,
@@ -28,6 +31,30 @@ describe("calcularEtapaAtual", () => {
     const r = calcularEtapaAtual({ ...base, verificacaoOk: false });
     expect(r.etapa_atual).toBe(1);
     expect(r.etapa1_ok).toBe(false);
+  });
+
+  test("etapa 1 com itens de conferência sem Ficha de Conferência Consultoras -> etapa1_ok false", () => {
+    const r = calcularEtapaAtual({
+      ...base,
+      verificacaoOk: true,
+      itensCobertos: 2,
+      totalItensConferencia: 1,
+      itensCobertosConferencia: 1,
+      itensComConferenciaConsultorasPreenchida: 0,
+    });
+    expect(r.etapa1_ok).toBe(false);
+  });
+
+  test("etapa 1 com todos os itens de conferência com Ficha de Conferência Consultoras preenchida -> etapa1_ok true", () => {
+    const r = calcularEtapaAtual({
+      ...base,
+      verificacaoOk: true,
+      itensCobertos: 2,
+      totalItensConferencia: 1,
+      itensCobertosConferencia: 1,
+      itensComConferenciaConsultorasPreenchida: 1,
+    });
+    expect(r.etapa1_ok).toBe(true);
   });
 
   test("etapa 1 completa, conferencia pendente -> etapa_atual 2", () => {
@@ -206,6 +233,8 @@ describe("listarPedidosDashboard", () => {
       // 13) instalacoes por pedido
       .mockResolvedValueOnce({ rows: [] })
       // 14) separacao por pedido
+      .mockResolvedValueOnce({ rows: [] })
+      // 15) itens com Ficha de Conferência Consultoras preenchida por pedido
       .mockResolvedValueOnce({ rows: [] });
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
@@ -254,7 +283,8 @@ describe("listarPedidosDashboard", () => {
       .mockResolvedValueOnce({ rows: [] }) // genitores agendados
       .mockResolvedValueOnce({ rows: [] }) // produto_ok
       .mockResolvedValueOnce({ rows: [] }) // instalacoes
-      .mockResolvedValueOnce({ rows: [] }); // separacao
+      .mockResolvedValueOnce({ rows: [] }) // separacao
+      .mockResolvedValueOnce({ rows: [] }); // itens com conferencia consultoras preenchida
 
     const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
 
@@ -295,11 +325,48 @@ describe("listarPedidosDashboard", () => {
       .mockResolvedValueOnce({ rows: [] }) // genitores agendados
       .mockResolvedValueOnce({ rows: [] }) // produto_ok
       .mockResolvedValueOnce({ rows: [] }) // instalacoes
-      .mockResolvedValueOnce({ rows: [] }); // separacao
+      .mockResolvedValueOnce({ rows: [] }) // separacao
+      .mockResolvedValueOnce({ rows: [] }); // itens com conferencia consultoras preenchida
 
     await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
 
     const queryItensCobertos = db.query.mock.calls[3][0];
     expect(queryItensCobertos).toContain("a.tipo = 'Instalação'");
+  });
+
+  test("inclui itens_com_conferencia_consultoras no progresso (via dashboardService futuro consumidor)", async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 4, numero_sequencial: 13, numero_origem: null, status: "pendente",
+          verificacao_ok: true, categorizacao_ok: true, total: "0.00",
+          criado_em: "2026-01-04T00:00:00.000Z", cliente_nome: "Cliente D",
+          consultor_nome: "Consultora W", consultor_id: 8, itens_count: "1",
+          pdf_ok: true, vinculos_ok: true,
+        }],
+      })
+      .mockResolvedValueOnce({ rows: [] }) // preAgs
+      .mockResolvedValueOnce({ rows: [{ pedido_id: 4, total: 1 }] }) // total itens
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos (instalação)
+      .mockResolvedValueOnce({ rows: [{ pedido_id: 4, total: 1 }] }) // total itens conferência
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos conferência (agendamento) — não usado pelo novo critério
+      .mockResolvedValueOnce({ rows: [] }) // sem categoria
+      .mockResolvedValueOnce({ rows: [] }) // sem vinculo
+      .mockResolvedValueOnce({ rows: [] }) // conferencia (etapa 2)
+      .mockResolvedValueOnce({ rows: [] }) // confeccao (etapa 3)
+      .mockResolvedValueOnce({ rows: [] }) // genitores agendados
+      .mockResolvedValueOnce({ rows: [] }) // produto_ok
+      .mockResolvedValueOnce({ rows: [] }) // instalacoes
+      .mockResolvedValueOnce({ rows: [] }) // separacao
+      .mockResolvedValueOnce({ rows: [{ pedido_id: 4, total: 1 }] }); // itens com conferencia consultoras preenchida
+
+    const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
+
+    // 1 item necessita conferência, 0 cobertos por agendamento (etapa1 não fecharia por aí),
+    // mas 1/1 com Ficha de Conferência Consultoras preenchida -> esse critério novo não bloqueia.
+    const ultimaQuery = db.query.mock.calls[14][0];
+    expect(ultimaQuery).toContain("necessita_conferencia");
+    expect(ultimaQuery).toContain("dados_conferencia_consultoras IS NOT NULL");
+    expect(resultado[0].id).toBe(4);
   });
 });

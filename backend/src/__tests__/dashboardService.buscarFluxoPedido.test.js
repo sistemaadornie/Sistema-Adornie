@@ -31,7 +31,8 @@ describe('buscarFluxoPedido — itens_persiana_pendentes', () => {
       .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })            // agendadoRows
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
       .mockResolvedValueOnce({ rows: [{ pendentes: 2 }] })            // itensPersianaPendentesRows
-      .mockResolvedValueOnce({ rows: [] });                           // itensControleRows
+      .mockResolvedValueOnce({ rows: [] })                            // itensControleRows
+      .mockResolvedValueOnce({ rows: [] });                           // itensComConferenciaConsultorasRows
 
     const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
 
@@ -72,6 +73,7 @@ describe('buscarFluxoPedido — itens_cobertos filtra por tipo Instalação e pr
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
       .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })            // itensPersianaPendentesRows
       .mockResolvedValueOnce({ rows: [] })                            // itensControleRows
+      .mockResolvedValueOnce({ rows: [] })                            // itensComConferenciaConsultorasRows
       .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
       .mockResolvedValueOnce({ rows: [] }) // herdeirosRaw
       .mockResolvedValueOnce({ rows: [] }); // separacaoRows
@@ -110,7 +112,8 @@ describe('buscarFluxoPedido — ambientes_canais_insuficientes', () => {
         { id: 10, ambiente: 'Sala', descricao: 'Controle 1 canal', distribui_canais: true, recebe_vinculo_automatico: false, acionamento: null },
         { id: 1,  ambiente: 'Sala', descricao: 'Cortina Motorizada', distribui_canais: false, recebe_vinculo_automatico: true, acionamento: 'motorizado' },
         { id: 2,  ambiente: 'Sala', descricao: 'Forro Motorizado', distribui_canais: false, recebe_vinculo_automatico: true, acionamento: 'motorizado' },
-      ] });                                                             // itensControleRows
+      ] })                                                              // itensControleRows
+      .mockResolvedValueOnce({ rows: [] });                            // itensComConferenciaConsultorasRows
 
     const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
     const etapa1 = resultado.etapas.find(e => e.numero === 1);
@@ -148,6 +151,7 @@ describe('buscarFluxoPedido — agendamento nao_concluido não conta como cobert
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
       .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })            // itensPersianaPendentesRows
       .mockResolvedValueOnce({ rows: [] })                            // itensControleRows
+      .mockResolvedValueOnce({ rows: [] })                            // itensComConferenciaConsultorasRows
       .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
       .mockResolvedValueOnce({ rows: [] }) // herdeirosRaw
       .mockResolvedValueOnce({ rows: [] }); // separacaoRows
@@ -190,6 +194,7 @@ describe('buscarFluxoPedido — expõe observacoes_status do agendamento', () =>
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })
       .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })                            // itensComConferenciaConsultorasRows
       .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
       .mockResolvedValueOnce({ rows: [{ id: 20, agendamento_pai_id: 10, tipo: 'Conferência', status: 'nao_concluido', data_inicio: '2026-06-21', observacoes_status: 'Item avariado' }] }) // herdeirosRaw
       .mockResolvedValueOnce({ rows: [] }); // separacaoRows
@@ -198,5 +203,43 @@ describe('buscarFluxoPedido — expõe observacoes_status do agendamento', () =>
 
     expect(resultado.pre_agendamentos[0].observacoes_status).toBe('Cliente ausente');
     expect(resultado.pre_agendamentos[0].herdeiros[0].observacoes_status).toBe('Item avariado');
+  });
+});
+
+describe('buscarFluxoPedido — itens_com_conferencia_consultoras bloqueia etapa1_ok', () => {
+  test('etapa1_ok fica false quando item de conferência não tem Ficha de Conferência Consultoras preenchida', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{
+        id: 1, numero_sequencial: 1, numero_origem: null, status: 'em_andamento',
+        verificacao_ok: true, categorizacao_ok: true, total: '0',
+        criado_em: '2026-01-01T00:00:00.000Z',
+        cliente_id: null, cep: null, rua: null, numero_rua: null, complemento: null,
+        bairro: null, cidade: null, estado: null,
+        cliente_nome: null, consultor_nome: 'Consultora', consultor_id: 99,
+      }] }) // pedido
+      .mockResolvedValueOnce({ rows: [] }) // anexos
+      .mockResolvedValueOnce({ rows: [] }) // vinculos
+      .mockResolvedValueOnce({ rows: [] }) // allItems
+      .mockResolvedValueOnce({ rows: [] }) // itensRows
+      .mockResolvedValueOnce({ rows: [] }) // genitoresRaw (vazio -> branch sem genitores)
+      .mockResolvedValueOnce({ rows: [{ total: 1 }] })                // totalItensRows
+      .mockResolvedValueOnce({ rows: [{ cobertos: 1 }] })             // itensCobertosRows (instalação)
+      .mockResolvedValueOnce({ rows: [{ total: 1 }] })                // totalConferenciaRows
+      .mockResolvedValueOnce({ rows: [{ cobertos: 1 }] })             // itensCobertosConferenciaRows
+      .mockResolvedValueOnce({ rows: [{ sem_cat: 0 }] })              // itensSemCatRows
+      .mockResolvedValueOnce({ rows: [{ sem_vinc: 0 }] })             // itensSemVinculoRows
+      .mockResolvedValueOnce({ rows: [{ total: 0, conferidos: 0 }] }) // confRows
+      .mockResolvedValueOnce({ rows: [{ em_confeccao: 0, confeccao_ok: 0 }] }) // prodRows
+      .mockResolvedValueOnce({ rows: [{ agendados: 0 }] })            // agendadoRows
+      .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
+      .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })            // itensPersianaPendentesRows
+      .mockResolvedValueOnce({ rows: [] })                            // itensControleRows
+      .mockResolvedValueOnce({ rows: [{ total: 0 }] });               // itensComConferenciaConsultorasRows (0/1 preenchida)
+
+    const resultado = await buscarFluxoPedido(1, 10, 99, ['DASHBOARD_PEDIDOS_GERAL']);
+
+    const etapa1 = resultado.etapas.find((e) => e.numero === 1);
+    expect(etapa1.progresso.itens_com_conferencia_consultoras).toBe(0);
+    expect(etapa1.concluida).toBe(false);
   });
 });

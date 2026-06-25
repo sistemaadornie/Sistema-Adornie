@@ -18,6 +18,7 @@ function calcularEtapaAtual({
   itensCobertos,
   totalItensConferencia,
   itensCobertosConferencia,
+  itensComConferenciaConsultorasPreenchida,
   totalItensConf,
   itensConferidos,
   totalEmConf,
@@ -32,11 +33,14 @@ function calcularEtapaAtual({
 }) {
   const conferenciaOk = (totalItensConferencia ?? 0) === 0 ||
                         (itensCobertosConferencia ?? 0) >= totalItensConferencia;
+  const conferenciaConsultorasOk = (totalItensConferencia ?? 0) === 0 ||
+                        (itensComConferenciaConsultorasPreenchida ?? 0) >= totalItensConferencia;
   const etapa1_ok = verificacaoOk &&
                     itensSemCategoria === 0 &&
                     itensSemVinculo === 0 &&
                     totalItens > 0 &&
-                    conferenciaOk;
+                    conferenciaOk &&
+                    conferenciaConsultorasOk;
 
   const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;
 
@@ -148,6 +152,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     { rows: produtoOkRows },
     { rows: instalacaoRows },
     { rows: separacaoRows },
+    { rows: itensComConferenciaConsultorasRows },
   ] = await Promise.all([
     // Genitores: agendamentos com pedido_id + itens de pedido vinculados
     db.query(
@@ -294,6 +299,17 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        GROUP BY g.pedido_id`,
       [pedidoIds, empresaId]
     ),
+    // Etapa 1: itens com Ficha de Conferência Consultoras preenchida por pedido
+    db.query(
+      `SELECT pi.pedido_id, COUNT(DISTINCT pi.id)::int AS total
+       FROM pedido_itens pi
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       JOIN ordem_servico os ON os.pedido_item_id = pi.id
+       WHERE pi.pedido_id = ANY($1) AND cat.necessita_conferencia = true
+         AND os.dados_conferencia_consultoras IS NOT NULL
+       GROUP BY pi.pedido_id`,
+      [pedidoIds]
+    ),
   ]);
 
   const preAgsPorPedido = {};
@@ -353,6 +369,9 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     };
   }
 
+  const itensComConferenciaConsultorasPorPedido = {};
+  for (const r of itensComConferenciaConsultorasRows) itensComConferenciaConsultorasPorPedido[r.pedido_id] = Number(r.total);
+
   const hoje = new Date();
 
   const resultado = pedidos.map((p) => {
@@ -379,6 +398,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       itensCobertos: itensCobertosPorPedido[p.id] || 0,
       totalItensConferencia: totalConferenciaPorPedido[p.id] || 0,
       itensCobertosConferencia: itensCobertosConferenciaPorPedido[p.id] || 0,
+      itensComConferenciaConsultorasPreenchida: itensComConferenciaConsultorasPorPedido[p.id] || 0,
       totalItensConf: conf.total,
       itensConferidos: conf.conferidos,
       totalEmConf: prod.em_confeccao,
@@ -503,6 +523,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     { rows: produtoOkRows },
     { rows: itensPersianaPendentesRows },
     { rows: itensControleRows },
+    { rows: itensComConferenciaConsultorasRows },
   ] = await Promise.all([
     db.query(
       `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
@@ -615,6 +636,15 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
          AND pi.ambiente IS NOT NULL AND pi.ambiente <> ''`,
       [pedidoId]
     ),
+    db.query(
+      `SELECT COUNT(DISTINCT pi.id)::int AS total
+       FROM pedido_itens pi
+       JOIN categorias cat ON cat.id = pi.categoria_id
+       JOIN ordem_servico os ON os.pedido_item_id = pi.id
+       WHERE pi.pedido_id = $1 AND cat.necessita_conferencia = true
+         AND os.dados_conferencia_consultoras IS NOT NULL`,
+      [pedidoId]
+    ),
   ]);
 
   const totalItens = totalItensRows[0]?.total ?? 0;
@@ -629,6 +659,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const itensComProdutoOk = produtoOkRows[0]?.produto_ok ?? 0;
   const itensPersianaPendentes = itensPersianaPendentesRows[0]?.pendentes ?? 0;
   const { insuficientes: ambientesCanaisInsuficientes } = encontrarVinculosControle(itensControleRows);
+  const itensComConferenciaConsultorasPreenchida = itensComConferenciaConsultorasRows[0]?.total ?? 0;
 
   if (!genitoresRaw.length) {
     const { etapa_atual, etapa1_ok, etapa2_ok, etapa3_ok, etapa4_ok } = calcularEtapaAtual({
@@ -639,6 +670,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       itensCobertos,
       totalItensConferencia,
       itensCobertosConferencia,
+      itensComConferenciaConsultorasPreenchida,
       totalItensConf,
       itensConferidos,
       totalEmConf,
@@ -655,7 +687,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido,
       etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes } },
+        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes, itens_com_conferencia_consultoras: itensComConferenciaConsultorasPreenchida } },
         { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
@@ -776,6 +808,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     itensCobertos,
     totalItensConferencia,
     itensCobertosConferencia,
+    itensComConferenciaConsultorasPreenchida,
     totalItensConf,
     itensConferidos,
     totalEmConf,
@@ -804,6 +837,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
         itens_cobertos_conferencia: itensCobertosConferencia,
         itens_persiana_pendentes: itensPersianaPendentes,
         ambientes_canais_insuficientes: ambientesCanaisInsuficientes,
+        itens_com_conferencia_consultoras: itensComConferenciaConsultorasPreenchida,
       },
     },
     {
