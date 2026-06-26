@@ -8,7 +8,7 @@
   min-height: 100vh;
   display: flex;
   align-items: stretch;
-  background: #0E0D0B;
+  background: var(--color-bg);
   position: relative;
   isolation: isolate;
 }
@@ -23,7 +23,7 @@
 }
 
 body:has(.auth-screen)::after {
-  background: #0E0D0B !important;
+  background: var(--color-bg);
 }
 
 /* ── SPLIT ── */
@@ -224,7 +224,7 @@ body:has(.auth-screen)::after {
   flex-direction: column;
   justify-content: center;
   padding: 56px 52px;
-  background: #0E0D0B;
+  background: var(--color-bg);
   overflow-y: auto;
   max-height: 100vh;
 }
@@ -289,7 +289,7 @@ body:has(.auth-screen)::after {
 
 .auth-form .input-base:focus,
 .auth-form .select-base:focus {
-  border-color: rgba(201, 169, 110, 0.50);
+  border-color: rgba(var(--color-primary-rgb), 0.50);
   background: var(--color-surface-strong);
 }
 
@@ -302,7 +302,7 @@ body:has(.auth-screen)::after {
 }
 
 .auth-form .select-base option {
-  background: #1F1D19;
+  background: var(--color-surface-strong);
   color: var(--color-text);
 }
 
@@ -435,6 +435,31 @@ body:has(.auth-screen)::after {
   margin-bottom: 2px;
 }
 
+/* ── BOTÃO TOGGLE DE TEMA ── */
+.auth-theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.auth-theme-toggle:hover {
+  color: var(--color-primary);
+  border-color: var(--color-border-strong);
+}
+
 /* ── ANIMAÇÃO ── */
 @keyframes authFadeUp {
   from { opacity: 0; transform: translateY(14px); }
@@ -442,61 +467,10 @@ body:has(.auth-screen)::after {
 }
 
 /* ── LIGHT MODE ── */
-[data-theme="light"] .auth-screen,
-[data-theme="light"] body:has(.auth-screen)::after {
-  background: #F5F0E8 !important;
-}
-
+/* O painel da marca mantém estética escura mesmo no modo claro */
 [data-theme="light"] .auth-brand {
   background: linear-gradient(160deg, #1A1612 0%, #2A2318 100%);
   border-right-color: rgba(201, 169, 110, 0.25);
-}
-
-[data-theme="light"] .auth-form-panel {
-  background: #F5F0E8;
-}
-
-[data-theme="light"] .auth-form-title {
-  color: #1A1612;
-}
-
-[data-theme="light"] .auth-form-subtitle {
-  color: #6B5F50;
-}
-
-[data-theme="light"] .auth-form .input-base,
-[data-theme="light"] .auth-form .select-base {
-  background: #FDFAF4;
-  border-color: #DED8CE;
-  color: #1A1612;
-}
-
-[data-theme="light"] .auth-form .input-base::placeholder {
-  color: #A09080;
-}
-
-[data-theme="light"] .auth-form .input-base:focus,
-[data-theme="light"] .auth-form .select-base:focus {
-  border-color: rgba(160, 120, 64, 0.60);
-  background: #FDFAF4;
-}
-
-[data-theme="light"] .auth-form label {
-  color: #A09080;
-}
-
-[data-theme="light"] .auth-links span {
-  color: #6B5F50;
-}
-
-[data-theme="light"] .auth-section-title {
-  color: #A09080;
-  border-bottom-color: #DED8CE;
-}
-
-[data-theme="light"] .auth-form .select-base option {
-  background: #FDFAF4;
-  color: #1A1612;
 }
 
 /* ── RESPONSIVE ── */

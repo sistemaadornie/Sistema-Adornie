@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FaSun, FaMoon } from "react-icons/fa";
 import { API_BASE } from "../services/api";
 
 function salvarUser(u) {
@@ -69,6 +70,15 @@ export default function Login() {
   const [forgotTipo,    setForgotTipo]    = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
     if (loading) return;
@@ -125,6 +135,14 @@ export default function Login() {
 
   return (
     <div className="auth-screen">
+      <button
+        className="auth-theme-toggle"
+        onClick={toggleTheme}
+        title={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+      >
+        {theme === "dark" ? <FaSun /> : <FaMoon />}
+      </button>
+
       <div className="auth-split">
 
         <BrandPanel forgotMode={forgotMode} />
