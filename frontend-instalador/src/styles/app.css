@@ -173,44 +173,6 @@ img {
   margin-top: 0;
 }
 
-.shortcut-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.shortcut-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2);
-  text-decoration: none;
-  color: var(--color-text);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
-}
-
-.shortcut-card:active {
-  transform: scale(0.98);
-}
-
-.shortcut-card .shortcut-icon {
-  font-size: 26px;
-  color: var(--color-primary);
-}
-
-.shortcut-card strong {
-  font-size: 15px;
-}
-
-.shortcut-card span {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
 .list-item {
   position: relative;
   display: block;
@@ -831,24 +793,121 @@ textarea.input-base {
 
 .item-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--color-border);
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 .item-row:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
-.item-row-nome {
+.item-row-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.item-row-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-row-num.is-done {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--color-bg);
+}
+
+.item-row-titulo {
   flex: 1;
   font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.item-row-specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  padding-left: 28px;
+}
+
+.item-row-spec {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.item-row-spec-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+}
+
+.item-row-spec-value {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-row-status {
+  align-self: flex-start;
+  margin-left: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 99px;
+  padding: 3px 9px;
+  border: none;
+}
+
+.item-row-status-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.item-row-status-acao {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.item-row-status-aviso {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
 }
 
 .item-row-fotos {
   display: flex;
   gap: 4px;
+  padding-left: 28px;
 }
 
 .item-row-foto-mini {
@@ -860,8 +919,8 @@ textarea.input-base {
 }
 
 .item-row-cam-btn {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -875,30 +934,22 @@ textarea.input-base {
 .item-row-erro {
   font-size: 11px;
   color: var(--color-danger);
+  padding-left: 28px;
 }
 
-.item-row-info {
-  flex: 1;
+.item-row-footnote {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.item-row-ficha-aguardando {
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
   font-size: 11px;
+  line-height: 1.4;
   color: var(--color-text-muted);
 }
 
-.item-row-ficha-btn {
-  align-self: flex-start;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-primary);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
+.item-row-footnote svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 /* ── Extra badges ────────────────────────────────────────── */
@@ -1084,12 +1135,11 @@ textarea.input-base {
 
 .btn:focus-visible,
 .input-base:focus-visible,
-.shortcut-card:focus-visible,
 .list-item:focus-visible,
 .filter-chip:focus-visible,
 .bottom-nav-item:focus-visible,
 .item-row-cam-btn:focus-visible,
-.item-row-ficha-btn:focus-visible,
+.item-row-status-acao:focus-visible,
 .rotas-date-btn:focus-visible,
 .topbar-avatar:focus-visible,
 .topbar-back:focus-visible,

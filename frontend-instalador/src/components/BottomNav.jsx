@@ -1,8 +1,7 @@
 import { NavLink } from "react-router-dom";
-import { FiHome, FiCalendar, FiMap, FiDroplet } from "react-icons/fi";
+import { FiCalendar, FiMap, FiDroplet } from "react-icons/fi";
 
 const ITEMS = [
-  { to: "/", label: "Início", icon: FiHome, end: true },
   { to: "/agenda", label: "Agenda", icon: FiCalendar },
   { to: "/rotas", label: "Rotas", icon: FiMap },
   { to: "/abastecimento", label: "Combustível", icon: FiDroplet },

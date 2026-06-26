@@ -124,7 +124,24 @@ async function montarAgendamento(id, empresaId) {
       `,
       [id]
     ),
-    db.query(`SELECT id, nome, pedido_item_id FROM agendamento_itens WHERE agendamento_id=$1 ORDER BY id`, [id]),
+    db.query(
+      `
+      SELECT ai.id, ai.nome, ai.pedido_item_id,
+             pi.ambiente AS item_ambiente,
+             pi.ordem    AS item_ordem,
+             pi.largura  AS item_largura,
+             pi.altura   AS item_altura,
+             cat.nome    AS item_produto
+      FROM agendamento_itens ai
+      LEFT JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+      LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+      LEFT JOIN produtos prod ON prod.id = oi.produto_id
+      LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      WHERE ai.agendamento_id=$1
+      ORDER BY ai.id
+      `,
+      [id]
+    ),
     db.query(
       `
       SELECT f.id, f.agendamento_item_id, f.url

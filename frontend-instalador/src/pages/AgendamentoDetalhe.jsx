@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   FiMapPin, FiClock, FiUser, FiFileText, FiCamera,
-  FiExternalLink, FiUsers, FiPackage, FiTag, FiX,
+  FiExternalLink, FiUsers, FiPackage, FiTag, FiX, FiCheck, FiInfo,
 } from "react-icons/fi";
 import { api } from "../services/api";
 import { estadoFichaTecnica } from "../utils/fichaTecnica";
@@ -29,6 +29,23 @@ const ROTULO_ITENS = {
 };
 function rotuloItens(tipo) {
   return ROTULO_ITENS[tipo] || "Itens";
+}
+
+function formatMedida(valor) {
+  const n = parseFloat(valor);
+  if (!Number.isFinite(n)) return null;
+  return n.toFixed(2).replace(".", ",");
+}
+
+function dadosItem(item) {
+  const largura = formatMedida(item.item_largura);
+  const altura  = formatMedida(item.item_altura);
+  return {
+    titulo:   item.item_produto || item.nome,
+    ambiente: item.item_ambiente || null,
+    medida:   largura && altura ? `${largura} x ${altura}` : null,
+    numero:   Number.isFinite(item.item_ordem) ? item.item_ordem + 1 : null,
+  };
 }
 
 const AVISO_FOTO = {
@@ -87,7 +104,7 @@ function FilePicker({ files, setFiles }) {
 }
 
 /* ── ItemComFoto ── */
-function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada, estado, onAbrirFicha }) {
+function ItemComFoto({ agendamentoId, item, index, podeFotografar, onFotoEnviada, estado, onAbrirFicha }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -109,18 +126,51 @@ function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada, estad
     }
   }
 
+  const { titulo, ambiente, medida, numero } = dadosItem(item);
+  const conferido = item.fotos?.length > 0;
+
   return (
     <li className="item-row">
-      <div className="item-row-info">
-        <span className="item-row-nome">{item.nome}</span>
-        {estado && (estado.acao ? (
-          <button type="button" className="item-row-ficha-btn" onClick={() => onAbrirFicha(item)}>
-            {estado.label}
-          </button>
-        ) : (
-          <span className="item-row-ficha-aguardando">{estado.texto}</span>
-        ))}
+      <div className="item-row-top">
+        <span className={`item-row-num${conferido ? " is-done" : ""}`}>
+          {conferido ? <FiCheck size={12} /> : (numero ?? index)}
+        </span>
+        <span className="item-row-titulo">{titulo}</span>
+        {podeFotografar && (
+          <label
+            className="item-row-cam-btn"
+            title="Adicionar foto"
+            style={{ opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto" }}
+          >
+            <FiCamera size={14} />
+            <input type="file" accept="image/*" capture="environment" multiple onChange={onChange} style={{ display: "none" }} />
+          </label>
+        )}
       </div>
+
+      {(ambiente || medida) && (
+        <div className="item-row-specs">
+          <div className="item-row-spec">
+            <span className="item-row-spec-label">Ambiente</span>
+            <span className="item-row-spec-value">{ambiente || "—"}</span>
+          </div>
+          <div className="item-row-spec">
+            <span className="item-row-spec-label">Medidas</span>
+            <span className="item-row-spec-value">{medida || "—"}</span>
+          </div>
+        </div>
+      )}
+
+      {estado && (estado.acao ? (
+        <button type="button" className="item-row-status item-row-status-acao" onClick={() => onAbrirFicha(item)}>
+          <span className="item-row-status-dot" /> {estado.label}
+        </button>
+      ) : (
+        <span className="item-row-status item-row-status-aviso">
+          <span className="item-row-status-dot" /> {estado.texto}
+        </span>
+      ))}
+
       {item.fotos?.length > 0 && (
         <div className="item-row-fotos">
           {item.fotos.map((f) => (
@@ -128,16 +178,7 @@ function ItemComFoto({ agendamentoId, item, podeFotografar, onFotoEnviada, estad
           ))}
         </div>
       )}
-      {podeFotografar && (
-        <label
-          className="item-row-cam-btn"
-          title="Adicionar foto"
-          style={{ opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto" }}
-        >
-          <FiCamera size={14} />
-          <input type="file" accept="image/*" capture="environment" multiple onChange={onChange} style={{ display: "none" }} />
-        </label>
-      )}
+
       {erro && <span className="item-row-erro">{erro}</span>}
     </li>
   );
@@ -364,12 +405,13 @@ export default function AgendamentoDetalhe() {
               <span className="detail-label">{rotuloItens(ag.tipo)}</span>
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-              {ag.itens_raw.map((item) => {
+              {ag.itens_raw.map((item, idx) => {
                 const ficha = item.pedido_item_id != null ? fichaPorItem[item.pedido_item_id] : null;
                 const estado = ficha ? estadoFichaTecnica(ficha) : null;
                 return (
                   <ItemComFoto
                     key={item.id}
+                    index={idx + 1}
                     agendamentoId={ag.id}
                     item={item}
                     podeFotografar={ag.status === "andamento"}
@@ -382,6 +424,11 @@ export default function AgendamentoDetalhe() {
                 );
               })}
             </ul>
+            {ag.itens_raw.some((it) => dadosItem(it).medida) && (
+              <p className="item-row-footnote">
+                <FiInfo size={12} /> Medidas informadas em metros (m). Largura x Altura.
+              </p>
+            )}
           </div>
         )}
 
@@ -473,9 +520,10 @@ export default function AgendamentoDetalhe() {
                 <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                   {(ag.itens_raw || [])
                     .filter((it) => it.pedido_item_id != null)
-                    .map((item) => (
+                    .map((item, idx) => (
                       <ItemComFoto
                         key={item.id}
+                        index={idx + 1}
                         agendamentoId={ag.id}
                         item={item}
                         podeFotografar

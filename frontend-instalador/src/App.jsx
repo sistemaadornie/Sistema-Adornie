@@ -1,10 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Home from "./pages/Home";
 import Agenda from "./pages/Agenda";
 import AgendamentoDetalhe from "./pages/AgendamentoDetalhe";
 import FichaTecnicaInstalador from "./pages/FichaTecnicaInstalador";
@@ -27,7 +26,7 @@ export default function App() {
                 </PrivateRoute>
               }
             >
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Navigate to="/agenda" replace />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/agenda/:id" element={<AgendamentoDetalhe />} />
               <Route path="/agenda/:agendamentoId/os/:osId" element={<FichaTecnicaInstalador />} />
