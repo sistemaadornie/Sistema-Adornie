@@ -888,6 +888,15 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
          WHERE id=$3 AND empresa_id=$4`,
         [status, motivo||null, id, empresaId, userId]
       );
+    } else if (status === "cancelado") {
+      await client.query(
+        `UPDATE agendamentos SET status=$1, atualizado_em=NOW() WHERE id=$2 AND empresa_id=$3`,
+        [status, id, empresaId]
+      );
+      // Agendamento cancelado: remove os itens vinculados (e fotos/conferências
+      // associadas) para não deixar dados órfãos nos históricos do pedido.
+      await client.query(`DELETE FROM agendamento_itens WHERE agendamento_id = $1`, [id]);
+      await client.query(`DELETE FROM conferencia_itens WHERE agendamento_id = $1`, [id]);
     } else {
       await client.query(
         `UPDATE agendamentos SET status=$1, atualizado_em=NOW() WHERE id=$2 AND empresa_id=$3`,
