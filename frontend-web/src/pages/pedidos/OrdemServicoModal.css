@@ -23,6 +23,11 @@
   flex-wrap: wrap;
 }
 
+.os-page-header-flat {
+  background: transparent;
+  border-bottom: none;
+}
+
 .os-page-header-left {
   display: flex;
   align-items: center;
@@ -263,6 +268,16 @@
   font-size: 13px;
 }
 
+.os-visual-field.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+
+.os-visual-field.stacked .os-v-value {
+  text-align: left;
+}
+
 .os-v-label {
   color: var(--color-text-muted);
   font-weight: 500;
@@ -332,6 +347,174 @@
   flex-direction: column;
   gap: 20px;
   min-width: 0;
+}
+
+/* ── BARRA DE DADOS HORIZONTAL ── */
+.os-info-bar {
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-bottom: 20px;
+}
+
+.os-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.os-info-item-grow {
+  flex: 1;
+}
+
+.os-info-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.os-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.os-info-value.tag-pedido {
+  align-self: flex-start;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.os-info-value.highlight-text {
+  color: var(--color-primary);
+}
+
+.os-info-value.spec-box {
+  display: inline-block;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  padding: 3px 9px;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  font-family: monospace;
+}
+
+/* ── LAYOUT COM IMAGEM DA CORTINA ── */
+.os-layout-img {
+  display: grid;
+  grid-template-columns: 1fr 560px;
+  gap: 28px;
+  align-items: start;
+}
+
+.os-col-left-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.os-img-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+.os-img-col .os-info-item {
+  width: 100%;
+  max-width: 280px;
+  align-items: center;
+  text-align: center;
+}
+
+.os-img-col .os-info-value.spec-box {
+  font-size: 14px;
+  padding: 6px 14px;
+}
+
+.os-img-cortina {
+  width: 100%;
+  max-width: 520px;
+}
+
+.os-field-tecido-rolo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.os-field-tecido-rolo .os-field {
+  flex: 1;
+}
+
+.os-icon-tecido {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  opacity: 0.85;
+  filter: invert(1);
+}
+
+[data-theme="light"] .os-icon-tecido {
+  filter: none;
+}
+
+@media (max-width: 1100px) {
+  .os-layout-img {
+    grid-template-columns: 1fr;
+  }
+
+  .os-img-col {
+    position: static;
+  }
+}
+
+.os-textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-surface-soft);
+  outline: none;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.os-textarea::placeholder { color: var(--color-text-muted); }
+
+.os-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  background: var(--color-surface);
+}
+
+@media (max-width: 768px) {
+  .os-info-bar {
+    gap: 14px;
+  }
 }
 
 /* ── SEÇÃO DE FORMULÁRIO ── */
