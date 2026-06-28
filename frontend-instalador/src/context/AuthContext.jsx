@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { API_BASE } from "../services/api";
+import { unsubscribeFromPush } from "../services/push";
 
 const AuthContext = createContext(null);
 
@@ -19,10 +20,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
 
   const logout = useCallback(() => {
+    unsubscribeFromPush().catch(() => {});
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
     setToken(null);
+  }, []);
+
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      const next = { ...prev, ...patch };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -73,6 +83,7 @@ export function AuthProvider({ children }) {
     loginError,
     login,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
