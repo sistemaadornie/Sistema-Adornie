@@ -1479,3 +1479,121 @@ Expected: a linha correspondente é removida de `push_subscriptions`; novas muda
 - [ ] **Step 6: Registrar o resultado**
 
 Depois do teste manual, relate ao usuário se tudo funcionou como esperado ou o que precisou de ajuste — não há commit nesta etapa.
+
+---
+
+### Task 14: Migrar `crewService.js` e `veiculoService.js` para `criarNotificacao`
+
+> Adicionada após a revisão final de branch das Tasks 1-12: a revisão encontrou dois pontos fora do escopo original do plano que ainda inserem notificação direto em `notificacoes` (sem passar por `criarNotificacao`), logo sem disparar push. `crewService.notificarMembrosCrew` notifica cada instalador quando é colocado numa equipe — público-alvo direto deste recurso. `veiculoService` notifica admins/operadores sobre abastecimento — público menos relevante para push, mas migrado por consistência (mesmo padrão, mesmo arquivo central). Execute esta task antes do teste manual da Task 13, para que o teste manual já cubra o comportamento final.
+
+**Files:**
+- Modify: `backend/src/services/crewService.js`
+- Modify: `backend/src/services/veiculoService.js`
+
+**Interfaces:**
+- Consumes: `criarNotificacao` (Task 4).
+
+- [ ] **Step 1: Refatorar `crewService.notificarMembrosCrew`**
+
+Em `backend/src/services/crewService.js`, troque:
+
+```js
+const db = require("../database/db");
+```
+
+por:
+
+```js
+const db = require("../database/db");
+const { criarNotificacao } = require("./notificacaoService");
+```
+
+E troque:
+
+```js
+    await db.query(
+      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone)
+       VALUES ($1,$2,'info',$3,$4,'/agendamentos/mapa','🚗')`,
+      [empresaId, membro.usuario_id, `Equipe formada — ${dataFmt}`, mensagem]
+    ).catch(() => {});
+```
+
+por:
+
+```js
+    await criarNotificacao({
+      empresaId,
+      usuarioId: membro.usuario_id,
+      tipo: "info",
+      titulo: `Equipe formada — ${dataFmt}`,
+      mensagem,
+      link: "/agendamentos/mapa",
+      icone: "🚗",
+    }).catch(() => {});
+```
+
+- [ ] **Step 2: Refatorar a notificação de abastecimento em `veiculoService.js`**
+
+Em `backend/src/services/veiculoService.js`, troque:
+
+```js
+const db = require("../database/db");
+const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
+```
+
+por:
+
+```js
+const db = require("../database/db");
+const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
+const { criarNotificacao } = require("./notificacaoService");
+```
+
+E troque:
+
+```js
+  await Promise.all(
+    admins.rows.map((admin) =>
+      db.query(
+        `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem)
+         VALUES ($1,$2,'info',$3,$4)`,
+        [empresaId, admin.id, tituloNotif, mensagemNotif]
+      ).catch(() => {})
+    )
+  );
+```
+
+por:
+
+```js
+  await Promise.all(
+    admins.rows.map((admin) =>
+      criarNotificacao({
+        empresaId,
+        usuarioId: admin.id,
+        tipo: "info",
+        titulo: tituloNotif,
+        mensagem: mensagemNotif,
+      }).catch(() => {})
+    )
+  );
+```
+
+- [ ] **Step 3: Rodar a suíte completa do backend**
+
+A partir de `backend/`:
+
+```bash
+npx jest
+```
+
+Expected: todos os testes continuam passando (não há teste dedicado a `notificarMembrosCrew` ou à notificação de abastecimento hoje).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add backend/src/services/crewService.js backend/src/services/veiculoService.js
+git commit -m "refactor(push): crewService e veiculoService usam criarNotificacao"
+```
