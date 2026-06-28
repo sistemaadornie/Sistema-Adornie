@@ -3,6 +3,7 @@ const db = require("../database/db");
 const authMiddleware = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
 const { isInstaladorPuro, isComercialPuro } = require("../services/permissionService");
+const { criarNotificacao } = require("../services/notificacaoService");
 
 const router = express.Router();
 
@@ -80,12 +81,16 @@ router.post(
         }
       }
 
-      const result = await db.query(
-        `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [empresa_id, usuario_id, tipo, titulo, mensagem || null, link || null, icone]
-      );
-      return res.status(201).json({ notificacao: result.rows[0] });
+      const notificacao = await criarNotificacao({
+        empresaId: empresa_id,
+        usuarioId: usuario_id,
+        tipo,
+        titulo,
+        mensagem: mensagem || null,
+        link: link || null,
+        icone,
+      });
+      return res.status(201).json({ notificacao });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Erro ao criar notificação." });
