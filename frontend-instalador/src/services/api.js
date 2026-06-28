@@ -71,4 +71,15 @@ export const api = {
     );
     return handleResponse(response);
   },
+
+  delete: async (path, body) => {
+    const response = await withTimeout(
+      fetch(`${API_BASE}${path}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+        body: body ? JSON.stringify(body) : undefined,
+      })
+    );
+    return handleResponse(response);
+  },
 };
