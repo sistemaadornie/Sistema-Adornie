@@ -1,4 +1,5 @@
 jest.mock('../database/db', () => ({ query: jest.fn(), connect: jest.fn() }));
+jest.mock('../services/pushService', () => ({ enviarPush: jest.fn().mockResolvedValue(undefined) }));
 const db  = require('../database/db');
 const svc = require('../services/agendamentoService');
 
@@ -43,18 +44,18 @@ describe('alterarStatus — nao_concluido notifica pedido e consultor', () => {
     await svc.alterarStatus(5, 1, 99, 'Admin', [], 'nao_concluido', 'Cliente não estava em casa', [], []);
 
     const todasQueries = db.query.mock.calls.map((c) => c[0]);
-    // INSERT global: usuario_id é NULL fixo no SQL (não é parâmetro), então os params
-    // têm 5 posições: [empresaId, titulo, mensagem, link, agendamentoId].
+    // criarNotificacao() sempre parametriza usuario_id (8 posições fixas):
+    // [empresaId, usuarioId, tipo, titulo, mensagem, link, icone, agendamentoId].
     const insertGlobal = db.query.mock.calls.find(
-      (c) => c[0].includes('INSERT INTO notificacoes') && c[1].length === 5
+      (c) => c[0].includes('INSERT INTO notificacoes') && c[1][1] === null
     );
-    expect(insertGlobal[1][3]).toBe('/pedidos/42/fluxo'); // link
+    expect(insertGlobal[1][5]).toBe('/pedidos/42/fluxo'); // link
 
     const insertConsultor = db.query.mock.calls.find(
       (c) => c[0].includes('INSERT INTO notificacoes') && c[1][1] === 88
     );
     expect(insertConsultor).toBeTruthy();
-    expect(insertConsultor[1][4]).toBe('/pedidos/42/fluxo');
+    expect(insertConsultor[1][5]).toBe('/pedidos/42/fluxo');
 
     const insertAuditoria = db.query.mock.calls.find((c) => c[0].includes('INSERT INTO pedido_auditoria'));
     expect(insertAuditoria).toBeTruthy();

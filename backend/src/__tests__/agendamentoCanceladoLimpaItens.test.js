@@ -1,4 +1,5 @@
 jest.mock('../database/db', () => ({ query: jest.fn(), connect: jest.fn() }));
+jest.mock('../services/pushService', () => ({ enviarPush: jest.fn().mockResolvedValue(undefined) }));
 const db  = require('../database/db');
 const svc = require('../services/agendamentoService');
 

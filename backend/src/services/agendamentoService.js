@@ -5,6 +5,7 @@ const streamifier = require("streamifier");
 const { isInstaladorPuro, isComercialPuro, podeGerenciarAgendamentos } = require("./permissionService");
 const { geocodificarAgendamento, geocodificarLote, avaliarEndereco } = require("../utils/geocoding");
 const { resolverCliente } = require("./clienteService");
+const { criarNotificacao } = require("./notificacaoService");
 
 /* ── upload Cloudinary ── */
 function uploadToCloudinary(fileBuffer, folder) {
@@ -62,11 +63,13 @@ async function notificarEquipe(agId, empresaId, tituloNotif, mensagemNotif, icon
     if (!destinatarios.size) return;
 
     const link = `/agendamentos?id=${agId}&detalhe=1`;
-    const uids = [...destinatarios];
-    await db.query(
-      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-       SELECT $1, unnest($2::integer[]), 'status_agendamento', $3, $4, $5, $6, $7`,
-      [empresaId, uids, tituloNotif, mensagemNotif, link, icone, agId]
+    await Promise.all(
+      [...destinatarios].map((uid) =>
+        criarNotificacao({
+          empresaId, usuarioId: uid, tipo: "status_agendamento",
+          titulo: tituloNotif, mensagem: mensagemNotif, link, icone, agendamentoId: agId,
+        })
+      )
     );
   } catch (e) {
     console.warn("Erro ao notificar equipe:", e.message);
@@ -281,6 +284,9 @@ async function listar(empresaId, userId, permissoes, filtros) {
 
   if (status)      { params.push(status);      wheres.push(`a.status = $${params.length}`); }
   else             { wheres.push(`a.status NOT IN ('pendente_aprovacao','rejeitado')`); }
+  if (isInstaladorPuro(permissoes)) {
+    wheres.push(`a.status != 'pre_agendado'`);
+  }
   if (tipo)        { params.push(tipo);         wheres.push(`a.tipo = $${params.length}`); }
   if (data_inicio) { params.push(data_inicio);  wheres.push(`a.data >= $${params.length}`); }
   if (data_fim)    { params.push(data_fim);     wheres.push(`a.data <= $${params.length}`); }
@@ -678,11 +684,10 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     const tituloN   = `Agendamento editado: ${ag?.titulo || `#${id}`}`;
     const mensagemN = `Os dados do agendamento "${ag?.titulo || `#${id}`}" foram atualizados.`;
     await Promise.all([
-      db.query(
-        `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-         VALUES ($1, NULL, 'sistema', $2, $3, $4, 'info', $5)`,
-        [empresaId, tituloN, mensagemN, `/agendamentos?id=${id}&detalhe=1`, id]
-      ),
+      criarNotificacao({
+        empresaId, usuarioId: null, tipo: "sistema",
+        titulo: tituloN, mensagem: mensagemN, link: `/agendamentos?id=${id}&detalhe=1`, icone: "info", agendamentoId: id,
+      }),
       notificarEquipe(id, empresaId, tituloN, mensagemN, "info", userId),
     ]);
   } catch (e) {
@@ -1006,21 +1011,19 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
       const tituloUnico = `Reagendar: ${titulo}`;
       const msgUnica    = `${cliente ? cliente + " — " : ""}Serviço não concluído. Reagendamento necessário.`;
       notifs = [
-        db.query(
-          `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-           VALUES ($1, NULL, 'reagendamento_pendente', $2, $3, $4, 'alerta', $5)`,
-          [empresaId, tituloUnico, msgUnica, linkReagendar, id]
-        ),
+        criarNotificacao({
+          empresaId, usuarioId: null, tipo: "reagendamento_pendente",
+          titulo: tituloUnico, mensagem: msgUnica, link: linkReagendar, icone: "alerta", agendamentoId: id,
+        }),
         notificarEquipe(id, empresaId, tituloUnico, msgUnica, "alerta", userId),
       ];
 
       if (consultorId) {
         notifs.push(
-          db.query(
-            `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-             VALUES ($1, $2, 'reagendamento_pendente', $3, $4, $5, 'alerta', $6)`,
-            [empresaId, consultorId, tituloUnico, msgUnica, linkReagendar, id]
-          )
+          criarNotificacao({
+            empresaId, usuarioId: consultorId, tipo: "reagendamento_pendente",
+            titulo: tituloUnico, mensagem: msgUnica, link: linkReagendar, icone: "alerta", agendamentoId: id,
+          })
         );
       }
 
@@ -1037,11 +1040,10 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
       }
     } else {
       notifs = [
-        db.query(
-          `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-           VALUES ($1, NULL, 'status_agendamento', $2, $3, $4, $5, $6)`,
-          [empresaId, tituloN, mensagemN, link, icone, id]
-        ),
+        criarNotificacao({
+          empresaId, usuarioId: null, tipo: "status_agendamento",
+          titulo: tituloN, mensagem: mensagemN, link, icone, agendamentoId: id,
+        }),
         notificarEquipe(id, empresaId, tituloN, mensagemN, icone, userId),
       ];
     }
@@ -1260,18 +1262,16 @@ async function reagendar(id, empresaId, userId, nomeCompleto, permissoes, { data
 
     await Promise.all([
       // Global — admins/operadores
-      db.query(
-        `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-         VALUES ($1, NULL, 'sistema', $2, $3, $4, 'info', $5)`,
-        [empresaId, tituloN, msgN, link, id]
-      ),
+      criarNotificacao({
+        empresaId, usuarioId: null, tipo: "sistema",
+        titulo: tituloN, mensagem: msgN, link, icone: "info", agendamentoId: id,
+      }),
       // Individuais — criador + equipe (exceto admins e quem arrastou)
       ...[...destinatarios].map((uid) =>
-        db.query(
-          `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-           VALUES ($1,$2,'status_agendamento',$3,$4,$5,'info',$6)`,
-          [empresaId, uid, tituloN, msgN, link, id]
-        )
+        criarNotificacao({
+          empresaId, usuarioId: uid, tipo: "status_agendamento",
+          titulo: tituloN, mensagem: msgN, link, icone: "info", agendamentoId: id,
+        })
       ),
     ]);
   } catch (e) {
@@ -1285,15 +1285,16 @@ async function geocodificarTodos(empresaId) {
 
 /* ── notifica admins/operadores sobre solicitação de urgência (global) ── */
 async function notificarAdminsAprovacao(empresaId, agId, titulo, cliente) {
-  await db.query(
-    `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-     VALUES ($1, NULL, 'aprovacao_urgencia', $2, $3, $4, 'alerta', $5)`,
-    [empresaId,
-     `Aprovação de urgência: ${titulo || `#${agId}`}`,
-     `${cliente ? cliente + " — " : ""}Solicitação de instalação antes do prazo mínimo aguardando aprovação.`,
-     `/agendamentos?aprovacoes=1`,
-     agId]
-  ).catch((e) => console.warn("Erro ao notificar admins (aprovação):", e.message));
+  await criarNotificacao({
+    empresaId,
+    usuarioId: null,
+    tipo: "aprovacao_urgencia",
+    titulo: `Aprovação de urgência: ${titulo || `#${agId}`}`,
+    mensagem: `${cliente ? cliente + " — " : ""}Solicitação de instalação antes do prazo mínimo aguardando aprovação.`,
+    link: `/agendamentos?aprovacoes=1`,
+    icone: "alerta",
+    agendamentoId: agId,
+  }).catch((e) => console.warn("Erro ao notificar admins (aprovação):", e.message));
 }
 
 /* ── lista solicitações de urgência pendentes (para a aba do ADMIN_MASTER) ── */
@@ -1365,11 +1366,16 @@ async function decidirAprovacao(id, empresaId, adminUser, { aprovado, motivo }) 
     const msgN    = aprovado
       ? `Sua solicitação de instalação urgente foi aprovada.`
       : `Sua solicitação de instalação urgente foi rejeitada. Motivo: ${String(motivo).trim()}`;
-    await db.query(
-      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone, agendamento_id)
-       VALUES ($1,$2,'aprovacao_urgencia',$3,$4,$5,$6,$7)`,
-      [empresaId, ag.criado_por, tituloN, msgN, `/agendamentos?id=${id}&detalhe=1`, aprovado ? "sucesso" : "erro", id]
-    ).catch((e) => console.warn("Erro ao notificar solicitante:", e.message));
+    await criarNotificacao({
+      empresaId,
+      usuarioId: ag.criado_por,
+      tipo: "aprovacao_urgencia",
+      titulo: tituloN,
+      mensagem: msgN,
+      link: `/agendamentos?id=${id}&detalhe=1`,
+      icone: aprovado ? "sucesso" : "erro",
+      agendamentoId: id,
+    }).catch((e) => console.warn("Erro ao notificar solicitante:", e.message));
   }
 
   return montarAgendamento(id, empresaId);
