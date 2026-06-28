@@ -1,4 +1,4 @@
-const CACHE_STATIC = "instalador-static-v2";
+const CACHE_STATIC = "instalador-static-v3";
 const CACHE_API = "instalador-api-v1";
 const CACHE_TILES = "instalador-tiles-v1";
 const CACHES = [CACHE_STATIC, CACHE_API, CACHE_TILES];
@@ -20,6 +20,33 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "CLEAR_API_CACHE") {
     caches.delete(CACHE_API);
   }
+});
+
+self.addEventListener("push", (event) => {
+  const data = event.data?.json() || {};
+  event.waitUntil(
+    self.registration.showNotification(data.titulo || "Adornie", {
+      body: data.mensagem || "",
+      icon: "/icon-192.png",
+      data: { link: data.link || "/agenda" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const link = event.notification.data?.link || "/agenda";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clientsList) => {
+      const existing = clientsList.find((c) => c.url.startsWith(self.location.origin));
+      if (existing) {
+        existing.focus();
+        if ("navigate" in existing) existing.navigate(link);
+        return;
+      }
+      return self.clients.openWindow(link);
+    })
+  );
 });
 
 async function networkFirst(request, cacheName) {
