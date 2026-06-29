@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
-  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar, FaFileAlt
+  FaUsers, FaCalendarAlt, FaCar, FaUserFriends, FaChartBar, FaFileAlt, FaClipboardList
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
 import "./Home.css";
@@ -12,6 +12,7 @@ export default function Home() {
   const nome = user?.nome_completo?.split(" ")[0] || "Usuário";
 
   const temPerm = (...perms) => perms.some((p) => user?.permissoes?.includes(p));
+  const podeVerPedidos     = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
   const podeVerClientes    = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
   const podeVerOrcamentos  = temPerm("COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER");
   const podeVerVeiculos    = temPerm("INSTALADOR", "OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS");
@@ -29,6 +30,15 @@ export default function Home() {
       desc: "Gerencie serviços, visitas e manutenções com calendário e mapa.",
       rota: "/agendamentos",
     },
+    ...(podeVerPedidos
+      ? [{
+          icon: <FaClipboardList />,
+          cor: "#06b6d4",
+          titulo: "Pedidos",
+          desc: "Acompanhe o fluxo completo dos pedidos de venda, da conferência à entrega.",
+          rota: "/pedidos",
+        }]
+      : []),
     ...(podeVerClientes
       ? [{
           icon: <FaUserFriends />,

@@ -38,6 +38,15 @@ body:has(.auth-screen)::after {
 
 /* ── PAINEL ESQUERDO (MARCA) ── */
 .auth-brand {
+  /* Painel sempre escuro (em qualquer tema), com sua própria escala de
+     texto fixa — não usa --color-text/--color-primary globais porque
+     esses tokens invertem no modo claro e ficam ilegíveis sobre o fundo
+     escuro do painel. */
+  --brand-text:           #F2EDE4;
+  --brand-text-secondary: #9A9080;
+  --brand-text-muted:     #5A544A;
+  --brand-primary:        #C9A96E;
+
   flex: 0 0 44%;
   display: flex;
   flex-direction: column;
@@ -84,14 +93,14 @@ body:has(.auth-screen)::after {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.5px;
-  color: var(--color-text-muted);
+  color: var(--brand-text-muted);
   text-decoration: none;
   transition: color 0.15s ease;
   z-index: 2;
 }
 
 .auth-back-link:hover {
-  color: var(--color-text-secondary);
+  color: var(--brand-text-secondary);
 }
 
 /* logo */
@@ -124,7 +133,7 @@ body:has(.auth-screen)::after {
   font-size: 12px;
   letter-spacing: 4px;
   text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--brand-primary);
   opacity: 0.85;
 }
 
@@ -134,7 +143,7 @@ body:has(.auth-screen)::after {
   font-size: 60px;
   letter-spacing: 6px;
   text-transform: uppercase;
-  color: var(--color-text);
+  color: var(--brand-text);
   line-height: 1;
   user-select: none;
 }
@@ -143,7 +152,7 @@ body:has(.auth-screen)::after {
 .auth-logo-rule {
   width: 40px;
   height: 1px;
-  background: var(--color-primary);
+  background: var(--brand-primary);
   margin-top: 16px;
   opacity: 0.7;
 }
@@ -154,7 +163,7 @@ body:has(.auth-screen)::after {
   font-size: 30px;
   font-weight: 500;
   font-style: italic;
-  color: var(--color-text);
+  color: var(--brand-text);
   line-height: 1.35;
   margin-top: 36px;
   margin-bottom: 12px;
@@ -165,7 +174,7 @@ body:has(.auth-screen)::after {
 .auth-brand-sub {
   font-size: 15px;
   font-weight: 300;
-  color: var(--color-text-muted);
+  color: var(--brand-text-muted);
   line-height: 1.75;
   margin-bottom: 44px;
   position: relative;
@@ -205,7 +214,7 @@ body:has(.auth-screen)::after {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--brand-text);
   margin-bottom: 2px;
   letter-spacing: 0.2px;
 }
@@ -213,7 +222,7 @@ body:has(.auth-screen)::after {
 .auth-brand-feature-text span {
   font-size: 13px;
   font-weight: 300;
-  color: var(--color-text-muted);
+  color: var(--brand-text-muted);
   line-height: 1.55;
 }
 

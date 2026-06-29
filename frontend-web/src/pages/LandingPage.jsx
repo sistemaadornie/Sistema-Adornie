@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FaSun, FaMoon } from "react-icons/fa";
 import "./LandingPage.css";
 
 const FEATURES = [
@@ -33,6 +35,15 @@ const FEATURES = [
 ];
 
 export default function LandingPage() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  }
+
   return (
     <div className="lp">
 
@@ -46,6 +57,14 @@ export default function LandingPage() {
           </div>
         </Link>
         <div className="lp-nav-actions">
+          <button
+            type="button"
+            className="lp-theme-toggle"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+          >
+            {theme === "dark" ? <FaSun /> : <FaMoon />}
+          </button>
           <Link to="/solicitar-acesso" className="lp-btn-ghost">Solicitar acesso</Link>
           <Link to="/login" className="lp-btn-primary">Entrar</Link>
         </div>

@@ -12,6 +12,7 @@
   /* ── BACKGROUND ──────────────────────────────────── */
   --color-bg:           #0E0D0B;
   --color-bg-secondary: #161512;
+  --color-bg-rgb:       14, 13, 11;
 
   /* ── SURFACES ────────────────────────────────────── */
   --color-surface:        #161512;
@@ -84,7 +85,7 @@
   --sidebar-border:      #2C2A25;
   --sidebar-item-hover:  rgba(201, 169, 110, 0.06);
   --sidebar-item-active: rgba(201, 169, 110, 0.12);
-  --sidebar-text:        #5A544A;
+  --sidebar-text:        #9A9080;
   --sidebar-text-active: #F2EDE4;
   --sidebar-accent:      #C9A96E;
 }
@@ -96,6 +97,7 @@
 [data-theme="light"] {
   --color-bg:           #F5F0E8;
   --color-bg-secondary: #FDFAF4;
+  --color-bg-rgb:       245, 240, 232;
 
   --color-surface:        #FDFAF4;
   --color-surface-strong: #F0EAE0;
@@ -126,7 +128,7 @@
   --sidebar-border:      #DED8CE;
   --sidebar-item-hover:  rgba(160, 120, 64, 0.06);
   --sidebar-item-active: rgba(160, 120, 64, 0.12);
-  --sidebar-text:        #A09080;
+  --sidebar-text:        #6B5F50;
   --sidebar-text-active: #1A1612;
   --sidebar-accent:      #A07840;
 }
