@@ -14,7 +14,9 @@ createRoot(document.getElementById("root")).render(
   </StrictMode>,
 );
 
-if ("serviceWorker" in navigator) {
+// Só registra o service worker em produção — em dev ele acaba servindo o
+// bundle antigo em cache (cache-first) e mascara qualquer mudança de código.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });

@@ -43,11 +43,13 @@ img {
   position: sticky;
   top: 0;
   z-index: 10;
-  height: var(--header-height);
+  min-height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-2);
+  gap: var(--space-1);
+  padding: 10px var(--space-2);
+  padding-top: calc(10px + env(safe-area-inset-top));
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
 }
@@ -58,6 +60,12 @@ img {
   font-weight: 600;
   margin: 0;
   color: var(--color-text);
+  min-width: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .topbar-back {
@@ -70,6 +78,7 @@ img {
   border: none;
   cursor: pointer;
   padding: 8px 0;
+  flex-shrink: 0;
 }
 
 .topbar-avatar {
@@ -86,6 +95,44 @@ img {
   border: 1px solid var(--color-border);
   cursor: pointer;
   text-decoration: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-avatar-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-2);
+}
+
+.perfil-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+  cursor: default;
+}
+
+.perfil-avatar-cam {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-bg);
+  cursor: pointer;
 }
 
 .page {
@@ -1082,6 +1129,44 @@ textarea.input-base {
   white-space: nowrap;
 }
 
+.gcal-equipe {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.gcal-equipe-avatar {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-surface);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  overflow: hidden;
+  margin-left: -7px;
+}
+
+.gcal-equipe-avatar:first-child {
+  margin-left: 0;
+}
+
+.gcal-equipe-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gcal-equipe-resto {
+  background: var(--color-surface-strong);
+  color: var(--color-text-secondary);
+}
+
 .gcal-evento-status {
   display: inline-block;
   margin-top: 6px;
@@ -1089,6 +1174,46 @@ textarea.input-base {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* ── Equipe (detalhe do agendamento) ─────────────────────── */
+
+.equipe-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.equipe-membro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.equipe-membro-avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.equipe-membro-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.equipe-membro-nome {
+  font-size: 14px;
+  color: var(--color-text);
 }
 
 /* ── Login ───────────────────────────────────────────────── */
@@ -1129,6 +1254,244 @@ textarea.input-base {
   margin: 0 auto var(--space-2);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
+}
+
+/* ── Cartão de veículo (Abastecimento) ───────────────────── */
+
+.vei-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  margin-top: 12px;
+}
+
+.vei-card-foto {
+  width: 100%;
+  height: 200px;
+  background: var(--color-surface-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.vei-card-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vei-card-foto-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+.vei-card-foto-placeholder svg {
+  font-size: 36px;
+}
+
+.vei-card-foto-placeholder span {
+  font-size: 12px;
+}
+
+.vei-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vei-card-nome {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vei-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vei-placa {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: var(--color-text);
+}
+
+.vei-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.vei-badge-tipo {
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.vei-badge-comb-gasolina { background: var(--color-warning-soft); color: var(--color-warning); }
+.vei-badge-comb-etanol   { background: var(--color-success-soft); color: var(--color-success); }
+.vei-badge-comb-flex     { background: var(--color-info-soft);    color: var(--color-info); }
+.vei-badge-comb-diesel   { background: rgba(148,163,184,0.14);    color: var(--color-text-secondary); }
+.vei-badge-comb-gnv      { background: rgba(139,92,246,0.14);     color: #a78bfa; }
+.vei-badge-comb-eletrico { background: var(--color-danger-soft);  color: var(--color-danger); }
+
+.vei-card-media {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vei-card-media strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* barra de combustível — direita do card */
+.vei-fuel-bar {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  height: 130px;
+  width: 36px;
+  background: rgba(0, 0, 0, 0.52);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(251, 146, 60, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+  padding: 8px 0 7px;
+  gap: 5px;
+}
+
+.vei-fuel-icon {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(251, 146, 60, 0.55));
+}
+
+.vei-fuel-track {
+  flex: 1;
+  width: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+  overflow: hidden;
+  clip-path: polygon(0 6px, 100% 0, 100% 100%, 0 100%);
+}
+
+.vei-fuel-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, #ea580c, #f97316 45%, #fbbf24);
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 2px;
+  box-shadow: 0 -8px 18px rgba(251, 146, 60, 0.75);
+}
+
+.vei-fuel-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    transparent 5%,
+    rgba(255, 255, 255, 0.20) 32%,
+    rgba(255, 255, 255, 0.38) 50%,
+    rgba(255, 255, 255, 0.20) 68%,
+    transparent 95%
+  );
+  pointer-events: none;
+}
+
+.vei-fuel-bar-pct {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 0 8px rgba(251, 146, 60, 0.85);
+  flex-shrink: 0;
+}
+
+.vei-km-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+}
+
+.vei-km-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.vei-km-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.vei-btn-abastecer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 11px 0;
+  margin-top: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.18s, border-color 0.18s;
+  letter-spacing: 0.02em;
+}
+
+.vei-btn-abastecer:active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.55);
 }
 
 /* ── Acessibilidade: foco visível ────────────────────────── */

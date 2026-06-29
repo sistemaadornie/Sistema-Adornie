@@ -31,10 +31,43 @@ function rotuloItens(tipo) {
   return ROTULO_ITENS[tipo] || "Itens";
 }
 
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Remove o número do pedido do final do título quando ele já aparece
+// repetido no subtítulo "Pedido {numero}" da mesma tela.
+function tituloSemPedido(titulo, pedidoNumero) {
+  if (!titulo || !pedidoNumero) return titulo;
+  const regex = new RegExp(`\\s*[-—]\\s*${escapeRegExp(pedidoNumero)}\\s*$`);
+  return titulo.replace(regex, "") || titulo;
+}
+
 function formatMedida(valor) {
   const n = parseFloat(valor);
   if (!Number.isFinite(n)) return null;
   return n.toFixed(2).replace(".", ",");
+}
+
+function iniciaisNome(nome) {
+  return String(nome || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+}
+
+function MembroEquipe({ membro }) {
+  return (
+    <div className="equipe-membro">
+      <span className="equipe-membro-avatar">
+        {membro.foto_url ? <img src={membro.foto_url} alt="" /> : iniciaisNome(membro.nome)}
+      </span>
+      <span className="equipe-membro-nome">{membro.nome}</span>
+    </div>
+  );
 }
 
 function dadosItem(item) {
@@ -316,13 +349,13 @@ export default function AgendamentoDetalhe() {
 
   return (
     <>
-      <TopBar title={ag.cliente} back />
+      <TopBar title="Agendamento" back />
       <div className="page">
 
         {/* Header com cor do status */}
         <div className="ag-header" style={{ borderLeft: `4px solid ${statusCor}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-            <h2 className="page-title" style={{ fontSize: 20, margin: 0 }}>{ag.titulo}</h2>
+            <h2 className="page-title" style={{ fontSize: 20, margin: 0 }}>{tituloSemPedido(ag.titulo, ag.pedido_numero)}</h2>
             <span className={`badge badge-${ag.status}`}>{statusLabel(ag.status)}</span>
           </div>
           {ag.pedido_numero && (
@@ -439,8 +472,10 @@ export default function AgendamentoDetalhe() {
               <FiUsers className="detail-icon" />
               <span className="detail-label">Equipe</span>
             </div>
-            <div style={{ fontSize: 14 }}>
-              {ag.equipe.map((m) => m.nome).join(", ")}
+            <div className="equipe-lista">
+              {ag.equipe.map((m) => (
+                <MembroEquipe key={m.id} membro={m} />
+              ))}
             </div>
           </div>
         )}

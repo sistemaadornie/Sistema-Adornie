@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMapPin, FiUsers } from "react-icons/fi";
+import { FiMapPin } from "react-icons/fi";
 import { api } from "../services/api";
 import TopBar from "../components/TopBar";
 import {
@@ -24,9 +24,45 @@ function horaFim(horaInicio, duracaoMin) {
   return `${hf}:${mf}`;
 }
 
+function iniciais(nome) {
+  return String(nome || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+}
+
+const MAX_AVATARES = 4;
+
+function EquipeAvatares({ equipe }) {
+  if (!equipe?.length) return null;
+  const visiveis = equipe.slice(0, MAX_AVATARES);
+  const resto = equipe.length - visiveis.length;
+
+  return (
+    <div className="gcal-equipe">
+      {visiveis.map((m, i) => (
+        <span
+          key={m.id ?? i}
+          className="gcal-equipe-avatar"
+          title={m.nome || ""}
+        >
+          {m.foto_url ? <img src={m.foto_url} alt="" /> : iniciais(m.nome)}
+        </span>
+      ))}
+      {resto > 0 && (
+        <span className="gcal-equipe-avatar gcal-equipe-resto" title={`+${resto}`}>
+          +{resto}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function EventoCard({ ag }) {
   const cor = STATUS_CORES[ag.status] || "#888";
-  const equipe = ag.equipe?.map((m) => m.nome || m).join(", ");
   const fim = ag.hora_fim || horaFim(ag.hora, ag.duracao_minutos);
 
   return (
@@ -60,12 +96,7 @@ function EventoCard({ ag }) {
         </div>
       )}
 
-      {equipe && (
-        <div className="gcal-evento-sub">
-          <FiUsers size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />
-          {equipe}
-        </div>
-      )}
+      <EquipeAvatares equipe={ag.equipe_info} />
 
       <span
         className="gcal-evento-status"

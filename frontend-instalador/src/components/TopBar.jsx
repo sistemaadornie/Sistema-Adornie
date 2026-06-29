@@ -24,7 +24,7 @@ export default function TopBar({ title, back = false }) {
       )}
       {back && <h1 style={{ fontSize: 16 }}>{title}</h1>}
       <Link to="/perfil" className="topbar-avatar" title="Perfil">
-        {initials || "?"}
+        {user?.foto_url ? <img src={user.foto_url} alt="" /> : (initials || "?")}
       </Link>
     </header>
   );
