@@ -44,7 +44,7 @@ function calcularEtapaAtual({
 
   const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;
 
-  const etapa3_ok = totalEmConf === 0 || totalConfOk >= totalEmConf;
+  const etapa3_ok = totalItens > 0 && totalConfOk >= totalItens;
 
   const etapa4_ok = totalItens > 0 && itensComProdutoOk >= totalItens;
 
@@ -687,7 +687,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido,
       etapa_atual,
       etapas: [
-        { numero: 1, concluida: etapa1_ok, progresso: { tem_anexo: anexos.length > 0, verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes, itens_com_conferencia_consultoras: itensComConferenciaConsultorasPreenchida } },
+        { numero: 1, concluida: etapa1_ok, progresso: { verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes, itens_com_conferencia_consultoras: itensComConferenciaConsultorasPreenchida } },
         { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
@@ -829,7 +829,6 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       numero: 1,
       concluida: etapa1_ok,
       progresso: {
-        tem_anexo: anexos.length > 0,
         verificacao_ok: !!pedido.verificacao_ok,
         itens_sem_categoria: itensSemCategoria,
         itens_sem_vinculo: itensSemVinculo,
