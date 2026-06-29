@@ -1,6 +1,7 @@
 const db = require("../database/db");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
+const { criarNotificacao } = require("./notificacaoService");
 
 const ALLOWED_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -128,7 +129,7 @@ async function excluir(id, empresaId) {
 
 async function listarAbastecimentos(veiculoId, empresaId) {
   const r = await db.query(
-    `SELECT a.*, u.nome AS registrado_por_nome
+    `SELECT a.*, u.nome_completo AS registrado_por_nome
        FROM abastecimentos a
        LEFT JOIN usuarios u ON u.id = a.registrado_por
       WHERE a.veiculo_id=$1 AND a.empresa_id=$2
@@ -178,11 +179,13 @@ async function registrarAbastecimento(veiculoId, empresaId, userId, dados) {
   const mensagemNotif = `${litrosStr}${valorStr} em ${posto_nome||"posto não informado"}`;
   await Promise.all(
     admins.rows.map((admin) =>
-      db.query(
-        `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem)
-         VALUES ($1,$2,'info',$3,$4)`,
-        [empresaId, admin.id, tituloNotif, mensagemNotif]
-      ).catch(() => {})
+      criarNotificacao({
+        empresaId,
+        usuarioId: admin.id,
+        tipo: "info",
+        titulo: tituloNotif,
+        mensagem: mensagemNotif,
+      }).catch(() => {})
     )
   );
 

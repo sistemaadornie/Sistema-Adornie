@@ -1,4 +1,5 @@
 const db = require("../database/db");
+const { criarNotificacao } = require("./notificacaoService");
 
 // ── Notificação de equipe formada ─────────────────────────
 async function notificarMembrosCrew(crew, empresaId) {
@@ -16,11 +17,15 @@ async function notificarMembrosCrew(crew, empresaId) {
     if (veiculo) mensagem += ` Veículo: ${veiculo}.`;
     mensagem += ` Colegas: ${colegasStr}.`;
 
-    await db.query(
-      `INSERT INTO notificacoes (empresa_id, usuario_id, tipo, titulo, mensagem, link, icone)
-       VALUES ($1,$2,'info',$3,$4,'/agendamentos/mapa','🚗')`,
-      [empresaId, membro.usuario_id, `Equipe formada — ${dataFmt}`, mensagem]
-    ).catch(() => {});
+    await criarNotificacao({
+      empresaId,
+      usuarioId: membro.usuario_id,
+      tipo: "info",
+      titulo: `Equipe formada — ${dataFmt}`,
+      mensagem,
+      link: "/agendamentos/mapa",
+      icone: "🚗",
+    }).catch(() => {});
   }
 }
 
