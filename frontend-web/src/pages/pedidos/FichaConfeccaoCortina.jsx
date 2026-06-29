@@ -96,25 +96,29 @@ export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSa
 
       <div className="os-page-body">
         <div className="os-info-bar">
-          <div className="os-info-item">
-            <span className="os-info-label"><FaUser /> Cliente</span>
-            <span className="os-info-value">{osData.cliente_nome || "—"}</span>
+          <div className="os-info-row">
+            <div className="os-info-item os-info-item-grow">
+              <span className="os-info-label"><FaUser /> Cliente</span>
+              <span className="os-info-value">{osData.cliente_nome || "—"}</span>
+            </div>
+            <div className="os-info-item">
+              <span className="os-info-label"><FaTag /> Pedido</span>
+              <span className="os-info-value tag-pedido">{pedidoNumero}</span>
+            </div>
+            <div className="os-info-item">
+              <span className="os-info-label"><FaUserTie /> Vendedor</span>
+              <span className="os-info-value">{osData.consultor_nome || "—"}</span>
+            </div>
           </div>
-          <div className="os-info-item">
-            <span className="os-info-label"><FaTag /> Pedido</span>
-            <span className="os-info-value tag-pedido">{pedidoNumero}</span>
-          </div>
-          <div className="os-info-item">
-            <span className="os-info-label"><FaUserTie /> Vendedor</span>
-            <span className="os-info-value">{osData.consultor_nome || "—"}</span>
-          </div>
-          <div className="os-info-item">
-            <span className="os-info-label"><FaHome /> Ambiente</span>
-            <span className="os-info-value highlight-text">{osData.item_ambiente || "—"}</span>
-          </div>
-          <div className="os-info-item os-info-item-grow">
-            <span className="os-info-label"><FaGift /> Produto</span>
-            <span className="os-info-value">{osData.item_descricao || "—"}</span>
+          <div className="os-info-row">
+            <div className="os-info-item">
+              <span className="os-info-label"><FaHome /> Ambiente</span>
+              <span className="os-info-value highlight-text">{osData.item_ambiente || "—"}</span>
+            </div>
+            <div className="os-info-item os-info-item-grow">
+              <span className="os-info-label"><FaGift /> Produto</span>
+              <span className="os-info-value">{osData.item_descricao || "—"}</span>
+            </div>
           </div>
         </div>
 

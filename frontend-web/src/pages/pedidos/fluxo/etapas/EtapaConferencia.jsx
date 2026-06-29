@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import { acaoFichaConferencia, abrirOsDoItem } from "../../../../utils/fichaConferencia";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
@@ -10,14 +11,50 @@ function fmtData(iso) {
   return d.toLocaleDateString("pt-BR");
 }
 
-export default function EtapaConferencia({ pedido, etapas, preAgendamentos, onClose }) {
+export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
   const [criandoId, setCriandoId] = useState(null);
+  const [definindoConferencia, setDefinindoConferencia] = useState(false);
 
+  const etapa1 = etapas.find((e) => e.numero === 1) || {};
+  const p1 = etapa1.progresso || {};
   const etapa2 = etapas.find((e) => e.numero === 2) || {};
   const p = etapa2.progresso || {};
 
   const genitores = preAgendamentos || [];
+
+  const totalItensConferencia = p1.total_itens_conferencia ?? 0;
+  const todasConferenciasFeitasOuDesnecessarias =
+    totalItensConferencia === 0 ||
+    (p1.itens_cobertos_conferencia ?? 0) >= totalItensConferencia;
+  const todosComConferenciaConsultoras =
+    totalItensConferencia === 0 ||
+    (p1.itens_com_conferencia_consultoras ?? 0) >= totalItensConferencia;
+
+  function handleAgendarConferencia(itensSel) {
+    setDefinindoConferencia(false);
+    navigate("/agendamentos", {
+      state: {
+        novoInstalacao: {
+          pedido_id:     pedido.id,
+          pedido_numero: numeroPedidoCompleto(pedido),
+          cliente:       pedido.cliente_nome || "",
+          cliente_id:    pedido.cliente_id || null,
+          cep:           pedido.cep,
+          rua:           pedido.rua,
+          numero:        pedido.numero_rua,
+          complemento:   pedido.complemento,
+          bairro:        pedido.bairro,
+          cidade:        pedido.cidade,
+          estado:        pedido.estado,
+          itens:         itensSel,
+          tipo:          "Conferência",
+          status:        "agendado",
+          titulo:        `Conferência - ${primeiroEUltimoNome(pedido.cliente_nome)} - ${numeroPedidoCompleto(pedido)}`,
+        },
+      },
+    });
+  }
 
   function remarcarConferencia(g) {
     navigate("/agendamentos", {
@@ -68,11 +105,45 @@ export default function EtapaConferencia({ pedido, etapas, preAgendamentos, onCl
 
           <hr className="pf-separador" />
 
+          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE CONFERÊNCIA</div>
+
+          {totalItensConferencia === 0 && (
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+              Nenhum item deste pedido necessita de conferência.
+            </div>
+          )}
+
+          {totalItensConferencia > 0 && !todosComConferenciaConsultoras && (
+            <div
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 8,
+                padding: "8px 12px", borderRadius: 8, marginBottom: 12,
+                background: "rgba(255, 160, 0, 0.12)",
+                border: "1px solid rgba(255, 160, 0, 0.35)",
+                fontSize: 13, color: "var(--pf-modal-text)",
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>⚠️</span>
+              <span>
+                Preencha a Ficha de Conferência Consultoras de todos os itens na Etapa 1 ({p1.itens_com_conferencia_consultoras ?? 0}/{totalItensConferencia})
+                antes de definir a data de conferência.
+              </span>
+            </div>
+          )}
+
+          {totalItensConferencia > 0 && todosComConferenciaConsultoras && !todasConferenciasFeitasOuDesnecessarias && (
+            <button className="pf-btn-primary" style={{ marginBottom: 12 }} onClick={() => setDefinindoConferencia(true)}>
+              DEFINIR DATA DE CONFERÊNCIA
+            </button>
+          )}
+
+          <hr className="pf-separador" />
+
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Genitores e conferências</div>
 
           {genitores.length === 0 && (
             <div style={{ color: "var(--pf-card-sub)", fontSize: 13 }}>
-              Nenhum pré-agendamento criado. Crie um na Etapa 1 primeiro.
+              Nenhum pré-agendamento criado ainda.
             </div>
           )}
 
@@ -158,6 +229,16 @@ export default function EtapaConferencia({ pedido, etapas, preAgendamentos, onCl
         </div>
       </div>
 
+      {definindoConferencia && (
+        <ModalSelecionarItensInstalacao
+          pedido={pedido}
+          itensEndpoint={`/pedidos/${pedidoId}/itens-disponiveis-conferencia-entrega`}
+          titulo={`Agendar Conferência — ${numeroPedidoCompleto(pedido)}`}
+          textoVazio="Todos os itens deste pedido já têm conferência agendada."
+          onClose={() => setDefinindoConferencia(false)}
+          onContinuar={handleAgendarConferencia}
+        />
+      )}
     </div>
   );
 }

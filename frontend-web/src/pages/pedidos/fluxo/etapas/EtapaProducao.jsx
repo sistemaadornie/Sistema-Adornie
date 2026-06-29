@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import { api } from "../../../../services/api";
+import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 
-export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRecarregar }) {
+function fmtData(iso) {
+  if (!iso) return "—";
+  const d = iso.includes("T") ? new Date(iso) : new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("pt-BR");
+}
+
+export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamentos, onClose, onRecarregar }) {
+  const navigate = useNavigate();
   const [itens, setItens] = useState(pedido?.itens || []);
   const [salvando, setSalvando] = useState({});
+  const [instalacao, setInstalacao] = useState(null);
 
   useEffect(() => { setItens(pedido?.itens || []); }, [pedido]);
 
@@ -20,8 +31,39 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRec
     }
   }
 
+  function handleAgendarInstalacao(itensSel) {
+    setInstalacao(null);
+    navigate("/agendamentos", {
+      state: {
+        novoInstalacao: {
+          pedido_id:     pedido.id,
+          pedido_numero: numeroPedidoCompleto(pedido),
+          cliente:       pedido.cliente_nome || "",
+          cliente_id:    pedido.cliente_id || null,
+          cep:           pedido.cep,
+          rua:           pedido.rua,
+          numero:        pedido.numero_rua,
+          complemento:   pedido.complemento,
+          bairro:        pedido.bairro,
+          cidade:        pedido.cidade,
+          estado:        pedido.estado,
+          itens:         itensSel,
+        },
+      },
+    });
+  }
+
+  const etapa1 = etapas.find((e) => e.numero === 1) || {};
+  const p1 = etapa1.progresso || {};
+  const etapa2 = etapas.find((e) => e.numero === 2) || {};
+  const conferenciaTecnicaConcluida = !!etapa2.concluida;
   const etapa3 = etapas.find((e) => e.numero === 3) || {};
   const p = etapa3.progresso || {};
+
+  const temItensPendentesEntrega = (p1.itens_cobertos ?? 0) < (p1.total_itens ?? 0);
+  const entregas = (preAgendamentos || []).filter(
+    (ag) => ag.tipo === "Instalação" && ag.status !== "cancelado" && ag.status !== "rejeitado"
+  );
 
   return (
     <div className="pf-modal-overlay">
@@ -90,8 +132,63 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, onClose, onRec
               )}
             </div>
           ))}
+
+          <hr className="pf-separador" />
+
+          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE ENTREGA (PRÉ AGENDAMENTO)</div>
+
+          {!conferenciaTecnicaConcluida && (
+            <div
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 8,
+                padding: "8px 12px", borderRadius: 8, marginBottom: 12,
+                background: "rgba(255, 160, 0, 0.12)",
+                border: "1px solid rgba(255, 160, 0, 0.35)",
+                fontSize: 13, color: "var(--pf-modal-text)",
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>⚠️</span>
+              <span>
+                A data de entrega só pode ser definida depois que a Conferência de Medidas (Etapa 2) for concluída.
+              </span>
+            </div>
+          )}
+
+          {conferenciaTecnicaConcluida && entregas.length === 0 && (
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+              Nenhum pré-agendamento de entrega criado ainda.
+            </div>
+          )}
+
+          {conferenciaTecnicaConcluida && entregas.map((ag) => (
+            <div key={ag.id} style={{ padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Entrega: {fmtData(ag.data_inicio)}</span>
+                <span className={`pf-badge ${ag.status === "agendado" ? "pf-badge-ok" : "pf-badge-pend"}`}>
+                  {ag.status}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>
+                {(ag.itens || []).length} itens vinculados
+              </div>
+            </div>
+          ))}
+
+          {conferenciaTecnicaConcluida && temItensPendentesEntrega && (
+            <button className="pf-btn-primary" style={{ marginTop: 8 }} onClick={() => setInstalacao(pedido)}>
+              DEFINIR PRÉ-AGENDAMENTO DE ENTREGA
+            </button>
+          )}
         </div>
       </div>
+
+      {instalacao && (
+        <ModalSelecionarItensInstalacao
+          pedido={instalacao}
+          onClose={() => setInstalacao(null)}
+          onContinuar={handleAgendarInstalacao}
+        />
+      )}
     </div>
   );
 }

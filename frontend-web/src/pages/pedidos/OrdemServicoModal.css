@@ -356,10 +356,21 @@
   border-radius: var(--radius-md);
   padding: 16px 20px;
   display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.os-info-row {
+  display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 22px;
-  margin-bottom: 20px;
+}
+
+.os-info-row + .os-info-row {
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
 }
 
 .os-info-item {
@@ -370,7 +381,7 @@
 }
 
 .os-info-item-grow {
-  flex: 1;
+  flex: 1 1 220px;
 }
 
 .os-info-label {
@@ -419,7 +430,7 @@
 /* ── LAYOUT COM IMAGEM DA CORTINA ── */
 .os-layout-img {
   display: grid;
-  grid-template-columns: 1fr 560px;
+  grid-template-columns: 1fr 400px;
   gap: 28px;
   align-items: start;
 }
@@ -454,7 +465,7 @@
 
 .os-img-cortina {
   width: 100%;
-  max-width: 520px;
+  max-width: 360px;
 }
 
 .os-field-tecido-rolo {
@@ -533,6 +544,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 
 .os-field label {
@@ -594,32 +606,32 @@
 /* ── GRIDS ── */
 .os-medidas-reais-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
 .os-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
 .os-grid-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
 .os-grid-2-custom {
   display: grid;
-  grid-template-columns: 1fr 90px;
+  grid-template-columns: minmax(0, 1fr) 90px;
   gap: 14px;
   align-items: flex-end;
 }
 
 .os-grid-3-custom {
   display: grid;
-  grid-template-columns: 1fr 1fr 90px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 90px;
   gap: 14px;
   align-items: flex-end;
 }
