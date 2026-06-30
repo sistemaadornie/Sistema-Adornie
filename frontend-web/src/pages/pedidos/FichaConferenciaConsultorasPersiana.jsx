@@ -1,6 +1,6 @@
 // frontend-web/src/pages/pedidos/FichaConferenciaConsultorasPersiana.jsx
 import { useState } from "react";
-import { FaUser, FaTag, FaUserTie, FaHome, FaGift } from "react-icons/fa";
+import { FaUser, FaTag, FaUserTie, FaHome, FaGift, FaRulerCombined } from "react-icons/fa";
 import { api } from "../../services/api";
 import { KEYWORD_MODELS } from "./importKeywordConfig";
 import "./OrdemServicoModal.css";
@@ -153,6 +153,9 @@ export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, 
           </div>
         </div>
 
+        <div className="os-layout-img">
+        <div className="os-col-left-form">
+
         <div className="os-form-section">
           <div className="os-section-title mandatory-title">Modelo / Tubo / Bandô (Obrigatório)</div>
           <div className="os-grid-3">
@@ -288,7 +291,7 @@ export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, 
                   onChange={() => setCampo("acionamento", op)}
                   className="input-highlight"
                 />
-                {op.charAt(0).toUpperCase() + op.slice(1)}
+                {op === "motorizado" ? "Motorizada" : "Manual"}
               </label>
             ))}
           </div>
@@ -322,6 +325,26 @@ export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, 
             </div>
           )}
         </div>
+
+        </div>{/* os-col-left-form */}
+
+        <div className="os-img-col">
+          <div className="os-info-item">
+            <span className="os-info-label"><FaRulerCombined /> Largura (medida de venda)</span>
+            <span className="os-info-value spec-box">
+              {osData.item_largura ? `${osData.item_largura} m` : "—"}
+            </span>
+          </div>
+          <img src="/persiana.png" alt="Esboço da persiana" className="os-img-cortina" />
+          <div className="os-info-item">
+            <span className="os-info-label"><FaRulerCombined /> Altura (medida de venda)</span>
+            <span className="os-info-value spec-box">
+              {osData.item_altura ? `${osData.item_altura} m` : "—"}
+            </span>
+          </div>
+        </div>
+
+        </div>{/* os-layout-img */}
       </div>
     </div>
   );

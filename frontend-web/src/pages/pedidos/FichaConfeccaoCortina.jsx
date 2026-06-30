@@ -241,7 +241,7 @@ export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSa
               <span className="os-info-label"><FaRulerCombined /> Largura (medida de venda)</span>
               <span className="os-info-value spec-box">{dados.larguraTrilho ? `${dados.larguraTrilho} m` : "—"}</span>
             </div>
-            <img src="/cortina-transparent.png" alt="Esboço da cortina" className="os-img-cortina" />
+            <img src="/cortina.png" alt="Esboço da cortina" className="os-img-cortina" />
             <div className="os-info-item">
               <span className="os-info-label"><FaRulerCombined /> Altura (medida de venda)</span>
               <span className="os-info-value spec-box">{dados.alturaCortina ? `${dados.alturaCortina} m` : "—"}</span>
