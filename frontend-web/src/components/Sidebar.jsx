@@ -21,6 +21,7 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import useAuth from "../hooks/useAuth";
+import AdornieWordmark from "./AdornieWordmark";
 
 function temPerm(user, ...perms) {
   return perms.some((p) => user?.permissoes?.includes(p));
@@ -69,7 +70,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
             <img src="/logo-adornie.png" alt="Adornie" className="sidebar-logo-icon" />
             <div className="sidebar-logo-adornie">
               <span className="sidebar-logo-sub">agenda</span>
-              <span className="sidebar-logo-main">Adornie</span>
+              <AdornieWordmark className="sidebar-logo-main-img" />
             </div>
           </div>
         )}

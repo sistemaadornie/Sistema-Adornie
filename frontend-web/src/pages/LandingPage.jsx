@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaSun, FaMoon } from "react-icons/fa";
+import AdornieWordmark from "../components/AdornieWordmark";
 import "./LandingPage.css";
 
 const FEATURES = [
@@ -53,7 +54,7 @@ export default function LandingPage() {
           <img src="/logo-adornie.png" alt="Adornie" className="lp-nav-logo-img" />
           <div className="lp-nav-logo-text">
             <span className="lp-nav-logo-sub">agenda</span>
-            <span className="lp-nav-logo-main">Adornie</span>
+            <AdornieWordmark className="lp-nav-logo-main-img" />
           </div>
         </Link>
         <div className="lp-nav-actions">
@@ -86,7 +87,7 @@ export default function LandingPage() {
             <img src="/logo-adornie.png" alt="Adornie" className="lp-hero-logo-img" />
             <div className="lp-hero-logo-text">
               <span className="lp-hero-logo-sub">agenda</span>
-              <span className="lp-hero-logo-main">Adornie</span>
+              <AdornieWordmark className="lp-hero-logo-main-img" />
             </div>
           </div>
 
@@ -167,7 +168,7 @@ export default function LandingPage() {
           <img src="/logo-adornie.png" alt="Adornie" className="lp-footer-logo-img" />
           <div className="lp-footer-logo-text">
             <span className="lp-footer-logo-sub">agenda</span>
-            <span className="lp-footer-logo-main">Adornie</span>
+            <AdornieWordmark className="lp-footer-logo-main-img" />
           </div>
         </Link>
         <span className="lp-footer-copy">

@@ -1,5 +1,5 @@
 /* ============================================================
-   RESET + BASE GLOBAL — Agenda Adornie
+   RESET + BASE GLOBAL — Sistema Adornie
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap');
@@ -92,3 +92,18 @@ ol {
   background: var(--color-primary-soft);
   color: var(--color-text);
 }
+
+/* ── LOGO WORDMARK (tema-aware) ──────────────────────
+   Renderiza a logo "ADORNIE HOME DECOR" preta no tema claro
+   e branca no tema escuro, sem precisar de ThemeContext. ── */
+
+.adornie-wordmark {
+  width: auto;
+  object-fit: contain;
+}
+
+.adornie-wordmark-preto  { display: none; }
+.adornie-wordmark-branco { display: block; }
+
+[data-theme="light"] .adornie-wordmark-preto  { display: block; }
+[data-theme="light"] .adornie-wordmark-branco { display: none; }

@@ -93,15 +93,8 @@
   line-height: 1;
 }
 
-.sidebar-logo-main {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--color-text);
-  line-height: 1;
-  white-space: nowrap;
+.sidebar-logo-main-img {
+  height: 16px;
 }
 
 /* Collapsed: "A" em dourado */

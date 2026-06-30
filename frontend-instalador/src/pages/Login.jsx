@@ -23,7 +23,7 @@ export default function Login() {
       <div className="login-brand">
         <div className="login-glow" />
         <img src="/icon-192.png" alt="Adornie" className="login-logo" />
-        <h1 className="page-title" style={{ marginBottom: 4 }}>Adornie Instalador</h1>
+        <h1 className="page-title" style={{ marginBottom: 4 }}>Sistema Adornie</h1>
         <p className="page-subtitle">Acesse com seu login da equipe de campo</p>
       </div>
 

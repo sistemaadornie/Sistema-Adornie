@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { API_BASE } from "../services/api";
+import AdornieWordmark from "../components/AdornieWordmark";
 import "./DevSetup.css";
 
 const DEV_PIN = "adornie@dev";
@@ -149,7 +150,7 @@ export default function DevSetup() {
           <img src="/logo-adornie.png" alt="Adornie" />
           <div>
             <span className="dev-header-sub">agenda</span>
-            <span className="dev-header-main">Adornie</span>
+            <AdornieWordmark className="dev-header-main-img" />
           </div>
         </div>
         <div className="dev-header-badge">⚙ Dev Setup</div>

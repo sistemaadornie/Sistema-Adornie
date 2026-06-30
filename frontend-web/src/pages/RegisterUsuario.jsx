@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE } from "../services/api";
+import AdornieWordmark from "../components/AdornieWordmark";
 
 function formatarCPF(valor) {
   const n = valor.replace(/\D/g, "").slice(0, 11);
@@ -92,14 +93,14 @@ export default function RegisterUsuario() {
             <div className="auth-brand-logo">
               <img src="/logo-adornie.png" alt="Adornie" className="auth-brand-logo-img" />
               <span className="auth-logo-sub">agenda</span>
-              <span className="auth-logo-main">Adornie</span>
+              <AdornieWordmark className="auth-logo-main-img" />
               <div className="auth-logo-rule" />
             </div>
           </Link>
 
           <p className="auth-brand-tagline">Solicitar acesso ao sistema</p>
           <p className="auth-brand-sub">
-            Preencha o formulário e aguarde a aprovação do administrador para começar a usar a Agenda Adornie.
+            Preencha o formulário e aguarde a aprovação do administrador para começar a usar o Sistema Adornie.
           </p>
 
           <div className="auth-brand-features">

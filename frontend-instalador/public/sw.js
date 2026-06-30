@@ -25,7 +25,7 @@ self.addEventListener("message", (event) => {
 self.addEventListener("push", (event) => {
   const data = event.data?.json() || {};
   event.waitUntil(
-    self.registration.showNotification(data.titulo || "Adornie", {
+    self.registration.showNotification(data.titulo || "Sistema Adornie", {
       body: data.mensagem || "",
       icon: "/icon-192.png",
       data: { link: data.link || "/agenda" },

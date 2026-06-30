@@ -1,5 +1,5 @@
 /* ============================================================
-   LANDING PAGE — Agenda Adornie · empresa única
+   LANDING PAGE — Sistema Adornie · empresa única
    ============================================================ */
 
 .lp {
@@ -59,14 +59,8 @@
   line-height: 1;
 }
 
-.lp-nav-logo-main {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--color-text);
-  line-height: 1;
+.lp-nav-logo-main-img {
+  height: 18px;
 }
 
 .lp-nav-actions {
@@ -266,15 +260,8 @@
   line-height: 1;
 }
 
-.lp-hero-logo-main {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: clamp(56px, 9vw, 88px);
-  letter-spacing: 10px;
-  text-transform: uppercase;
-  color: var(--color-text);
-  line-height: 1;
-  user-select: none;
+.lp-hero-logo-main-img {
+  height: clamp(40px, 7vw, 64px);
 }
 
 .lp-hero-logo::after {
@@ -574,14 +561,9 @@
   line-height: 1;
 }
 
-.lp-footer-logo-main {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  line-height: 1;
+.lp-footer-logo-main-img {
+  height: 13px;
+  opacity: 0.8;
 }
 
 .lp-footer-copy {
@@ -626,5 +608,4 @@
   .lp-quote-wrap    { padding: 60px 24px; }
   .lp-footer        { padding: 28px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
   .lp-footer-links  { display: none; }
-  .lp-hero-logo-main { letter-spacing: 7px; }
 }

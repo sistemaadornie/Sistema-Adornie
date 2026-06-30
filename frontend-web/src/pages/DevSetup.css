@@ -155,13 +155,8 @@
   font-weight: 400;
 }
 
-.dev-header-main {
-  font-family: var(--font-title);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--color-text);
+.dev-header-main-img {
+  height: 14px;
 }
 
 .dev-header-badge {

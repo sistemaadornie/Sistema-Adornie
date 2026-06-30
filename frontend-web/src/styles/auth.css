@@ -1,5 +1,5 @@
 /* ============================================================
-   AUTH — LOGIN / CADASTRO — Agenda Adornie
+   AUTH — LOGIN / CADASTRO — Sistema Adornie
    Estética quente, dourada, refinada
    ============================================================ */
 
@@ -137,15 +137,9 @@ body:has(.auth-screen)::after {
   opacity: 0.85;
 }
 
-.auth-logo-main {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 60px;
-  letter-spacing: 6px;
-  text-transform: uppercase;
-  color: var(--brand-text);
-  line-height: 1;
-  user-select: none;
+.auth-logo-main-img {
+  height: 44px;
+  margin-top: 2px;
 }
 
 /* linha dourada sob o logo */
@@ -501,8 +495,8 @@ body:has(.auth-screen)::after {
     display: none;
   }
 
-  .auth-logo-main {
-    font-size: 46px;
+  .auth-logo-main-img {
+    height: 34px;
   }
 
   .auth-brand-features {

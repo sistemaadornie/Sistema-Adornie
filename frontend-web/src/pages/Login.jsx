@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaSun, FaMoon } from "react-icons/fa";
 import { API_BASE } from "../services/api";
+import AdornieWordmark from "../components/AdornieWordmark";
 
 function salvarUser(u) {
   const seguro = {
@@ -22,7 +23,7 @@ const BrandPanel = ({ forgotMode }) => (
       <div className="auth-brand-logo">
         <img src="/logo-adornie.png" alt="Adornie" className="auth-brand-logo-img" />
         <span className="auth-logo-sub">agenda</span>
-        <span className="auth-logo-main">Adornie</span>
+        <AdornieWordmark className="auth-logo-main-img" />
         <div className="auth-logo-rule" />
       </div>
     </Link>
