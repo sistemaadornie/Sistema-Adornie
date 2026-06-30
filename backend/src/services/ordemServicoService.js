@@ -127,6 +127,15 @@ function validarDadosConfeccaoForro(dados) {
   if (!forroCosturado) throw Object.assign(new Error('Campo "Forro costurado" é obrigatório.'), { status: 400 });
 }
 
+function validarDadosConferenciaConsultorasPersiana(dados) {
+  if (!dados.modelo || !dados.tubo)
+    throw Object.assign(new Error('Modelo e tubo da persiana são obrigatórios.'), { status: 400 });
+  if (!dados.acionamento)
+    throw Object.assign(new Error('Acionamento (manual/motorizado) é obrigatório.'), { status: 400 });
+  if (dados.acionamento === 'motorizado' && !dados.qtdMotor)
+    throw Object.assign(new Error('Quantidade de motor é obrigatória para persiana motorizada.'), { status: 400 });
+}
+
 async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
   const { rows: osRows } = await db.query(`SELECT tipo FROM ordem_servico WHERE id = $1`, [id]);
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
@@ -152,13 +161,18 @@ async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
 }
 
 async function salvarDadosConferenciaConsultoras(id, userId, dados) {
-  const { rows: osRows } = await db.query(`SELECT tipo FROM ordem_servico WHERE id = $1`, [id]);
+  const { rows: osRows } = await db.query(
+    `SELECT tipo, pedido_item_id FROM ordem_servico WHERE id = $1`,
+    [id]
+  );
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
 
   if (osRows[0].tipo === 'cortina') {
     validarDadosConfeccaoCortina(dados);
   } else if (osRows[0].tipo === 'forro') {
     validarDadosConfeccaoForro(dados);
+  } else if (osRows[0].tipo === 'persiana') {
+    validarDadosConferenciaConsultorasPersiana(dados);
   }
 
   const { rows } = await db.query(
@@ -172,6 +186,17 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados) {
      RETURNING *`,
     [JSON.stringify(dados), userId, id]
   );
+
+  if (osRows[0].tipo === 'persiana') {
+    await db.query(
+      `UPDATE pedido_itens
+          SET modelo        = $1,
+              especificacoes = $2
+        WHERE id = $3`,
+      [dados.modelo, JSON.stringify({ tubo: dados.tubo, bando: dados.bando || null }), osRows[0].pedido_item_id]
+    );
+  }
+
   return rows[0];
 }
 

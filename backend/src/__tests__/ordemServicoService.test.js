@@ -206,6 +206,52 @@ describe('salvarDadosConferenciaConsultoras', () => {
     db.query.mockResolvedValueOnce({ rows: [] });
     await expect(svc.salvarDadosConferenciaConsultoras(999, 2, {})).rejects.toMatchObject({ status: 404 });
   });
+
+  test('salva ficha de persiana (manual) e sincroniza pedido_itens', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 7 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 3, dados_conferencia_consultoras: { modelo: 'Rolo / Rollo', tubo: '38mm' }, status: 'em_andamento' }] })
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE pedido_itens
+
+    const dados = { modelo: 'Rolo / Rollo', tubo: '38mm', bando: null, acionamento: 'manual', tecido: 'Drumis', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], qtdMotor: '', ordem: '' };
+    const result = await svc.salvarDadosConferenciaConsultoras(3, 1, dados);
+
+    expect(result.status).toBe('em_andamento');
+    expect(db.query).toHaveBeenCalledTimes(3);
+    expect(db.query).toHaveBeenNthCalledWith(3,
+      expect.stringContaining('UPDATE pedido_itens'),
+      ['Rolo / Rollo', JSON.stringify({ tubo: '38mm', bando: null }), 7]
+    );
+  });
+
+  test('salva ficha de persiana (motorizado com qtdMotor)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 8 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 4, dados_conferencia_consultoras: { modelo: 'Meliade', tubo: '30mm', acionamento: 'motorizado', qtdMotor: '2' }, status: 'em_andamento' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const dados = { modelo: 'Meliade', tubo: '30mm', bando: '', acionamento: 'motorizado', qtdMotor: '2', tecido: '', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], ordem: '' };
+    const result = await svc.salvarDadosConferenciaConsultoras(4, 1, dados);
+
+    expect(result.status).toBe('em_andamento');
+    expect(db.query).toHaveBeenCalledTimes(3);
+  });
+
+  test('lança 400 quando modelo ou tubo faltando para persiana', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 9 }] });
+
+    await expect(
+      svc.salvarDadosConferenciaConsultoras(5, 1, { modelo: '', tubo: '', acionamento: 'manual' })
+    ).rejects.toMatchObject({ status: 400, message: expect.stringContaining('tubo') });
+  });
+
+  test('lança 400 quando motorizada sem qtdMotor para persiana', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 10 }] });
+
+    await expect(
+      svc.salvarDadosConferenciaConsultoras(6, 1, { modelo: 'Meliade', tubo: '30mm', acionamento: 'motorizado', qtdMotor: '' })
+    ).rejects.toMatchObject({ status: 400, message: expect.stringContaining('motor') });
+  });
 });
 
 describe('salvarDadosTecnicos', () => {
