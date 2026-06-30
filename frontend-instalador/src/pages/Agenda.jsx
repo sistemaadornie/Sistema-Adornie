@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMapPin } from "react-icons/fi";
+import { FiMapPin, FiSearch, FiX } from "react-icons/fi";
 import { api } from "../services/api";
 import TopBar from "../components/TopBar";
 import {
@@ -14,6 +14,8 @@ const FILTROS = [
   { id: "mes",    label: "30 dias" },
   { id: "todos",  label: "Todos" },
 ];
+
+const TIPOS = ["todos", ...Object.keys(TIPO_CORES)];
 
 function horaFim(horaInicio, duracaoMin) {
   if (!horaInicio) return null;
@@ -140,29 +142,43 @@ function GrupoData({ data, itens }) {
 
 export default function Agenda() {
   const [filtro, setFiltro] = useState("semana");
+  const [tipoFiltro, setTipoFiltro] = useState("todos");
+  const [busca, setBusca] = useState("");
+  const [buscaDebounced, setBuscaDebounced] = useState("");
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setBuscaDebounced(busca.trim()), 300);
+    return () => clearTimeout(t);
+  }, [busca]);
 
   useEffect(() => {
     let ativo = true;
     setLoading(true);
     setErro("");
 
-    const hoje = todayISO();
-    let query = `data_inicio=${hoje}`;
-    if (filtro === "hoje")   query += `&data_fim=${hoje}`;
-    if (filtro === "semana") query += `&data_fim=${addDaysISO(hoje, 7)}`;
-    if (filtro === "mes")    query += `&data_fim=${addDaysISO(hoje, 30)}`;
+    const params = new URLSearchParams();
+    if (buscaDebounced) {
+      params.set("q", buscaDebounced);
+    } else {
+      const hoje = todayISO();
+      params.set("data_inicio", hoje);
+      if (filtro === "hoje")   params.set("data_fim", hoje);
+      if (filtro === "semana") params.set("data_fim", addDaysISO(hoje, 7));
+      if (filtro === "mes")    params.set("data_fim", addDaysISO(hoje, 30));
+    }
+    if (tipoFiltro !== "todos") params.set("tipo", tipoFiltro);
 
     api
-      .get(`/agendamentos?${query}`)
+      .get(`/agendamentos?${params.toString()}`)
       .then((data) => ativo && setAgendamentos(data.agendamentos || []))
       .catch((err) => ativo && setErro(err.message))
       .finally(() => ativo && setLoading(false));
 
     return () => { ativo = false; };
-  }, [filtro]);
+  }, [filtro, tipoFiltro, buscaDebounced]);
 
   const grupos = useMemo(() => {
     const porData = new Map();
@@ -178,24 +194,65 @@ export default function Agenda() {
       <TopBar title="Agenda" />
       <div className="page">
 
-        {/* Filtros */}
-        <div className="field-filter">
-          {FILTROS.map((f) => (
+        {/* Busca */}
+        <div className="search-bar">
+          <FiSearch className="search-bar-icon" />
+          <input
+            type="text"
+            className="search-bar-input"
+            placeholder="Buscar por título, cliente ou pedido..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+          {busca && (
             <button
-              key={f.id}
-              className={`filter-chip${filtro === f.id ? " active" : ""}`}
-              onClick={() => setFiltro(f.id)}
+              type="button"
+              className="search-bar-clear"
+              onClick={() => setBusca("")}
+              aria-label="Limpar busca"
             >
-              {f.label}
+              <FiX />
+            </button>
+          )}
+        </div>
+
+        {/* Chips de tipo */}
+        <div className="field-filter">
+          {TIPOS.map((t) => (
+            <button
+              key={t}
+              className={`filter-chip${tipoFiltro === t ? " active" : ""}`}
+              onClick={() => setTipoFiltro(t)}
+            >
+              {t === "todos" ? "Todos os tipos" : t}
             </button>
           ))}
         </div>
+
+        {/* Filtros de data (ocultos durante busca) */}
+        {!buscaDebounced && (
+          <div className="field-filter">
+            {FILTROS.map((f) => (
+              <button
+                key={f.id}
+                className={`filter-chip${filtro === f.id ? " active" : ""}`}
+                onClick={() => setFiltro(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading && <div className="spinner-wrap"><span className="spinner" /> Carregando...</div>}
         {erro && <div className="banner banner-danger">{erro}</div>}
 
         {!loading && !erro && agendamentos.length === 0 && (
-          <div className="empty-state">Nenhum agendamento encontrado.</div>
+          <div className="empty-state">
+            {buscaDebounced
+              ? `Nenhum resultado para "${buscaDebounced}".`
+              : "Nenhum agendamento encontrado."}
+          </div>
         )}
 
         {/* Lista estilo Google Calendar */}

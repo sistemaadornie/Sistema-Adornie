@@ -278,7 +278,7 @@ async function getEquipe(empresaId) {
 }
 
 async function listar(empresaId, userId, permissoes, filtros) {
-  const { status, tipo, data_inicio, data_fim, usuario_id } = filtros;
+  const { status, tipo, data_inicio, data_fim, usuario_id, q } = filtros;
   const params = [empresaId];
   const wheres = ["a.empresa_id = $1"];
 
@@ -290,6 +290,10 @@ async function listar(empresaId, userId, permissoes, filtros) {
   if (tipo)        { params.push(tipo);         wheres.push(`a.tipo = $${params.length}`); }
   if (data_inicio) { params.push(data_inicio);  wheres.push(`a.data >= $${params.length}`); }
   if (data_fim)    { params.push(data_fim);     wheres.push(`a.data <= $${params.length}`); }
+  if (q) {
+    params.push(`%${q}%`);
+    wheres.push(`(a.titulo ILIKE $${params.length} OR a.cliente ILIKE $${params.length} OR ped.numero_origem ILIKE $${params.length} OR ped.numero_sequencial::text ILIKE $${params.length})`);
+  }
   if (usuario_id)  {
     params.push(usuario_id);
     wheres.push(`EXISTS (SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id=a.id AND ae.usuario_id=$${params.length})`);
@@ -335,6 +339,7 @@ async function listar(empresaId, userId, permissoes, filtros) {
     LEFT JOIN pedidos   ped ON ped.id = a.pedido_id AND ped.deleted_at IS NULL
     WHERE ${wheres.join(" AND ")}
     ORDER BY a.data ASC, a.hora ASC
+    ${q ? "LIMIT 100" : ""}
     `,
     params
   );
