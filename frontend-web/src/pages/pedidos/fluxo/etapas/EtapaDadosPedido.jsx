@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "./EditarPedidoModal";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
-import SelecionarTipoPersianaModal from "./SelecionarTipoPersianaModal";
 import { api } from "../../../../services/api";
 import { abrirOsDoItem } from "../../../../utils/fichaConferencia";
 
@@ -21,7 +20,6 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
   const [editando, setEditando] = useState(false);
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
-  const [selecionandoTipo, setSelecionandoTipo] = useState(false);
   const [pendentesConsultoras, setPendentesConsultoras] = useState([]);
   const [carregandoPendentes, setCarregandoPendentes] = useState(true);
   const [abrindoItemId, setAbrindoItemId] = useState(null);
@@ -62,11 +60,6 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
-            {(p.itens_persiana_pendentes ?? 0) > 0 && (
-              <button className="pf-btn-secondary" onClick={() => setSelecionandoTipo(true)}>
-                🎛️ Selecionar Tipo ({p.itens_persiana_pendentes})
-              </button>
-            )}
             <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
             <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
             <button className="pf-modal-fechar" onClick={onClose}>×</button>
@@ -200,14 +193,6 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
         <VincularItensModal
           pedidoId={pedidoId}
           onClose={() => setVinculando(false)}
-          onRecarregar={onRecarregar}
-        />
-      )}
-
-      {selecionandoTipo && (
-        <SelecionarTipoPersianaModal
-          pedidoId={pedidoId}
-          onClose={() => setSelecionandoTipo(false)}
           onRecarregar={onRecarregar}
         />
       )}
