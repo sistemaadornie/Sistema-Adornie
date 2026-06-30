@@ -167,12 +167,50 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados) {
   );
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
 
-  if (osRows[0].tipo === 'cortina') {
+  const tipo = osRows[0].tipo;
+
+  if (tipo === 'cortina') {
     validarDadosConfeccaoCortina(dados);
-  } else if (osRows[0].tipo === 'forro') {
+  } else if (tipo === 'forro') {
     validarDadosConfeccaoForro(dados);
-  } else if (osRows[0].tipo === 'persiana') {
+  } else if (tipo === 'persiana') {
     validarDadosConferenciaConsultorasPersiana(dados);
+  }
+
+  if (tipo === 'persiana') {
+    if (!osRows[0].pedido_item_id) {
+      throw Object.assign(
+        new Error('OS de persiana sem pedido_item_id — não foi possível sincronizar o item.'),
+        { status: 500 }
+      );
+    }
+
+    await db.query('BEGIN');
+    try {
+      const { rows } = await db.query(
+        `UPDATE ordem_servico
+         SET dados_conferencia_consultoras = $1,
+             conferencia_consultoras_preenchido_em = NOW(),
+             conferencia_consultoras_preenchido_por = $2,
+             status = CASE WHEN status = 'aberta' THEN 'em_andamento' ELSE status END,
+             updated_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [JSON.stringify(dados), userId, id]
+      );
+      await db.query(
+        `UPDATE pedido_itens
+            SET modelo        = $1,
+                especificacoes = $2
+          WHERE id = $3`,
+        [dados.modelo, JSON.stringify({ tubo: dados.tubo, bando: dados.bando || null }), osRows[0].pedido_item_id]
+      );
+      await db.query('COMMIT');
+      return rows[0];
+    } catch (e) {
+      await db.query('ROLLBACK');
+      throw e;
+    }
   }
 
   const { rows } = await db.query(
@@ -186,16 +224,6 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados) {
      RETURNING *`,
     [JSON.stringify(dados), userId, id]
   );
-
-  if (osRows[0].tipo === 'persiana') {
-    await db.query(
-      `UPDATE pedido_itens
-          SET modelo        = $1,
-              especificacoes = $2
-        WHERE id = $3`,
-      [dados.modelo, JSON.stringify({ tubo: dados.tubo, bando: dados.bando || null }), osRows[0].pedido_item_id]
-    );
-  }
 
   return rows[0];
 }

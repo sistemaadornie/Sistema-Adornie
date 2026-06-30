@@ -207,34 +207,66 @@ describe('salvarDadosConferenciaConsultoras', () => {
     await expect(svc.salvarDadosConferenciaConsultoras(999, 2, {})).rejects.toMatchObject({ status: 404 });
   });
 
-  test('salva ficha de persiana (manual) e sincroniza pedido_itens', async () => {
+  test('salva ficha de persiana (manual) e sincroniza pedido_itens em transação', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 7 }] })
-      .mockResolvedValueOnce({ rows: [{ id: 3, dados_conferencia_consultoras: { modelo: 'Rolo / Rollo', tubo: '38mm' }, status: 'em_andamento' }] })
-      .mockResolvedValueOnce({ rows: [] }); // UPDATE pedido_itens
+      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 7 }] }) // SELECT
+      .mockResolvedValueOnce({ rows: [] })                                          // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 3, dados_conferencia_consultoras: { modelo: 'Rolo / Rollo', tubo: '38mm' }, status: 'em_andamento' }] }) // UPDATE ordem_servico
+      .mockResolvedValueOnce({ rows: [] })                                          // UPDATE pedido_itens
+      .mockResolvedValueOnce({ rows: [] });                                         // COMMIT
 
     const dados = { modelo: 'Rolo / Rollo', tubo: '38mm', bando: null, acionamento: 'manual', tecido: 'Drumis', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], qtdMotor: '', ordem: '' };
     const result = await svc.salvarDadosConferenciaConsultoras(3, 1, dados);
 
     expect(result.status).toBe('em_andamento');
-    expect(db.query).toHaveBeenCalledTimes(3);
-    expect(db.query).toHaveBeenNthCalledWith(3,
+    expect(db.query).toHaveBeenCalledTimes(5);
+    expect(db.query).toHaveBeenNthCalledWith(2, 'BEGIN');
+    expect(db.query).toHaveBeenNthCalledWith(4,
       expect.stringContaining('UPDATE pedido_itens'),
       ['Rolo / Rollo', JSON.stringify({ tubo: '38mm', bando: null }), 7]
     );
+    expect(db.query).toHaveBeenNthCalledWith(5, 'COMMIT');
   });
 
   test('salva ficha de persiana (motorizado com qtdMotor)', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 8 }] })
-      .mockResolvedValueOnce({ rows: [{ id: 4, dados_conferencia_consultoras: { modelo: 'Meliade', tubo: '30mm', acionamento: 'motorizado', qtdMotor: '2' }, status: 'em_andamento' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 8 }] }) // SELECT
+      .mockResolvedValueOnce({ rows: [] })                                          // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 4, dados_conferencia_consultoras: { modelo: 'Meliade', tubo: '30mm', acionamento: 'motorizado', qtdMotor: '2' }, status: 'em_andamento' }] }) // UPDATE ordem_servico
+      .mockResolvedValueOnce({ rows: [] })                                          // UPDATE pedido_itens
+      .mockResolvedValueOnce({ rows: [] });                                         // COMMIT
 
     const dados = { modelo: 'Meliade', tubo: '30mm', bando: '', acionamento: 'motorizado', qtdMotor: '2', tecido: '', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], ordem: '' };
     const result = await svc.salvarDadosConferenciaConsultoras(4, 1, dados);
 
     expect(result.status).toBe('em_andamento');
-    expect(db.query).toHaveBeenCalledTimes(3);
+    expect(db.query).toHaveBeenCalledTimes(5);
+    expect(db.query).toHaveBeenNthCalledWith(2, 'BEGIN');
+    expect(db.query).toHaveBeenNthCalledWith(5, 'COMMIT');
+  });
+
+  test('lança erro 500 quando persiana não tem pedido_item_id', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: null }] });
+
+    const dados = { modelo: 'Rolo / Rollo', tubo: '38mm', bando: null, acionamento: 'manual', tecido: '', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], qtdMotor: '', ordem: '' };
+    await expect(
+      svc.salvarDadosConferenciaConsultoras(7, 1, dados)
+    ).rejects.toMatchObject({ status: 500, message: expect.stringContaining('pedido_item_id') });
+  });
+
+  test('executa ROLLBACK quando UPDATE pedido_itens falha na persiana', async () => {
+    const dbError = new Error('DB error');
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'persiana', pedido_item_id: 7 }] }) // SELECT
+      .mockResolvedValueOnce({ rows: [] })                                          // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 3, status: 'em_andamento' }] })       // UPDATE ordem_servico
+      .mockRejectedValueOnce(dbError)                                               // UPDATE pedido_itens — falha
+      .mockResolvedValueOnce({ rows: [] });                                         // ROLLBACK
+
+    const dados = { modelo: 'Rolo / Rollo', tubo: '38mm', bando: null, acionamento: 'manual', tecido: '', largMax: '', modeloControle: '', modeloMotor: '', acessorios: [], qtdMotor: '', ordem: '' };
+    await expect(svc.salvarDadosConferenciaConsultoras(3, 1, dados)).rejects.toThrow('DB error');
+
+    expect(db.query).toHaveBeenNthCalledWith(5, 'ROLLBACK');
   });
 
   test('lança 400 quando modelo ou tubo faltando para persiana', async () => {
