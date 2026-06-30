@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 import FichaConfeccaoCortina from "./FichaConfeccaoCortina";
 import FichaConfeccaoForro from "./FichaConfeccaoForro";
+import FichaConferenciaConsultorasPersiana from "./FichaConferenciaConsultorasPersiana";
 import "./OrdemServicoModal.css";
 
 export default function FichaConferenciaConsultoras() {
@@ -55,6 +56,16 @@ export default function FichaConferenciaConsultoras() {
         <div className="os-alert os-alert-danger">{erro || "Ordem de serviço não encontrada."}</div>
         <button className="os-btn os-btn-secondary" onClick={voltar}>← Voltar</button>
       </div>
+    );
+  }
+
+  if (osData.tipo === "persiana") {
+    return (
+      <FichaConferenciaConsultorasPersiana
+        osData={osData}
+        onSalvar={voltar}
+        onVoltar={voltar}
+      />
     );
   }
 
