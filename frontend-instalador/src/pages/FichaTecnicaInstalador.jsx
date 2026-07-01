@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { FiCamera } from "react-icons/fi";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
@@ -92,6 +93,50 @@ function CanvasDraw({ value, onSave }) {
   );
 }
 
+function FotosConferencia({ agendamentoId, itemId, fotos, onFotosEnviadas }) {
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function onChange(e) {
+    const arquivos = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!arquivos.length || itemId == null) return;
+    setEnviando(true);
+    setErro("");
+    try {
+      const fd = new FormData();
+      arquivos.forEach((f) => fd.append("arquivos", f));
+      const data = await api.post(`/agendamentos/${agendamentoId}/itens/${itemId}/fotos`, fd, true);
+      onFotosEnviadas(data.fotos || []);
+    } catch (err) {
+      setErro(err.message || "Erro ao enviar foto.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>Fotos da Conferência</h3>
+      <div className="photo-grid">
+        {fotos.map((f) => (
+          <div className="photo-thumb" key={f.id}>
+            <img src={f.url} alt="" />
+          </div>
+        ))}
+        {itemId != null && (
+          <label className="upload-btn" style={{ opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto" }}>
+            <FiCamera />
+            Adicionar foto
+            <input type="file" accept="image/*" capture="environment" multiple onChange={onChange} style={{ display: "none" }} />
+          </label>
+        )}
+      </div>
+      {erro && <div className="banner banner-danger" style={{ marginTop: 8 }}>{erro}</div>}
+    </div>
+  );
+}
+
 const DADOS_TECNICOS_VAZIO = {
   largura: "", altura_esq: "", altura_meio: "", altura_dir: "",
   fixacao: "parede", lado_motor: "n/a", voltagem: "sem_motor",
@@ -130,6 +175,7 @@ function painelConfeccao(dc, tipo) {
 export default function FichaTecnicaInstalador() {
   const { agendamentoId, osId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -137,8 +183,26 @@ export default function FichaTecnicaInstalador() {
   const [erro, setErro] = useState("");
   const [osData, setOsData] = useState(null);
   const [dados, setDados] = useState(DADOS_TECNICOS_VAZIO);
+  const [itemId, setItemId] = useState(location.state?.itemId ?? null);
+  const [fotos, setFotos] = useState(location.state?.fotos ?? []);
 
   useEffect(() => { carregar(); }, [osId]);
+
+  // Fallback: se a tela foi aberta sem o state de navegação (ex: refresh),
+  // descobre o item do agendamento cruzando pedido_item_id com a OS carregada.
+  useEffect(() => {
+    if (itemId != null || !osData?.pedido_item_id) return;
+    api.get(`/agendamentos/${agendamentoId}`)
+      .then((data) => {
+        const item = (data.agendamento?.itens_raw || [])
+          .find((it) => String(it.pedido_item_id) === String(osData.pedido_item_id));
+        if (item) {
+          setItemId(item.id);
+          setFotos(item.fotos || []);
+        }
+      })
+      .catch(() => {});
+  }, [itemId, osData, agendamentoId]);
 
   async function carregar() {
     setLoading(true);
@@ -251,6 +315,13 @@ export default function FichaTecnicaInstalador() {
       <TopBar title="Conferência Técnica" back />
       <div className="page">
         {erro && <div className="banner banner-danger">{erro}</div>}
+
+        <FotosConferencia
+          agendamentoId={agendamentoId}
+          itemId={itemId}
+          fotos={fotos}
+          onFotosEnviadas={(novasFotos) => setFotos((prev) => [...prev, ...novasFotos])}
+        />
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Ficha de Conferência Consultoras (referência)</h3>

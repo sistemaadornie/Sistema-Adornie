@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   FiMapPin, FiClock, FiUser, FiFileText, FiCamera,
   FiExternalLink, FiUsers, FiPackage, FiTag, FiX, FiCheck, FiInfo,
+  FiLogIn, FiChevronRight,
 } from "react-icons/fi";
 import { api } from "../services/api";
 import { estadoFichaTecnica } from "../utils/fichaTecnica";
@@ -169,7 +170,7 @@ function ItemComFoto({ agendamentoId, item, index, podeFotografar, onFotoEnviada
           {conferido ? <FiCheck size={12} /> : (numero ?? index)}
         </span>
         <span className="item-row-titulo">{titulo}</span>
-        {podeFotografar && (
+        {podeFotografar && !estado?.acao && (
           <label
             className="item-row-cam-btn"
             title="Adicionar foto"
@@ -195,8 +196,10 @@ function ItemComFoto({ agendamentoId, item, index, podeFotografar, onFotoEnviada
       )}
 
       {estado && (estado.acao ? (
-        <button type="button" className="item-row-status item-row-status-acao" onClick={() => onAbrirFicha(item)}>
-          <span className="item-row-status-dot" /> {estado.label}
+        <button type="button" className="item-row-ficha-btn" onClick={() => onAbrirFicha(item)}>
+          <FiLogIn size={18} />
+          <span>{estado.label}</span>
+          <FiChevronRight size={16} />
         </button>
       ) : (
         <span className="item-row-status item-row-status-aviso">
@@ -451,7 +454,9 @@ export default function AgendamentoDetalhe() {
                     onFotoEnviada={atualizarFotosItem}
                     estado={estado}
                     onAbrirFicha={() => {
-                      if (ficha?.ordem_servico_id) navigate(`/agenda/${ag.id}/os/${ficha.ordem_servico_id}`);
+                      if (ficha?.ordem_servico_id) {
+                        navigate(`/agenda/${ag.id}/os/${ficha.ordem_servico_id}`, { state: { itemId: item.id } });
+                      }
                     }}
                   />
                 );
