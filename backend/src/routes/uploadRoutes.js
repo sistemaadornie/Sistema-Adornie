@@ -94,7 +94,7 @@ router.post('/midias/:sessionId/confirmar', authMiddleware, async (req, res) => 
     return res.status(400).json({ message: 'drive_file_id e drive_url obrigatórios' });
   }
   try {
-    const result = await uploadSvc.confirmar(req.params.sessionId, {
+    const result = await uploadSvc.confirmar(req.params.sessionId, req.user.id, {
       driveFileId: drive_file_id, driveUrl: drive_url,
       duracaoSegundos: duracao_segundos ?? null,
     });
@@ -107,7 +107,7 @@ router.post('/midias/:sessionId/confirmar', authMiddleware, async (req, res) => 
 // GET /api/pedidos/:pedidoId/midias
 router.get('/pedidos/:pedidoId/midias', authMiddleware, async (req, res) => {
   try {
-    const rows = await uploadSvc.listarPorPedido(Number(req.params.pedidoId), {
+    const rows = await uploadSvc.listarPorPedido(Number(req.params.pedidoId), req.user.empresa_id, {
       itemId: req.query.item_id ? Number(req.query.item_id) : undefined,
       osId:   req.query.os_id   ? Number(req.query.os_id)   : undefined,
       tipo:   req.query.tipo,
@@ -121,7 +121,7 @@ router.get('/pedidos/:pedidoId/midias', authMiddleware, async (req, res) => {
 // GET /api/os/:osId/midias
 router.get('/os/:osId/midias', authMiddleware, async (req, res) => {
   try {
-    const rows = await uploadSvc.listarPorOs(Number(req.params.osId));
+    const rows = await uploadSvc.listarPorOs(Number(req.params.osId), req.user.empresa_id);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });

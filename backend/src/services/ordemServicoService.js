@@ -1,13 +1,14 @@
 const db = require('../database/db');
 const { fmtNumeroOrigem } = require('./pedidoService');
 
-async function criar({ pedidoItemId, responsavelId }) {
+async function criar({ pedidoItemId, responsavelId, empresaId }) {
   const { rows: catRows } = await db.query(
     `SELECT cat.tipo_confeccao
      FROM pedido_itens pi
+     JOIN pedidos p ON p.id = pi.pedido_id
      LEFT JOIN categorias cat ON cat.id = pi.categoria_id
-     WHERE pi.id = $1`,
-    [pedidoItemId]
+     WHERE pi.id = $1 AND p.empresa_id = $2`,
+    [pedidoItemId, empresaId]
   );
   if (!catRows.length) {
     throw Object.assign(new Error('Item do pedido não encontrado'), { status: 404 });
@@ -33,7 +34,7 @@ async function criar({ pedidoItemId, responsavelId }) {
   return existentes[0];
 }
 
-async function listarPorPedido(pedidoId) {
+async function listarPorPedido(pedidoId, empresaId) {
   const { rows } = await db.query(
     `SELECT os.id, os.status, os.aberta_em, os.encerrada_em,
             pi.descricao AS item_descricao,
@@ -42,30 +43,37 @@ async function listarPorPedido(pedidoId) {
             COUNT(pm.id) FILTER (WHERE pm.tipo = 'video') AS total_videos
      FROM ordem_servico os
      JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
      LEFT JOIN usuarios u  ON u.id  = os.responsavel_id
      LEFT JOIN pedido_midias pm ON pm.ordem_servico_id = os.id
-     WHERE pi.pedido_id = $1
+     WHERE pi.pedido_id = $1 AND p.empresa_id = $2
      GROUP BY os.id, pi.descricao, u.nome_completo
      ORDER BY os.id`,
-    [pedidoId]
+    [pedidoId, empresaId]
   );
   return rows;
 }
 
-async function atualizarStatus(id, status) {
+async function atualizarStatus(id, status, empresaId) {
   const encerradaClause = status === 'encerrada' ? ', encerrada_em = NOW()' : '';
   const { rows } = await db.query(
     `UPDATE ordem_servico
      SET status = $1, updated_at = NOW() ${encerradaClause}
      WHERE id = $2
+       AND id IN (
+         SELECT os.id FROM ordem_servico os
+         JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+         JOIN pedidos p ON p.id = pi.pedido_id
+         WHERE p.empresa_id = $3
+       )
      RETURNING *`,
-    [status, id]
+    [status, id, empresaId]
   );
   if (!rows[0]) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
   return rows[0];
 }
 
-async function buscar(id) {
+async function buscar(id, empresaId) {
   const { rows } = await db.query(
     `SELECT os.id, os.status, os.aberta_em, os.encerrada_em, os.tipo,
             os.dados_tecnicos, os.preenchido_em, os.preenchido_por,
@@ -95,8 +103,8 @@ async function buscar(id) {
      LEFT JOIN clientes c ON c.id = p.cliente_id
      LEFT JOIN usuarios u ON u.id = p.consultor_id
      LEFT JOIN arquitetos a ON a.id = p.arquiteto_id
-     WHERE os.id = $1`,
-    [id]
+     WHERE os.id = $1 AND p.empresa_id = $2`,
+    [id, empresaId]
   );
   if (rows.length === 0) return null;
   
@@ -136,8 +144,15 @@ function validarDadosConferenciaConsultorasPersiana(dados) {
     throw Object.assign(new Error('Quantidade de motor é obrigatória para persiana motorizada.'), { status: 400 });
 }
 
-async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
-  const { rows: osRows } = await db.query(`SELECT tipo FROM ordem_servico WHERE id = $1`, [id]);
+async function salvarDadosConfeccao(id, userId, dadosConfeccao, empresaId) {
+  const { rows: osRows } = await db.query(
+    `SELECT os.tipo
+     FROM ordem_servico os
+     JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
+     WHERE os.id = $1 AND p.empresa_id = $2`,
+    [id, empresaId]
+  );
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
 
   if (osRows[0].tipo === 'cortina') {
@@ -160,10 +175,14 @@ async function salvarDadosConfeccao(id, userId, dadosConfeccao) {
   return rows[0];
 }
 
-async function salvarDadosConferenciaConsultoras(id, userId, dados) {
+async function salvarDadosConferenciaConsultoras(id, userId, dados, empresaId) {
   const { rows: osRows } = await db.query(
-    `SELECT tipo, pedido_item_id FROM ordem_servico WHERE id = $1`,
-    [id]
+    `SELECT os.tipo, os.pedido_item_id
+     FROM ordem_servico os
+     JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
+     WHERE os.id = $1 AND p.empresa_id = $2`,
+    [id, empresaId]
   );
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
 
@@ -228,8 +247,15 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados) {
   return rows[0];
 }
 
-async function salvarDadosTecnicos(id, userId, dadosTecnicos) {
-  const { rows: osRows } = await db.query(`SELECT dados_conferencia_consultoras FROM ordem_servico WHERE id = $1`, [id]);
+async function salvarDadosTecnicos(id, userId, dadosTecnicos, empresaId) {
+  const { rows: osRows } = await db.query(
+    `SELECT os.dados_conferencia_consultoras
+     FROM ordem_servico os
+     JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
+     WHERE os.id = $1 AND p.empresa_id = $2`,
+    [id, empresaId]
+  );
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
   if (!osRows[0].dados_conferencia_consultoras) {
     throw Object.assign(new Error('Ficha de Conferência Consultoras precisa ser preenchida antes da Conferência Técnica.'), { status: 400 });

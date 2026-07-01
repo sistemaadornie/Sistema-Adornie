@@ -38,14 +38,14 @@ async function buscarStatus(sessionId, userId) {
   return rows[0] ?? null;
 }
 
-async function confirmar(sessionId, { driveFileId, driveUrl, duracaoSegundos }) {
+async function confirmar(sessionId, userId, { driveFileId, driveUrl, duracaoSegundos }) {
   // db is the pg Pool; use a dedicated client so all queries run in one transaction
   const client = await db.connect();
   try {
     await client.query('BEGIN');
 
     const { rows: sessionRows } = await client.query(
-      `SELECT * FROM upload_sessions WHERE id = $1`, [sessionId]
+      `SELECT * FROM upload_sessions WHERE id = $1 AND iniciado_por = $2`, [sessionId, userId]
     );
     const s = sessionRows[0];
     if (!s) {
@@ -80,8 +80,8 @@ async function confirmar(sessionId, { driveFileId, driveUrl, duracaoSegundos }) 
   }
 }
 
-async function listarPorPedido(pedidoId, { itemId, osId, tipo } = {}) {
-  const params = [pedidoId];
+async function listarPorPedido(pedidoId, empresaId, { itemId, osId, tipo } = {}) {
+  const params = [pedidoId, empresaId];
   const clauses = [];
   if (itemId) { params.push(itemId);  clauses.push(`pm.pedido_item_id = $${params.length}`); }
   if (osId)   { params.push(osId);    clauses.push(`pm.ordem_servico_id = $${params.length}`); }
@@ -94,23 +94,25 @@ async function listarPorPedido(pedidoId, { itemId, osId, tipo } = {}) {
             u.nome_completo AS enviado_por_nome
      FROM pedido_midias pm
      JOIN usuarios u ON u.id = pm.enviado_por
-     WHERE pm.pedido_id = $1 ${where}
+     JOIN pedidos p ON p.id = pm.pedido_id
+     WHERE pm.pedido_id = $1 AND p.empresa_id = $2 ${where}
      ORDER BY pm.enviado_em`,
     params
   );
   return rows;
 }
 
-async function listarPorOs(osId) {
+async function listarPorOs(osId, empresaId) {
   const { rows } = await db.query(
     `SELECT pm.id, pm.drive_file_id, pm.drive_url, pm.tipo, pm.nome_original,
             pm.tamanho_bytes, pm.duracao_segundos, pm.enviado_em,
             u.nome_completo AS enviado_por_nome
      FROM pedido_midias pm
      JOIN usuarios u ON u.id = pm.enviado_por
-     WHERE pm.ordem_servico_id = $1
+     JOIN pedidos p ON p.id = pm.pedido_id
+     WHERE pm.ordem_servico_id = $1 AND p.empresa_id = $2
      ORDER BY pm.enviado_em`,
-    [osId]
+    [osId, empresaId]
   );
   return rows;
 }

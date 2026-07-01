@@ -1186,6 +1186,17 @@ router.put(
         return res.status(400).json({ message: "Permissões inválidas." });
       }
 
+      // Apenas quem já é ADMIN_MASTER pode conceder ADMIN_MASTER — evita que
+      // um usuário com GESTOR_USUARIOS se autopromova a superusuário.
+      if (
+        permissoes.includes("ADMIN_MASTER") &&
+        !(req.user.permissoes || []).includes("ADMIN_MASTER")
+      ) {
+        return res.status(403).json({
+          message: "Apenas um ADMIN_MASTER pode conceder a permissão ADMIN_MASTER.",
+        });
+      }
+
       const usuarioValido = await db.query(
         `
         SELECT id

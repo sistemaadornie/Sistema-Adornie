@@ -1,9 +1,17 @@
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, kReleaseMode, defaultTargetPlatform, TargetPlatform;
 
 class ApiConstants {
   ApiConstants._();
 
+  // Permite apontar para outro backend em builds customizados:
+  // flutter build apk --dart-define=API_BASE_URL=https://meu-backend.com/api
+  static const String _override = String.fromEnvironment('API_BASE_URL');
+
   static String get baseUrl {
+    if (_override.isNotEmpty) return _override;
+    // Builds de release nunca devem falar com localhost — usa o backend de produção (HTTPS).
+    if (kReleaseMode) return 'https://operon-sistema.onrender.com/api';
     if (kIsWeb) return 'http://localhost:3001/api';
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:3001/api';

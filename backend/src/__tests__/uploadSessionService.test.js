@@ -88,7 +88,7 @@ describe('confirmar', () => {
       .mockResolvedValueOnce({ rows: [] })              // UPDATE sessão
       .mockResolvedValueOnce({ rows: [] });             // COMMIT
 
-    const result = await svc.confirmar('uuid-1', {
+    const result = await svc.confirmar('uuid-1', 7, {
       driveFileId: 'file-111',
       driveUrl: 'https://drive.google.com/file/d/file-111',
       duracaoSegundos: null,
@@ -108,7 +108,7 @@ describe('confirmar', () => {
       .mockResolvedValueOnce({ rows: [] });  // ROLLBACK (catch block)
 
     await expect(
-      svc.confirmar('uuid-nao-existe', { driveFileId: 'x', driveUrl: 'y', duracaoSegundos: null })
+      svc.confirmar('uuid-nao-existe', 7, { driveFileId: 'x', driveUrl: 'y', duracaoSegundos: null })
     ).rejects.toMatchObject({ status: 404 });
 
     expect(mockClientRelease).toHaveBeenCalledTimes(1);
