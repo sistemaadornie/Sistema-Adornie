@@ -54,7 +54,7 @@ export default function EtapaAgendamento({ pedidoId, pedido, etapas, preAgendame
 
   return (
     <div className="pf-modal-overlay">
-      <div className="pf-modal">
+      <div className="pf-modal pf-modal-grande">
         <div className="pf-modal-header">
           <div>
             <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginBottom: 2 }}>ETAPA 5</div>

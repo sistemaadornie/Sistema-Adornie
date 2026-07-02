@@ -62,7 +62,7 @@ export default function HistoricoPedidoModal({ pedidoId, onClose }) {
 
   return (
     <div className="pf-modal-overlay">
-      <div className="pf-modal">
+      <div className="pf-modal pf-modal-grande">
         <div className="pf-modal-header">
           <div className="pf-modal-titulo">🕘 Histórico do Pedido</div>
           <button className="pf-modal-fechar" onClick={onClose}>×</button>
