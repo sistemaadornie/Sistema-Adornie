@@ -1,6 +1,7 @@
 "use strict";
 const db = require("../database/db");
 const { encontrarVinculosControle } = require('./vinculoAutomaticoService');
+const { labelProdutoConferencia } = require('../utils/produtoLabel');
 
 function calcNivelAlerta(diasParaPrazo) {
   if (diasParaPrazo == null) return null;
@@ -706,6 +707,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const [{ rows: itensPorGenitor }, { rows: herdeirosRaw }] = await Promise.all([
     db.query(
       `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao, pi.ordem, pi.medidas,
+              pi.ambiente, pi.largura, pi.altura, pi.modelo,
+              pi.especificacoes->>'acionamento' AS acionamento,
               cat.tipo_confeccao,
               os.id AS ordem_servico_id,
               (os.dados_confeccao IS NOT NULL) AS confeccao_preenchida,
@@ -735,6 +738,10 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       descricao: item.descricao,
       ordem: item.ordem,
       medidas: item.medidas,
+      ambiente: item.ambiente,
+      largura: item.largura,
+      altura: item.altura,
+      produto: labelProdutoConferencia(item.tipo_confeccao, item.modelo, item.acionamento) || item.descricao,
       tipo_confeccao: item.tipo_confeccao,
       ordem_servico_id: item.ordem_servico_id,
       confeccao_preenchida: item.confeccao_preenchida,

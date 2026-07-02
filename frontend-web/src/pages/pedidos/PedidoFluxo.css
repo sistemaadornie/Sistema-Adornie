@@ -294,6 +294,9 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 .vim-tabela.vim-com-ambiente {
   grid-template-columns: 40px minmax(160px, 1fr) 110px 110px minmax(220px, auto);
 }
+.vim-tabela.vim-fichas {
+  grid-template-columns: 40px 190px minmax(140px, 1fr) 130px minmax(150px, auto);
+}
 
 .vim-header,
 .vim-row {

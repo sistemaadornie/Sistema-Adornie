@@ -25,7 +25,7 @@ const VAZIO = {
   qtdMotor: "", ordem: "",
 };
 
-export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, onVoltar }) {
+export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, onVoltar, readOnly = false }) {
   const [dados, setDados] = useState(() => ({
     ...VAZIO,
     ...(osData.dados_conferencia_consultoras || {}),
@@ -102,19 +102,32 @@ export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, 
       <div className="os-page-header os-page-header-flat">
         <div className="os-page-header-left">
           <button className="os-back-btn" onClick={onVoltar}>← Voltar</button>
-          <h1 className="os-page-title">Ficha de Conferência Consultoras — Persiana</h1>
+          <h1 className="os-page-title">
+            Ficha de Conferência Consultoras — Persiana
+            {readOnly && (
+              <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.08)", color: "var(--color-text-muted, #999)" }}>
+                🔒 Somente leitura
+              </span>
+            )}
+          </h1>
         </div>
         <div className="os-page-header-right">
-          <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>
-            Cancelar
-          </button>
-          <button
-            className="os-btn os-btn-primary"
-            onClick={salvar}
-            disabled={salvando || !podeSalvar}
-          >
-            {salvando ? "Salvando..." : "✓ Salvar Ficha de Conferência Consultoras"}
-          </button>
+          {readOnly ? (
+            <button className="os-btn os-btn-secondary" onClick={onVoltar}>Fechar</button>
+          ) : (
+            <>
+              <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>
+                Cancelar
+              </button>
+              <button
+                className="os-btn os-btn-primary"
+                onClick={salvar}
+                disabled={salvando || !podeSalvar}
+              >
+                {salvando ? "Salvando..." : "✓ Salvar Ficha de Conferência Consultoras"}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -125,7 +138,7 @@ export default function FichaConferenciaConsultorasPersiana({ osData, onSalvar, 
         <div className="os-alert os-alert-success" style={{ margin: "0 0 16px" }}>{sucesso}</div>
       )}
 
-      <div className="os-page-body">
+      <div className="os-page-body" style={readOnly ? { pointerEvents: "none", opacity: 0.85 } : undefined}>
         <div className="os-info-bar">
           <div className="os-info-row">
             <div className="os-info-item os-info-item-grow">

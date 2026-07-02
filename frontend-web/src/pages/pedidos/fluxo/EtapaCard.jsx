@@ -26,8 +26,9 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
     if (concluida) return "Concluído";
     if (pendente) return "Aguardando";
     if (numero === 1) {
-      const { itens_cobertos = 0, total_itens = 0 } = progresso;
-      return `${itens_cobertos} de ${total_itens} itens agendados`;
+      const { itens_com_conferencia_consultoras = 0, total_itens_conferencia = 0 } = progresso;
+      if (total_itens_conferencia === 0) return "Nenhuma ficha necessária";
+      return `${itens_com_conferencia_consultoras} de ${total_itens_conferencia} fichas preenchidas`;
     }
     if (numero === 2) {
       const { conferidos = 0, total = 0 } = progresso;
@@ -60,8 +61,9 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
   function buildProgressPct() {
     if (concluida) return 100;
     if (numero === 1) {
-      const { itens_cobertos = 0, total_itens = 1 } = progresso;
-      return Math.round((itens_cobertos / total_itens) * 100);
+      const { itens_com_conferencia_consultoras = 0, total_itens_conferencia = 0 } = progresso;
+      if (total_itens_conferencia === 0) return 100;
+      return Math.round((itens_com_conferencia_consultoras / total_itens_conferencia) * 100);
     }
     if (numero === 2) {
       const { conferidos = 0, total = 1 } = progresso;

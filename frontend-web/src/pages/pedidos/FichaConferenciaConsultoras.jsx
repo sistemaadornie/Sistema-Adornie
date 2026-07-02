@@ -11,6 +11,7 @@ export default function FichaConferenciaConsultoras() {
   const navigate = useNavigate();
   const location = useLocation();
   const voltarAgendamentoId = location.state?.voltarConferenciaAgendamentoId || null;
+  const readOnly = !!location.state?.readOnly;
 
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -65,12 +66,13 @@ export default function FichaConferenciaConsultoras() {
         osData={osData}
         onSalvar={voltar}
         onVoltar={voltar}
+        readOnly={readOnly}
       />
     );
   }
 
   if (osData.tipo === "forro") {
-    return <FichaConfeccaoForro osData={osData} modo="conferencia_consultoras" onSalvar={voltar} onVoltar={voltar} />;
+    return <FichaConfeccaoForro osData={osData} modo="conferencia_consultoras" onSalvar={voltar} onVoltar={voltar} readOnly={readOnly} />;
   }
-  return <FichaConfeccaoCortina osData={osData} modo="conferencia_consultoras" onSalvar={voltar} onVoltar={voltar} />;
+  return <FichaConfeccaoCortina osData={osData} modo="conferencia_consultoras" onSalvar={voltar} onVoltar={voltar} readOnly={readOnly} />;
 }

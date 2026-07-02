@@ -5,6 +5,7 @@ const svc = require("../services/pedidoService");
 const db  = require("../database/db");
 const dashboardSvc = require("../services/dashboardService");
 const auditSvc = require("../services/auditoriaService");
+const { labelProdutoConferencia } = require("../utils/produtoLabel");
 
 const router = express.Router();
 const uploadPdf = multer({
@@ -616,6 +617,56 @@ router.get("/:id/itens-pendentes-conferencia-consultoras", authMiddleware, async
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Erro ao buscar itens pendentes de Conferência Consultoras." });
+  }
+});
+
+// GET /pedidos/:id/itens-conferencia-consultoras
+router.get("/:id/itens-conferencia-consultoras", authMiddleware, async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const empresaId = req.user.empresa_id;
+
+    const pedCheck = await db.query(
+      `SELECT id FROM pedidos WHERE id = $1 AND empresa_id = $2 AND deleted_at IS NULL`,
+      [pedidoId, empresaId]
+    );
+    if (pedCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    const query = `
+      SELECT
+        pi.id AS pedido_item_id,
+        pi.ordem,
+        pi.ambiente,
+        pi.descricao,
+        pi.medidas,
+        pi.largura,
+        pi.altura,
+        pi.modelo,
+        pi.especificacoes->>'acionamento' AS acionamento,
+        cat.tipo_confeccao,
+        os.id AS ordem_servico_id,
+        (os.dados_conferencia_consultoras IS NOT NULL) AS preenchida
+      FROM pedido_itens pi
+      LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
+      LEFT JOIN produtos prod ON prod.id = oi.produto_id
+      LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
+      WHERE pi.pedido_id = $1
+        AND cat.necessita_conferencia = true
+      ORDER BY pi.ordem ASC, pi.id ASC
+    `;
+
+    const { rows } = await db.query(query, [pedidoId]);
+    const itens = rows.map(({ modelo, acionamento, tipo_confeccao, ...item }) => ({
+      ...item,
+      produto: labelProdutoConferencia(tipo_confeccao, modelo, acionamento) || item.descricao,
+    }));
+    return res.json({ itens });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao buscar itens de Conferência Consultoras." });
   }
 });
 

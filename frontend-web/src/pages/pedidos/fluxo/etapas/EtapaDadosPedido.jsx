@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import EditarPedidoModal from "./EditarPedidoModal";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
-import { api } from "../../../../services/api";
-import { abrirOsDoItem } from "../../../../utils/fichaConferencia";
+import VerFichasConsultorasModal from "./VerFichasConsultorasModal";
 
 function CriterioItem({ ok, texto }) {
   return (
@@ -16,39 +14,17 @@ function CriterioItem({ ok, texto }) {
 }
 
 export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarregar }) {
-  const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
-  const [pendentesConsultoras, setPendentesConsultoras] = useState([]);
-  const [carregandoPendentes, setCarregandoPendentes] = useState(true);
-  const [abrindoItemId, setAbrindoItemId] = useState(null);
+  const [vendoFichas, setVendoFichas] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};
 
-  useEffect(() => {
-    let ativo = true;
-    setCarregandoPendentes(true);
-    api.get(`/pedidos/${pedidoId}/itens-pendentes-conferencia-consultoras`)
-      .then((res) => { if (ativo) setPendentesConsultoras(res.itens || []); })
-      .finally(() => { if (ativo) setCarregandoPendentes(false); });
-    return () => { ativo = false; };
-  }, [pedidoId]);
-
   const todasConferenciasFeitasOuDesnecessarias =
     (p.total_itens_conferencia ?? 0) === 0 ||
     (p.itens_cobertos_conferencia ?? 0) >= (p.total_itens_conferencia ?? 1);
-
-  async function preencherConferenciaConsultoras(item) {
-    setAbrindoItemId(item.pedido_item_id);
-    try {
-      const osId = await abrirOsDoItem(item);
-      navigate(`/pedidos/os/${osId}/conferencia-consultoras`);
-    } finally {
-      setAbrindoItemId(null);
-    }
-  }
 
   return (
     <div className="pf-modal-overlay">
@@ -60,6 +36,7 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
+            <button className="pf-btn-secondary" onClick={() => setVendoFichas(true)}>👁 Ver Fichas de Consultoras</button>
             <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
             <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
             <button className="pf-modal-fechar" onClick={onClose}>×</button>
@@ -139,37 +116,13 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
             </div>
           )}
 
-          {(p.total_itens_conferencia ?? 0) > 0 && (
+          {!todasConferenciasFeitasOuDesnecessarias && (p.total_itens_conferencia ?? 0) > 0 && (
             <>
               <hr className="pf-separador" />
-              <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>CONFERÊNCIA CONSULTORAS</div>
-
-              {!carregandoPendentes && pendentesConsultoras.length === 0 && (
-                <div style={{ color: "var(--pf-badge-ok-text)", fontSize: 13, marginBottom: 12 }}>
-                  Todos os itens já têm Conferência Consultoras preenchida.
-                </div>
-              )}
-
-              {pendentesConsultoras.map((item) => (
-                <div key={item.pedido_item_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--pf-btn-secondary-bg)", borderRadius: 8, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{item.descricao}</div>
-                    {item.ambiente && <div style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>{item.ambiente}</div>}
-                  </div>
-                  <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
-                    disabled={abrindoItemId === item.pedido_item_id}
-                    onClick={() => preencherConferenciaConsultoras(item)}>
-                    {abrindoItemId === item.pedido_item_id ? "Abrindo..." : "Preencher Conferência Consultoras"}
-                  </button>
-                </div>
-              ))}
+              <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
+                A data de conferência é definida na Etapa 2 — Conferência de Medidas.
+              </div>
             </>
-          )}
-
-          {!todasConferenciasFeitasOuDesnecessarias && (p.total_itens_conferencia ?? 0) > 0 && (
-            <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
-              A data de conferência é definida na Etapa 2 — Conferência de Medidas.
-            </div>
           )}
         </div>
       </div>
@@ -193,6 +146,14 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
         <VincularItensModal
           pedidoId={pedidoId}
           onClose={() => setVinculando(false)}
+          onRecarregar={onRecarregar}
+        />
+      )}
+
+      {vendoFichas && (
+        <VerFichasConsultorasModal
+          pedidoId={pedidoId}
+          onClose={() => setVendoFichas(false)}
           onRecarregar={onRecarregar}
         />
       )}

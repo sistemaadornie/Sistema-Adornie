@@ -4,6 +4,7 @@ import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao
 import { acaoFichaConferencia, abrirOsDoItem } from "../../../../utils/fichaConferencia";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
+import { fmtMedidas } from "../../../../utils/formatMedidas";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -191,37 +192,47 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
               )}
               {(g.itens || []).length > 0 && (
                 <div style={{ padding: "10px 14px" }}>
-                  {g.itens.map((item) => {
-                    const acao = acaoFichaConferencia(item);
-                    return (
-                      <div key={item.pedido_item_id} className="pf-item-card">
-                        <span className="pf-item-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : "—"}</span>
-                        <div className="pf-item-card-conteudo">
-                          <div className="pf-item-card-desc">{item.descricao}</div>
-                          {item.medidas && <span className="pf-item-medidas">📐 {item.medidas}</span>}
+                  <div className="vim-tabela vim-fichas">
+                    <div className="vim-header vim-fichas">
+                      <span>Item</span>
+                      <span>Ambiente</span>
+                      <span>Produto</span>
+                      <span>Medidas</span>
+                      <span></span>
+                    </div>
+                    {g.itens.map((item, i) => {
+                      const acao = acaoFichaConferencia(item);
+                      return (
+                        <div key={item.pedido_item_id} className="vim-row vim-fichas">
+                          <span className="vim-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : i + 1}</span>
+                          <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                          <span className="vim-desc">{item.produto || item.descricao}</span>
+                          <span className="vim-medidas">{fmtMedidas(item)}</span>
+                          <span className="vim-acao">
+                            {acao ? (
+                              <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
+                                disabled={criandoId === item.pedido_item_id}
+                                onClick={async () => {
+                                  setCriandoId(item.pedido_item_id);
+                                  try {
+                                    const osId = await abrirOsDoItem(item);
+                                    navigate(acao.rota === "confeccao" ? `/pedidos/os/${osId}/confeccao` : `/pedidos/os/${osId}`);
+                                  } finally {
+                                    setCriandoId(null);
+                                  }
+                                }}>
+                                {criandoId === item.pedido_item_id ? "Abrindo..." : acao.label}
+                              </button>
+                            ) : item.tipo_confeccao ? (
+                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando Conferência Consultoras (Etapa 1)</span>
+                            ) : (
+                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Sem ficha de confecção</span>
+                            )}
+                          </span>
                         </div>
-                        {acao ? (
-                          <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
-                            disabled={criandoId === item.pedido_item_id}
-                            onClick={async () => {
-                              setCriandoId(item.pedido_item_id);
-                              try {
-                                const osId = await abrirOsDoItem(item);
-                                navigate(acao.rota === "confeccao" ? `/pedidos/os/${osId}/confeccao` : `/pedidos/os/${osId}`);
-                              } finally {
-                                setCriandoId(null);
-                              }
-                            }}>
-                            {criandoId === item.pedido_item_id ? "Abrindo..." : acao.label}
-                          </button>
-                        ) : item.tipo_confeccao ? (
-                          <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando Conferência Consultoras (Etapa 1)</span>
-                        ) : (
-                          <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Sem ficha de confecção</span>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

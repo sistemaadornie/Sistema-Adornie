@@ -14,7 +14,7 @@ function paraNumero(valor) {
   return Number.isFinite(n) ? n : 0;
 }
 
-export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalvar, onVoltar }) {
+export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalvar, onVoltar, readOnly = false }) {
   const campoDados = modo === "conferencia_consultoras" ? "dados_conferencia_consultoras" : "dados_confeccao";
   const endpointSalvar = modo === "conferencia_consultoras" ? "conferencia-consultoras" : "confeccao";
   const tituloPagina = modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras — Forro" : "Ficha de Confecção — Forro";
@@ -74,7 +74,14 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
         <div className="os-page-header-left">
           <button className="os-back-btn" onClick={onVoltar}>← Voltar</button>
           <div>
-            <h1 className="os-page-title">{tituloPagina}</h1>
+            <h1 className="os-page-title">
+              {tituloPagina}
+              {readOnly && (
+                <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.08)", color: "var(--color-text-muted, #999)" }}>
+                  🔒 Somente leitura
+                </span>
+              )}
+            </h1>
             <p className="os-page-subtitle">
               {osData.cliente_nome && <span>{osData.cliente_nome}</span>}
               {pedidoNumero && <span className="os-v-value tag-pedido" style={{ marginLeft: 8 }}>{pedidoNumero}</span>}
@@ -83,17 +90,23 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
           </div>
         </div>
         <div className="os-page-header-right">
-          <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>Cancelar</button>
-          <button className="os-btn os-btn-primary" onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando..." : `✓ ${labelSalvar}`}
-          </button>
+          {readOnly ? (
+            <button className="os-btn os-btn-secondary" onClick={onVoltar}>Fechar</button>
+          ) : (
+            <>
+              <button className="os-btn os-btn-secondary" onClick={onVoltar} disabled={salvando}>Cancelar</button>
+              <button className="os-btn os-btn-primary" onClick={salvar} disabled={salvando}>
+                {salvando ? "Salvando..." : `✓ ${labelSalvar}`}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       {erro && <div className="os-alert os-alert-danger" style={{ margin: "0 0 16px" }}>{erro}</div>}
       {sucesso && <div className="os-alert os-alert-success" style={{ margin: "0 0 16px" }}>{sucesso}</div>}
 
-      <div className="os-page-body">
+      <div className="os-page-body" style={readOnly ? { pointerEvents: "none", opacity: 0.85 } : undefined}>
         <div className="os-layout-cols">
           <div className="os-col-left">
             <div className="os-section-title">Dados do Pedido</div>
