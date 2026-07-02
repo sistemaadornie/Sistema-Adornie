@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
-import { acaoFichaConferencia, abrirOsDoItem } from "../../../../utils/fichaConferencia";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
 import { primeiroEUltimoNome } from "../../../../utils/nomeCliente";
 import { fmtMedidas } from "../../../../utils/formatMedidas";
@@ -14,7 +13,6 @@ function fmtData(iso) {
 
 export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendamentos, onClose }) {
   const navigate = useNavigate();
-  const [criandoId, setCriandoId] = useState(null);
   const [definindoConferencia, setDefinindoConferencia] = useState(false);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
@@ -201,7 +199,6 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
                       <span></span>
                     </div>
                     {g.itens.map((item, i) => {
-                      const acao = acaoFichaConferencia(item);
                       return (
                         <div key={item.pedido_item_id} className="vim-row vim-fichas">
                           <span className="vim-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : i + 1}</span>
@@ -209,20 +206,13 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
                           <span className="vim-desc">{item.produto || item.descricao}</span>
                           <span className="vim-medidas">{fmtMedidas(item)}</span>
                           <span className="vim-acao">
-                            {acao ? (
+                            {item.ficha_preenchida ? (
                               <button className="pf-btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }}
-                                disabled={criandoId === item.pedido_item_id}
-                                onClick={async () => {
-                                  setCriandoId(item.pedido_item_id);
-                                  try {
-                                    const osId = await abrirOsDoItem(item);
-                                    navigate(acao.rota === "confeccao" ? `/pedidos/os/${osId}/confeccao` : `/pedidos/os/${osId}`);
-                                  } finally {
-                                    setCriandoId(null);
-                                  }
-                                }}>
-                                {criandoId === item.pedido_item_id ? "Abrindo..." : acao.label}
+                                onClick={() => navigate(`/pedidos/os/${item.ordem_servico_id}`)}>
+                                👁 Ver Ficha
                               </button>
+                            ) : item.conferencia_consultoras_preenchida ? (
+                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Pendente de preenchimento dos técnicos</span>
                             ) : item.tipo_confeccao ? (
                               <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando Conferência Consultoras (Etapa 1)</span>
                             ) : (

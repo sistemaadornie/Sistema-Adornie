@@ -159,16 +159,9 @@ function painelConfeccao(dc, tipo) {
     ];
   }
   return [
-    ["Cortina feita por", dc.feitaPor],
-    ["Espaçador", dc.espacador],
     ["Tipo wave", dc.tipoWave],
     ["Abertura", dc.abertura],
     ["Componente", dc.componente],
-    ["Largura do trilho", dc.larguraTrilho],
-    ["Largura do tecido", dc.larguraTecido],
-    ["Nome do tecido", dc.nomeTecido],
-    ["Altura da cortina", dc.alturaCortina],
-    ["Vendeu barra aplicada", dc.vendeuBarraAplicada],
   ];
 }
 
@@ -316,15 +309,21 @@ export default function FichaTecnicaInstalador() {
       <div className="page">
         {erro && <div className="banner banner-danger">{erro}</div>}
 
-        <FotosConferencia
-          agendamentoId={agendamentoId}
-          itemId={itemId}
-          fotos={fotos}
-          onFotosEnviadas={(novasFotos) => setFotos((prev) => [...prev, ...novasFotos])}
-        />
-
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Ficha de Conferência Consultoras (referência)</h3>
+          {osData.tipo === "cortina" && (
+            <div className="ficha-img-col">
+              <div className="ficha-spec-box">
+                <span className="detail-label">Largura (medida de venda)</span>
+                {osData.dados_conferencia_consultoras.larguraTrilho ? `${osData.dados_conferencia_consultoras.larguraTrilho} m` : "—"}
+              </div>
+              <img src="/cortina.png" alt="Esboço da cortina" className="ficha-img-cortina" />
+              <div className="ficha-spec-box">
+                <span className="detail-label">Altura (medida de venda)</span>
+                {osData.dados_conferencia_consultoras.alturaCortina ? `${osData.dados_conferencia_consultoras.alturaCortina} m` : "—"}
+              </div>
+            </div>
+          )}
           {campos.map(([label, valor]) => (
             <div className="detail-row" key={label}>
               <div>
@@ -414,6 +413,13 @@ export default function FichaTecnicaInstalador() {
           <h3 style={{ marginTop: 0 }}>Assinatura do Técnico</h3>
           <CanvasDraw value={dados.assinatura_tecnico} onSave={(val) => setCampo("assinatura_tecnico", val)} />
         </div>
+
+        <FotosConferencia
+          agendamentoId={agendamentoId}
+          itemId={itemId}
+          fotos={fotos}
+          onFotosEnviadas={(novasFotos) => setFotos((prev) => [...prev, ...novasFotos])}
+        />
 
         <button className="btn btn-primary btn-block" disabled={salvando} onClick={salvar}>
           {salvando ? "Salvando..." : "✓ Salvar Conferência Técnica"}
