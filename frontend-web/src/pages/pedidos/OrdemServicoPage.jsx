@@ -264,7 +264,13 @@ export default function OrdemServicoPage() {
   }
 
   const pedidoNumero = osData.pedido_numero || osData.pedido_id;
-  const camposConfeccao = painelConfeccao(osData.dados_conferencia_consultoras, osData.tipo);
+  const dc = osData.dados_conferencia_consultoras;
+  const camposConfeccao = painelConfeccao(dc, osData.tipo);
+  const motorizada = osData.tipo === "persiana"
+    ? dc.acionamento === "motorizado"
+    : osData.tipo === "cortina"
+      ? /motoriza/i.test(dc.componente || "")
+      : false;
 
   return (
     <div className="ek-page os-page">
@@ -356,22 +362,26 @@ export default function OrdemServicoPage() {
                     <option value="vão">Vão</option>
                   </select>
                 </div>
-                <div className="os-field">
-                  <label>Lado Motor</label>
-                  <select value={dadosTecnicos.lado_motor} onChange={(e) => setField("lado_motor", e.target.value)}>
-                    <option value="n/a">Sem motor</option>
-                    <option value="esquerdo">Esquerdo</option>
-                    <option value="direito">Direito</option>
-                  </select>
-                </div>
-                <div className="os-field">
-                  <label>Voltagem</label>
-                  <select value={dadosTecnicos.voltagem} onChange={(e) => setField("voltagem", e.target.value)}>
-                    <option value="sem_motor">Sem Motor</option>
-                    <option value="110v">110V</option>
-                    <option value="220v">220V</option>
-                  </select>
-                </div>
+                {motorizada && (
+                  <>
+                    <div className="os-field">
+                      <label>Lado Motor</label>
+                      <select value={dadosTecnicos.lado_motor} onChange={(e) => setField("lado_motor", e.target.value)}>
+                        <option value="n/a">Sem motor</option>
+                        <option value="esquerdo">Esquerdo</option>
+                        <option value="direito">Direito</option>
+                      </select>
+                    </div>
+                    <div className="os-field">
+                      <label>Voltagem</label>
+                      <select value={dadosTecnicos.voltagem} onChange={(e) => setField("voltagem", e.target.value)}>
+                        <option value="sem_motor">Sem Motor</option>
+                        <option value="110v">110V</option>
+                        <option value="220v">220V</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="os-grid-3">

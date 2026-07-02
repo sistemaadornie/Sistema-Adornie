@@ -158,6 +158,19 @@ function painelConfeccao(dc, tipo) {
       ["Espaçador", dc.espacador],
     ];
   }
+  if (tipo === "persiana") {
+    return [
+      ["Modelo", dc.modelo],
+      ["Tubo", dc.tubo],
+      ["Bandô/Caixa", dc.bando],
+      ["Tecido", dc.tecido],
+      ["Modelo Controle", dc.modeloControle],
+      ["Modelo Motor", dc.modeloMotor],
+      ["Acessórios", (dc.acessorios || []).join(", ")],
+      ["Acionamento", dc.acionamento === "motorizado" ? "Motorizado" : dc.acionamento === "manual" ? "Manual" : null],
+      ["Qtd Motor", dc.qtdMotor],
+    ];
+  }
   return [
     ["Tipo wave", dc.tipoWave],
     ["Abertura", dc.abertura],
@@ -301,7 +314,20 @@ export default function FichaTecnicaInstalador() {
     );
   }
 
-  const campos = painelConfeccao(osData.dados_conferencia_consultoras, osData.tipo);
+  const dc = osData.dados_conferencia_consultoras;
+  const campos = painelConfeccao(dc, osData.tipo);
+
+  const IMAGEM_TIPO = {
+    cortina:  { src: "/cortina.png",  alt: "Esboço da cortina",  largura: dc.larguraTrilho, altura: dc.alturaCortina },
+    persiana: { src: "/persiana.png", alt: "Esboço da persiana", largura: osData.item_largura, altura: osData.item_altura },
+  };
+  const imagem = IMAGEM_TIPO[osData.tipo];
+
+  const motorizada = osData.tipo === "persiana"
+    ? dc.acionamento === "motorizado"
+    : osData.tipo === "cortina"
+      ? /motoriza/i.test(dc.componente || "")
+      : false;
 
   return (
     <>
@@ -311,16 +337,16 @@ export default function FichaTecnicaInstalador() {
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Ficha de Conferência Consultoras (referência)</h3>
-          {osData.tipo === "cortina" && (
+          {imagem && (
             <div className="ficha-img-col">
               <div className="ficha-spec-box">
                 <span className="detail-label">Largura (medida de venda)</span>
-                {osData.dados_conferencia_consultoras.larguraTrilho ? `${osData.dados_conferencia_consultoras.larguraTrilho} m` : "—"}
+                {imagem.largura ? `${imagem.largura} m` : "—"}
               </div>
-              <img src="/cortina.png" alt="Esboço da cortina" className="ficha-img-cortina" />
+              <img src={imagem.src} alt={imagem.alt} className="ficha-img-cortina" />
               <div className="ficha-spec-box">
                 <span className="detail-label">Altura (medida de venda)</span>
-                {osData.dados_conferencia_consultoras.alturaCortina ? `${osData.dados_conferencia_consultoras.alturaCortina} m` : "—"}
+                {imagem.altura ? `${imagem.altura} m` : "—"}
               </div>
             </div>
           )}
@@ -364,22 +390,26 @@ export default function FichaTecnicaInstalador() {
               <option value="vão">Vão</option>
             </select>
           </div>
-          <div className="form-group">
-            <label>Lado Motor</label>
-            <select className="input-base" value={dados.lado_motor} onChange={(e) => setCampo("lado_motor", e.target.value)}>
-              <option value="n/a">Sem motor</option>
-              <option value="esquerdo">Esquerdo</option>
-              <option value="direito">Direito</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Voltagem</label>
-            <select className="input-base" value={dados.voltagem} onChange={(e) => setCampo("voltagem", e.target.value)}>
-              <option value="sem_motor">Sem Motor</option>
-              <option value="110v">110V</option>
-              <option value="220v">220V</option>
-            </select>
-          </div>
+          {motorizada && (
+            <>
+              <div className="form-group">
+                <label>Lado Motor</label>
+                <select className="input-base" value={dados.lado_motor} onChange={(e) => setCampo("lado_motor", e.target.value)}>
+                  <option value="n/a">Sem motor</option>
+                  <option value="esquerdo">Esquerdo</option>
+                  <option value="direito">Direito</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Voltagem</label>
+                <select className="input-base" value={dados.voltagem} onChange={(e) => setCampo("voltagem", e.target.value)}>
+                  <option value="sem_motor">Sem Motor</option>
+                  <option value="110v">110V</option>
+                  <option value="220v">220V</option>
+                </select>
+              </div>
+            </>
+          )}
           <div className="form-group">
             <label>Cortineiro</label>
             <select className="input-base" value={dados.cortineiro} onChange={(e) => setCampo("cortineiro", e.target.value)}>
