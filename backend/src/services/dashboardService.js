@@ -689,7 +689,18 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       etapa_atual,
       etapas: [
         { numero: 1, concluida: etapa1_ok, progresso: { verificacao_ok: !!pedido.verificacao_ok, itens_sem_categoria: itensSemCategoria, itens_sem_vinculo: itensSemVinculo, total_itens: totalItens, itens_cobertos: itensCobertos, total_itens_conferencia: totalItensConferencia, itens_cobertos_conferencia: itensCobertosConferencia, itens_persiana_pendentes: itensPersianaPendentes, ambientes_canais_insuficientes: ambientesCanaisInsuficientes, itens_com_conferencia_consultoras: itensComConferenciaConsultorasPreenchida } },
-        { numero: 2, concluida: etapa2_ok, progresso: { total: totalItensConf, conferidos: itensConferidos } },
+        {
+          numero: 2,
+          concluida: etapa2_ok,
+          progresso: {
+            total: totalItensConf,
+            conferidos: itensConferidos,
+            aguardando_agendamento_conferencia:
+              totalItensConferencia > 0 &&
+              itensComConferenciaConsultorasPreenchida >= totalItensConferencia &&
+              itensCobertosConferencia < totalItensConferencia,
+          },
+        },
         { numero: 3, concluida: etapa3_ok, progresso: { em_confeccao: totalEmConf, confeccao_ok: totalConfOk } },
         { numero: 4, concluida: etapa4_ok, progresso: { total_itens: totalItens, itens_produto_ok: itensComProdutoOk } },
         { numero: 5, concluida: false, progresso: { genitores_agendados: 0 } },
@@ -851,7 +862,14 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     {
       numero: 2,
       concluida: etapa2_ok,
-      progresso: { total: totalItensConf, conferidos: itensConferidos },
+      progresso: {
+        total: totalItensConf,
+        conferidos: itensConferidos,
+        aguardando_agendamento_conferencia:
+          totalItensConferencia > 0 &&
+          itensComConferenciaConsultorasPreenchida >= totalItensConferencia &&
+          itensCobertosConferencia < totalItensConferencia,
+      },
     },
     {
       numero: 3,
