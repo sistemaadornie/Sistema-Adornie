@@ -64,6 +64,15 @@ router.get('/pedidos/:pedidoId/os', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/tecidos/largura', authMiddleware, async (req, res) => {
+  try {
+    const largura = await svc.buscarLarguraTecidoConhecida(req.query.nome, req.user.empresa_id);
+    res.json({ largura });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);

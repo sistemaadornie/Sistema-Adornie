@@ -78,3 +78,20 @@ describe('PUT /api/os/:id/confeccao', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('GET /api/os/tecidos/largura', () => {
+  test('200 com a largura encontrada', async () => {
+    svc.buscarLarguraTecidoConhecida.mockResolvedValueOnce('3,30');
+    const res = await request(app).get('/api/os/tecidos/largura').query({ nome: 'ADO016' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ largura: '3,30' });
+    expect(svc.buscarLarguraTecidoConhecida).toHaveBeenCalledWith('ADO016', 1);
+  });
+
+  test('200 com largura null quando não encontra', async () => {
+    svc.buscarLarguraTecidoConhecida.mockResolvedValueOnce(null);
+    const res = await request(app).get('/api/os/tecidos/largura').query({ nome: 'DESCONHECIDO' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ largura: null });
+  });
+});
