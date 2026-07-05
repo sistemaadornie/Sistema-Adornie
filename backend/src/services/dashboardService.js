@@ -18,7 +18,6 @@ function calcularEtapaAtual({
   totalItens,
   itensCobertos,
   totalItensConferencia,
-  itensCobertosConferencia,
   itensComConferenciaConsultorasPreenchida,
   totalItensConf,
   itensConferidos,
@@ -32,15 +31,12 @@ function calcularEtapaAtual({
   itensSeparados,
   status,
 }) {
-  const conferenciaOk = (totalItensConferencia ?? 0) === 0 ||
-                        (itensCobertosConferencia ?? 0) >= totalItensConferencia;
   const conferenciaConsultorasOk = (totalItensConferencia ?? 0) === 0 ||
                         (itensComConferenciaConsultorasPreenchida ?? 0) >= totalItensConferencia;
   const etapa1_ok = verificacaoOk &&
                     itensSemCategoria === 0 &&
                     itensSemVinculo === 0 &&
                     totalItens > 0 &&
-                    conferenciaOk &&
                     conferenciaConsultorasOk;
 
   const etapa2_ok = totalItensConf > 0 && itensConferidos >= totalItensConf;

@@ -124,7 +124,7 @@ describe('buscarFluxoPedido — ambientes_canais_insuficientes', () => {
 });
 
 describe('buscarFluxoPedido — agendamento nao_concluido não conta como cobertura', () => {
-  test('etapa1_ok fica false quando a única conferência do item está nao_concluido', async () => {
+  test('agendamento nao_concluido não conta como cobertura, mas não bloqueia mais etapa1_ok (só sinaliza aguardando_agendamento_conferencia na etapa 2)', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [{
         id: 1, numero_sequencial: 1, numero_origem: null, status: 'em_andamento',
@@ -151,7 +151,7 @@ describe('buscarFluxoPedido — agendamento nao_concluido não conta como cobert
       .mockResolvedValueOnce({ rows: [{ produto_ok: 0 }] })           // produtoOkRows
       .mockResolvedValueOnce({ rows: [{ pendentes: 0 }] })            // itensPersianaPendentesRows
       .mockResolvedValueOnce({ rows: [] })                            // itensControleRows
-      .mockResolvedValueOnce({ rows: [] })                            // itensComConferenciaConsultorasRows
+      .mockResolvedValueOnce({ rows: [{ total: 1 }] })                // itensComConferenciaConsultorasRows (1/1 preenchida)
       .mockResolvedValueOnce({ rows: [] }) // itensPorGenitor
       .mockResolvedValueOnce({ rows: [] }) // herdeirosRaw
       .mockResolvedValueOnce({ rows: [] }); // separacaoRows
@@ -162,7 +162,10 @@ describe('buscarFluxoPedido — agendamento nao_concluido não conta como cobert
     expect(queryCobertura).toContain("'cancelado','rejeitado','nao_concluido'");
 
     const etapa1 = resultado.etapas.find((e) => e.numero === 1);
-    expect(etapa1.concluida).toBe(false);
+    expect(etapa1.concluida).toBe(true);
+
+    const etapa2 = resultado.etapas.find((e) => e.numero === 2);
+    expect(etapa2.progresso.aguardando_agendamento_conferencia).toBe(true);
   });
 });
 
