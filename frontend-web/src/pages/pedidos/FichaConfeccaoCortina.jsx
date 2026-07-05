@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaUser, FaTag, FaUserTie, FaHome, FaGift, FaRulerCombined } from "react-icons/fa";
 import { api } from "../../services/api";
 import "./OrdemServicoModal.css";
@@ -45,6 +45,27 @@ export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSa
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+
+  useEffect(() => {
+    if (readOnly) return;
+    const nome = dados.nomeTecido?.trim();
+    if (!nome) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      api.get(`/os/tecidos/largura?nome=${encodeURIComponent(nome)}`, { signal: controller.signal })
+        .then((res) => {
+          if (!res.largura) return;
+          setDados((prev) => (prev.larguraTecido ? prev : { ...prev, larguraTecido: res.largura }));
+        })
+        .catch(() => {});
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [dados.nomeTecido, readOnly]);
 
   function setCampo(chave, valor) {
     setDados((prev) => ({ ...prev, [chave]: valor }));
