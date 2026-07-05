@@ -273,11 +273,11 @@ export default function EditarPedido() {
               <div className="os-grid-2">
                 <div className="os-field">
                   <label>CPF/CNPJ</label>
-                  <input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
+                  <input type="text" value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
                 </div>
                 <div className="os-field">
                   <label>E-mail</label>
-                  <input value={form.email_cliente} onChange={(e) => set("email_cliente", e.target.value)} />
+                  <input type="text" value={form.email_cliente} onChange={(e) => set("email_cliente", e.target.value)} />
                 </div>
               </div>
             </div>
@@ -287,33 +287,33 @@ export default function EditarPedido() {
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px", gap: 10 }}>
                 <div className="os-field">
                   <label>CEP</label>
-                  <input value={form.cep} onChange={(e) => set("cep", e.target.value)} placeholder="00000-000" />
+                  <input type="text" value={form.cep} onChange={(e) => set("cep", e.target.value)} placeholder="00000-000" />
                 </div>
                 <div className="os-field">
                   <label>Rua / Logradouro</label>
-                  <input value={form.rua} onChange={(e) => set("rua", e.target.value)} />
+                  <input type="text" value={form.rua} onChange={(e) => set("rua", e.target.value)} />
                 </div>
                 <div className="os-field">
                   <label>Número</label>
-                  <input value={form.numero} onChange={(e) => set("numero", e.target.value)} />
+                  <input type="text" value={form.numero} onChange={(e) => set("numero", e.target.value)} />
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 10 }}>
                 <div className="os-field">
                   <label>Complemento</label>
-                  <input value={form.complemento} onChange={(e) => set("complemento", e.target.value)} />
+                  <input type="text" value={form.complemento} onChange={(e) => set("complemento", e.target.value)} />
                 </div>
                 <div className="os-field">
                   <label>Bairro</label>
-                  <input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
+                  <input type="text" value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
                 </div>
                 <div className="os-field">
                   <label>Cidade</label>
-                  <input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
+                  <input type="text" value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
                 </div>
                 <div className="os-field">
                   <label>UF</label>
-                  <input value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} maxLength={2} style={{ textTransform: "uppercase" }} />
+                  <input type="text" value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} maxLength={2} style={{ textTransform: "uppercase" }} />
                 </div>
               </div>
             </div>
