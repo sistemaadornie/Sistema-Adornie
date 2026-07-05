@@ -24,7 +24,12 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
 
   function buildStatusLabel() {
     if (concluida) return "Concluído";
-    if (pendente) return "Aguardando";
+    if (pendente) {
+      if (numero === 2 && progresso.aguardando_agendamento_conferencia) {
+        return "Aguardando definir data de conferência";
+      }
+      return "Aguardando";
+    }
     if (numero === 1) {
       const { itens_com_conferencia_consultoras = 0, total_itens_conferencia = 0 } = progresso;
       if (total_itens_conferencia === 0) return "Nenhuma ficha necessária";
