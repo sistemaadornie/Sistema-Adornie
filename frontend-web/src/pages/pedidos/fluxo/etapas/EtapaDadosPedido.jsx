@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import EditarPedidoModal from "./EditarPedidoModal";
+import { useNavigate } from "react-router-dom";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
 import VerFichasConsultorasModal from "./VerFichasConsultorasModal";
@@ -14,7 +14,7 @@ function CriterioItem({ ok, texto }) {
 }
 
 export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarregar, abrirFichasConsultorasInicial, onFichasConsultorasAbertas }) {
-  const [editando, setEditando] = useState(false);
+  const navigate = useNavigate();
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
   const [vendoFichas, setVendoFichas] = useState(!!abrirFichasConsultorasInicial);
@@ -44,7 +44,7 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="pf-btn-secondary" onClick={() => setVinculando(true)}>🔗 Vincular Itens</button>
             <button className="pf-btn-secondary" onClick={() => setVendoFichas(true)}>👁 Ver Fichas de Consultoras</button>
-            <button className="pf-btn-secondary" onClick={() => setEditando(true)}>✏️ Editar Pedido</button>
+            <button className="pf-btn-secondary" onClick={() => navigate(`/pedidos/${pedidoId}/editar`)}>✏️ Editar Pedido</button>
             <button className="pf-btn-secondary" onClick={() => setHistorico(true)}>🕘 Histórico</button>
             <button className="pf-modal-fechar" onClick={onClose}>×</button>
           </div>
@@ -133,14 +133,6 @@ export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarreg
           )}
         </div>
       </div>
-
-      {editando && (
-        <EditarPedidoModal
-          pedidoId={pedidoId}
-          onClose={() => setEditando(false)}
-          onSalvo={() => { setEditando(false); onRecarregar?.(); }}
-        />
-      )}
 
       {historico && (
         <HistoricoPedidoModal

@@ -66,6 +66,14 @@ export default function PedidoFluxo() {
     }
   }, [location.state]);
 
+  /* Reabrir a Etapa 1 ao voltar da tela de Editar Pedido */
+  useEffect(() => {
+    if (location.state?.reabrirEtapa) {
+      setEtapaAberta(location.state.reabrirEtapa);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   function handleEtapaClick(numero) {
     setEtapaAberta(numero);
   }
