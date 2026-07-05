@@ -11,6 +11,7 @@ export default function FichaConferenciaConsultoras() {
   const navigate = useNavigate();
   const location = useLocation();
   const voltarAgendamentoId = location.state?.voltarConferenciaAgendamentoId || null;
+  const voltarPedidoFluxoId = location.state?.voltarPedidoFluxoId || null;
   const readOnly = !!location.state?.readOnly;
 
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,8 @@ export default function FichaConferenciaConsultoras() {
   function voltar() {
     if (voltarAgendamentoId) {
       navigate("/agendamentos", { state: { reabrirConferenciaAgendamentoId: voltarAgendamentoId } });
+    } else if (voltarPedidoFluxoId) {
+      navigate(`/pedidos/${voltarPedidoFluxoId}/fluxo`, { state: { reabrirFichasConsultoras: true } });
     } else {
       navigate("/pedidos");
     }

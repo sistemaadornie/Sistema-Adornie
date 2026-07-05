@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { api } from "../../services/api";
 import { numeroPedidoCurto } from "../../utils/numeroPedido";
@@ -33,12 +33,14 @@ const ETAPA_COMPONENTES = {
 export default function PedidoFluxo() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   useAuth();
 
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
   const [dados, setDados] = useState(null);
   const [etapaAberta, setEtapaAberta] = useState(null);
+  const [abrirFichasConsultoras, setAbrirFichasConsultoras] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -55,13 +57,27 @@ export default function PedidoFluxo() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  /* Reabrir a Etapa 1 com a modal de Fichas de Consultoras ao voltar de uma ficha */
+  useEffect(() => {
+    if (location.state?.reabrirFichasConsultoras) {
+      setEtapaAberta(1);
+      setAbrirFichasConsultoras(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   function handleEtapaClick(numero) {
     setEtapaAberta(numero);
   }
 
   function handleFecharEtapa() {
     setEtapaAberta(null);
+    setAbrirFichasConsultoras(false);
     carregar();
+  }
+
+  function handleFichasConsultorasAbertas() {
+    setAbrirFichasConsultoras(false);
   }
 
   if (loading) {
@@ -109,6 +125,8 @@ export default function PedidoFluxo() {
           preAgendamentos={pre_agendamentos}
           onClose={handleFecharEtapa}
           onRecarregar={carregar}
+          abrirFichasConsultorasInicial={abrirFichasConsultoras}
+          onFichasConsultorasAbertas={handleFichasConsultorasAbertas}
         />
       )}
     </div>

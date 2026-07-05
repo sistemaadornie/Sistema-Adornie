@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EditarPedidoModal from "./EditarPedidoModal";
 import HistoricoPedidoModal from "./HistoricoPedidoModal";
 import VincularItensModal from "./VincularItensModal";
@@ -13,11 +13,18 @@ function CriterioItem({ ok, texto }) {
   );
 }
 
-export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarregar }) {
+export default function EtapaDadosPedido({ pedidoId, etapas, onClose, onRecarregar, abrirFichasConsultorasInicial, onFichasConsultorasAbertas }) {
   const [editando, setEditando] = useState(false);
   const [historico, setHistorico] = useState(false);
   const [vinculando, setVinculando] = useState(false);
-  const [vendoFichas, setVendoFichas] = useState(false);
+  const [vendoFichas, setVendoFichas] = useState(!!abrirFichasConsultorasInicial);
+
+  useEffect(() => {
+    if (abrirFichasConsultorasInicial) onFichasConsultorasAbertas?.();
+    // Consome a flag uma única vez no mount — evita que um remount posterior
+    // (disparado pelo próprio onRecarregar do modal de fichas) reabra o modal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const etapa1 = etapas.find((e) => e.numero === 1) || {};
   const p = etapa1.progresso || {};

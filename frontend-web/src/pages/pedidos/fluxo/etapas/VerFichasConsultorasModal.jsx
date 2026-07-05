@@ -22,14 +22,18 @@ export default function VerFichasConsultorasModal({ pedidoId, onClose, onRecarre
   }, [pedidoId]);
 
   function verFicha(item) {
-    navigate(`/pedidos/os/${item.ordem_servico_id}/conferencia-consultoras`, { state: { readOnly: true } });
+    navigate(`/pedidos/os/${item.ordem_servico_id}/conferencia-consultoras`, {
+      state: { readOnly: true, voltarPedidoFluxoId: pedidoId },
+    });
   }
 
   async function preencherFicha(item) {
     setAbrindoId(item.pedido_item_id);
     try {
       const osId = await abrirOsDoItem(item);
-      navigate(`/pedidos/os/${osId}/conferencia-consultoras`);
+      navigate(`/pedidos/os/${osId}/conferencia-consultoras`, {
+        state: { voltarPedidoFluxoId: pedidoId },
+      });
     } finally {
       setAbrindoId(null);
     }
