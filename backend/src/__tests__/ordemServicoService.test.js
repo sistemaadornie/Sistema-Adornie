@@ -341,3 +341,32 @@ describe('salvarDadosTecnicos', () => {
   });
 });
 
+describe('buscarLarguraTecidoConhecida', () => {
+  test('retorna a largura salva quando o nome bate ignorando maiúsculas/espaços', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ largura: '3,30' }] });
+
+    const result = await svc.buscarLarguraTecidoConhecida('  ado016 ', 1);
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("lower(trim(os.dados_confeccao->>'nomeTecido'))"),
+      [1, 'ado016']
+    );
+    expect(result).toBe('3,30');
+  });
+
+  test('retorna null quando não encontra nenhum registro', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const result = await svc.buscarLarguraTecidoConhecida('ADO999', 1);
+
+    expect(result).toBeNull();
+  });
+
+  test('retorna null sem consultar o banco quando o nome é vazio ou só espaços', async () => {
+    const result = await svc.buscarLarguraTecidoConhecida('   ', 1);
+
+    expect(result).toBeNull();
+    expect(db.query).not.toHaveBeenCalled();
+  });
+});
+

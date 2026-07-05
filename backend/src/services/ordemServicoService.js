@@ -307,4 +307,34 @@ async function salvarDadosTecnicos(id, userId, dadosTecnicos, empresaId) {
   return rows[0];
 }
 
-module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosConferenciaConsultoras, salvarDadosTecnicos };
+async function buscarLarguraTecidoConhecida(nomeTecido, empresaId) {
+  const nome = String(nomeTecido || '').trim();
+  if (!nome) return null;
+
+  const { rows } = await db.query(
+    `SELECT largura FROM (
+       SELECT os.dados_confeccao->>'larguraTecido' AS largura, os.updated_at
+       FROM ordem_servico os
+       JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE p.empresa_id = $1
+         AND os.tipo = 'cortina'
+         AND lower(trim(os.dados_confeccao->>'nomeTecido')) = lower(trim($2))
+       UNION ALL
+       SELECT os.dados_conferencia_consultoras->>'larguraTecido' AS largura, os.updated_at
+       FROM ordem_servico os
+       JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+       JOIN pedidos p ON p.id = pi.pedido_id
+       WHERE p.empresa_id = $1
+         AND os.tipo = 'cortina'
+         AND lower(trim(os.dados_conferencia_consultoras->>'nomeTecido')) = lower(trim($2))
+     ) t
+     WHERE NULLIF(trim(largura), '') IS NOT NULL
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [empresaId, nome]
+  );
+  return rows[0]?.largura || null;
+}
+
+module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosConferenciaConsultoras, salvarDadosTecnicos, buscarLarguraTecidoConhecida };
