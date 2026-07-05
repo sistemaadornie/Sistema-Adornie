@@ -41,6 +41,18 @@ describe('GET /api/pedidos/:id/itens-disponiveis-conferencia-entrega', () => {
     expect(db.query.mock.calls[1][0]).toContain("a.tipo = 'Conferência'");
   });
 
+  test('exige Ficha de Conferência Consultoras preenchida (join com ordem_servico)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
+      .mockResolvedValueOnce({ rows: [] });
+
+    await request(app).get('/api/pedidos/1/itens-disponiveis-conferencia-entrega');
+
+    const query = db.query.mock.calls[1][0];
+    expect(query).toContain('JOIN ordem_servico os ON os.pedido_item_id = pi.id');
+    expect(query).toContain('os.dados_conferencia_consultoras IS NOT NULL');
+  });
+
   test('200 chama a query de itens pendentes apenas com pedidoId (sem parametro extra nao referenciado)', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck

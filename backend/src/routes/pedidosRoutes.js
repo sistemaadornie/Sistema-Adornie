@@ -558,8 +558,10 @@ router.get("/:id/itens-disponiveis-conferencia-entrega", authMiddleware, async (
       LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
       LEFT JOIN produtos prod ON prod.id = oi.produto_id
       LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
+      JOIN ordem_servico os ON os.pedido_item_id = pi.id
       WHERE pi.pedido_id = $1
         AND cat.necessita_conferencia = true
+        AND os.dados_conferencia_consultoras IS NOT NULL
         AND pi.id NOT IN (
           SELECT ai.pedido_item_id
           FROM agendamento_itens ai
