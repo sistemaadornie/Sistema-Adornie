@@ -68,6 +68,14 @@
 }
 .pd-totais-row { display: flex; gap: 16px; min-width: 200px; justify-content: space-between; }
 .pd-totais-row.total { font-size: 15px; font-weight: 700; color: #34d399; }
+.pd-totais-row input {
+  background: var(--color-surface, #1e293b);
+  border: 1px solid var(--color-border, #334155);
+  border-radius: 6px;
+  color: var(--color-text, #f1f5f9);
+  padding: 4px 8px;
+  font-size: 13px;
+}
 
 /* ── Editor de pagamentos ── */
 .pd-pag-editor { display: flex; flex-direction: column; gap: 6px; }
