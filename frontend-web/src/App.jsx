@@ -26,6 +26,7 @@ const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
 const OrdemServicoPage       = lazy(() => import("./pages/pedidos/OrdemServicoPage"));
 const FichaConfeccao         = lazy(() => import("./pages/pedidos/FichaConfeccao"));
 const FichaConferenciaConsultoras = lazy(() => import("./pages/pedidos/FichaConferenciaConsultoras"));
+const EditarPedido = lazy(() => import("./pages/pedidos/EditarPedido"));
 const Relatorios             = lazy(() => import("./pages/Relatorios"));
 const Configuracoes          = lazy(() => import("./pages/Configuracoes"));
 const Produtos               = lazy(() => import("./pages/catalogo/Produtos"));
@@ -103,6 +104,7 @@ export default function App() {
                   <Route path="/pedidos/os/:osId/confeccao" element={<FichaConfeccao />} />
                   <Route path="/pedidos/os/:osId/conferencia-consultoras" element={<FichaConferenciaConsultoras />} />
                   <Route path="/pedidos/:id/fluxo"    element={<PedidoFluxo />} />
+                  <Route path="/pedidos/:id/editar"   element={<EditarPedido />} />
                   <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
                   <Route path="/arquitetos"  element={<Arquitetos />} />
