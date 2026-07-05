@@ -49,6 +49,8 @@ export default function EditarPedido() {
         const p = resPedido.pedido;
         setForm({
           cliente_id:          p.cliente_id,
+          cliente_nome:        p.cliente_nome || "",
+          pedido_numero:       p.numero || "",
           consultor_id:        p.consultor_id,
           arquiteto_id:        p.arquiteto_id,
           consultor_nome:      p.consultor_nome || "",
@@ -233,94 +235,105 @@ export default function EditarPedido() {
         {!carregando && form && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            {/* Dados principais */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-              <div className="pf-form-field">
-                <label>Status</label>
-                <select value={form.status} onChange={(e) => set("status", e.target.value)}>
-                  {STATUS_OPCOES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="pf-form-field">
-                <label>Data do Pedido</label>
-                <input type="date" value={form.data_pedido} onChange={(e) => set("data_pedido", e.target.value)} />
-              </div>
-              <div className="pf-form-field">
-                <label>CPF/CNPJ</label>
-                <input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
-              </div>
-              <div className="pf-form-field">
-                <label>E-mail</label>
-                <input value={form.email_cliente} onChange={(e) => set("email_cliente", e.target.value)} />
-              </div>
-            </div>
-
-            {/* Consultora / Arquiteto (somente leitura) */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div className="pf-form-field">
-                <label>Consultora</label>
-                <input readOnly value={form.consultor_nome || "—"} style={{ opacity: .6 }} />
-              </div>
-              <div className="pf-form-field">
-                <label>Arquiteto</label>
-                <input readOnly value={form.arquiteto_nome || "—"} style={{ opacity: .6 }} />
+            <div className="os-info-bar">
+              <div className="os-info-row">
+                <div className="os-info-item os-info-item-grow">
+                  <span className="os-info-label">Cliente</span>
+                  <span className="os-info-value">{form.cliente_nome || "—"}</span>
+                </div>
+                <div className="os-info-item">
+                  <span className="os-info-label">Pedido</span>
+                  <span className="os-info-value tag-pedido">{form.pedido_numero || "—"}</span>
+                </div>
+                <div className="os-info-item">
+                  <span className="os-info-label">Vendedor</span>
+                  <span className="os-info-value">{form.consultor_nome || "—"}</span>
+                </div>
+                <div className="os-info-item">
+                  <span className="os-info-label">Arquiteto</span>
+                  <span className="os-info-value">{form.arquiteto_nome || "—"}</span>
+                </div>
               </div>
             </div>
 
-            {/* Endereço de entrega */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Endereço de Entrega</div>
-              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px", gap: 10, marginBottom: 10 }}>
-                <div className="pf-form-field">
+            <div className="os-form-section">
+              <div className="os-section-title">Dados do Pedido</div>
+              <div className="os-grid-2">
+                <div className="os-field">
+                  <label>Status</label>
+                  <select value={form.status} onChange={(e) => set("status", e.target.value)}>
+                    {STATUS_OPCOES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div className="os-field">
+                  <label>Data do Pedido</label>
+                  <input type="date" value={form.data_pedido} onChange={(e) => set("data_pedido", e.target.value)} />
+                </div>
+              </div>
+              <div className="os-grid-2">
+                <div className="os-field">
+                  <label>CPF/CNPJ</label>
+                  <input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
+                </div>
+                <div className="os-field">
+                  <label>E-mail</label>
+                  <input value={form.email_cliente} onChange={(e) => set("email_cliente", e.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="os-form-section">
+              <div className="os-section-title">Endereço de Entrega</div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px", gap: 10 }}>
+                <div className="os-field">
                   <label>CEP</label>
                   <input value={form.cep} onChange={(e) => set("cep", e.target.value)} placeholder="00000-000" />
                 </div>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>Rua / Logradouro</label>
                   <input value={form.rua} onChange={(e) => set("rua", e.target.value)} />
                 </div>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>Número</label>
                   <input value={form.numero} onChange={(e) => set("numero", e.target.value)} />
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 10 }}>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>Complemento</label>
                   <input value={form.complemento} onChange={(e) => set("complemento", e.target.value)} />
                 </div>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>Bairro</label>
                   <input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
                 </div>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>Cidade</label>
                   <input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
                 </div>
-                <div className="pf-form-field">
+                <div className="os-field">
                   <label>UF</label>
                   <input value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} maxLength={2} style={{ textTransform: "uppercase" }} />
                 </div>
               </div>
             </div>
 
-            {/* Observações */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div className="pf-form-field">
-                <label>Observações</label>
-                <textarea rows={3} value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} />
-              </div>
-              <div className="pf-form-field">
-                <label>Observações de Entrega</label>
-                <textarea rows={3} value={form.observacoes_entrega} onChange={(e) => set("observacoes_entrega", e.target.value)} />
+            <div className="os-form-section">
+              <div className="os-section-title">Observações</div>
+              <div className="os-grid-2">
+                <div className="os-field">
+                  <label>Observações</label>
+                  <textarea className="os-textarea" rows={3} value={form.observacoes} onChange={(e) => set("observacoes", e.target.value)} />
+                </div>
+                <div className="os-field">
+                  <label>Observações de Entrega</label>
+                  <textarea className="os-textarea" rows={3} value={form.observacoes_entrega} onChange={(e) => set("observacoes_entrega", e.target.value)} />
+                </div>
               </div>
             </div>
 
-            {/* ITENS */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>
-                Itens ({itens.length})
-              </div>
+            <div className="os-form-section">
+              <div className="os-section-title">Itens ({itens.length})</div>
               <div className="pd-itens-editor">
                 <div className="pd-itens-editor-header">
                   <span>#</span>
@@ -366,7 +379,6 @@ export default function EditarPedido() {
               </div>
               <button className="pd-add-linha" onClick={addItem}>+ Adicionar item</button>
 
-              {/* Totais */}
               <div className="pd-totais-editor" style={{ marginTop: 12 }}>
                 <div className="pd-totais-row">
                   <span>SubTotal</span>
@@ -388,11 +400,8 @@ export default function EditarPedido() {
               </div>
             </div>
 
-            {/* PAGAMENTOS */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>
-                Pagamentos ({pagamentos.length})
-              </div>
+            <div className="os-form-section">
+              <div className="os-section-title">Pagamentos ({pagamentos.length})</div>
               <div className="pd-pag-editor">
                 <div className="pd-pag-header">
                   <span>Forma</span>
