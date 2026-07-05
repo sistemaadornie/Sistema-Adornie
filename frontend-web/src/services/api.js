@@ -93,4 +93,21 @@ export const api = {
     );
     return handleResponse(response);
   },
+
+  getBlob: async (path) => {
+    const response = await withTimeout(
+      fetch(`${API_BASE}${path}`, {
+        method: "GET",
+        headers: getHeaders(),
+      })
+    );
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+      throw new Error("Sessão expirada. Faça login novamente.");
+    }
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}: ${response.statusText || "Requisição falhou"}`);
+    }
+    return response.blob();
+  },
 };
