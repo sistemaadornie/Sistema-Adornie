@@ -104,8 +104,6 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
 
           <hr className="pf-separador" />
 
-          <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 14 }}>DATA DE CONFERÊNCIA</div>
-
           {totalItensConferencia === 0 && (
             <div style={{ color: "var(--pf-card-sub)", fontSize: 13, marginBottom: 12 }}>
               Nenhum item deste pedido necessita de conferência.
@@ -137,8 +135,6 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
           )}
 
           <hr className="pf-separador" />
-
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Genitores e conferências</div>
 
           {genitores.length === 0 && (
             <div style={{ color: "var(--pf-card-sub)", fontSize: 13 }}>
