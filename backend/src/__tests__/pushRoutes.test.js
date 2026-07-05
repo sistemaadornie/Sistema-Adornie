@@ -22,6 +22,13 @@ describe('GET /api/push/vapid-public-key', () => {
     expect(res.status).toBe(200);
     expect(res.body.publicKey).toBe('chave-publica-teste');
   });
+
+  test('503 quando VAPID_PUBLIC_KEY nao esta configurada', async () => {
+    delete process.env.VAPID_PUBLIC_KEY;
+    const res = await request(app).get('/api/push/vapid-public-key');
+    expect(res.status).toBe(503);
+    expect(res.body.message).toBeTruthy();
+  });
 });
 
 describe('POST /api/push/subscribe', () => {

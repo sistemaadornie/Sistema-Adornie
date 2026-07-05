@@ -5,7 +5,10 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 router.get("/vapid-public-key", (req, res) => {
-  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
+  if (!process.env.VAPID_PUBLIC_KEY) {
+    return res.status(503).json({ message: "Notificações push não estão configuradas neste servidor." });
+  }
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
 router.post("/subscribe", authMiddleware, async (req, res) => {

@@ -25,6 +25,7 @@ export async function subscribeToPush() {
   if (permission !== "granted") throw new Error("Permissão de notificação negada.");
 
   const { publicKey } = await api.get("/push/vapid-public-key");
+  if (!publicKey) throw new Error("Notificações push não estão configuradas neste servidor.");
   const reg = await navigator.serviceWorker.ready;
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
