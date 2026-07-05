@@ -24,10 +24,10 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
 
   function buildStatusLabel() {
     if (concluida) return "Concluído";
+    if (numero === 2 && progresso.aguardando_agendamento_conferencia) {
+      return "Aguardando definir data de conferência";
+    }
     if (pendente) {
-      if (numero === 2 && progresso.aguardando_agendamento_conferencia) {
-        return "Aguardando definir data de conferência";
-      }
       return "Aguardando";
     }
     if (numero === 1) {
