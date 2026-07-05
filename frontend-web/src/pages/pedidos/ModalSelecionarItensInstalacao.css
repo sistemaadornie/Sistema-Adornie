@@ -1,14 +1,4 @@
-/* ── Modal "Agendar Instalação" — seleção de itens ── */
-.msi-modal {
-  width: min(94vw, 760px);
-  max-height: 86vh;
-}
-
-.msi-subtitle {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
+/* ── Modal "Agendar Instalação" / "Agendar Conferência" — seleção de itens ── */
 
 /* ── Toolbar (ações em massa + contador) ── */
 .msi-toolbar {
@@ -19,7 +9,7 @@
   flex-wrap: wrap;
   margin-bottom: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--pf-separador);
 }
 
 .msi-toolbar-acoes {
@@ -33,7 +23,6 @@
   background: none;
   padding: 0;
   font-size: 13px;
-  font-family: var(--font-body);
   font-weight: 600;
   color: var(--color-primary);
   cursor: pointer;
@@ -66,44 +55,29 @@
   white-space: nowrap;
 }
 
-/* ── Lista de itens ── */
-.msi-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.msi-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-soft);
+/* ── Linhas da tabela de seleção (reaproveita grid .vim-tabela.vim-fichas) ── */
+.vim-row.vim-fichas {
   cursor: pointer;
-  transition: border-color var(--transition-fast, 0.15s ease),
-              background var(--transition-fast, 0.15s ease),
-              transform var(--transition-fast, 0.15s ease);
 }
-
-.msi-card:hover {
-  border-color: var(--color-border-strong);
-  transform: translateY(-1px);
-}
-
-.msi-card.is-selecionado {
-  border-color: var(--color-primary);
+.vim-row.vim-fichas.is-selecionado > span {
   background: var(--color-primary-soft);
+}
+
+.vim-desc-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--pf-card-sub);
 }
 
 /* ── Checkbox customizado ── */
 .msi-checkbox {
   position: relative;
+  display: inline-flex;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
+  width: 20px;
+  height: 20px;
 }
 
 .msi-checkbox input {
@@ -131,8 +105,8 @@
   position: absolute;
   left: 6px;
   top: 2px;
-  width: 6px;
-  height: 11px;
+  width: 5px;
+  height: 10px;
   border: solid var(--color-primary-btn-text);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -152,73 +126,4 @@
 .msi-checkbox input:focus-visible + .msi-checkbox-marca {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-}
-
-/* ── Conteúdo do card ── */
-.msi-card-conteudo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.msi-card-topo {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.msi-card-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-surface-strong);
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.msi-card-titulo {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.35;
-}
-
-.msi-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-xs);
-  padding: 3px 8px;
-  white-space: nowrap;
-}
-
-.msi-card-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.msi-meta-ponto {
-  color: var(--color-text-muted);
-}
-
-.msi-meta-medidas {
-  font-weight: 700;
-  color: var(--color-primary);
 }

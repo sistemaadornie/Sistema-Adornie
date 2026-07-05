@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { numeroPedidoCompleto } from "../../utils/numeroPedido";
+import { fmtMedidas } from "../../utils/formatMedidas";
 import "./ModalSelecionarItensInstalacao.css";
 
 export default function ModalSelecionarItensInstalacao({ pedido, onClose, onContinuar, itensEndpoint, titulo, textoVazio }) {
@@ -45,28 +46,31 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box msi-modal">
-        <div className="modal-header">
+    <div className="pf-modal-overlay">
+      <div className="pf-modal pf-modal-grande">
+        <div className="pf-modal-header">
           <div>
-            <h2 className="modal-title">{titulo || `Agendar Instalação — ${pedido.numero || numeroPedidoCompleto(pedido)}`}</h2>
+            <div className="pf-modal-titulo">{titulo || `Agendar Instalação — ${pedido.numero || numeroPedidoCompleto(pedido)}`}</div>
             {!loading && !erro && itens.length > 0 && (
-              <p className="msi-subtitle">
+              <div style={{ fontSize: 12, color: "var(--pf-card-sub)", marginTop: 2 }}>
                 {itens.length === 1 ? "1 item disponível" : `${itens.length} itens disponíveis`} para agendamento
-              </p>
+              </div>
             )}
           </div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="pf-modal-fechar" onClick={onClose}>×</button>
         </div>
-        <div className="modal-body">
+
+        <div className="pf-modal-body">
           {loading ? (
-            <p>Carregando itens…</p>
+            <div>Carregando…</div>
           ) : erro ? (
-            <p className="arq-form-erro">{erro}</p>
+            <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
+              ⚠ {erro}
+            </div>
           ) : itens.length === 0 ? (
-            <p style={{ color: "var(--color-text-muted)" }}>
+            <div style={{ color: "var(--pf-card-sub)", fontSize: 13 }}>
               {textoVazio || "Todos os itens deste pedido já estão agendados para instalação."}
-            </p>
+            </div>
           ) : (
             <>
               <div className="msi-toolbar">
@@ -77,49 +81,56 @@ export default function ModalSelecionarItensInstalacao({ pedido, onClose, onCont
                 </div>
                 <span className="msi-contador">{sel.size} de {itens.length} selecionados</span>
               </div>
-              <div className="msi-lista">
-                {itens.map((it) => {
+              <div className="vim-tabela vim-fichas">
+                <div className="vim-header vim-fichas">
+                  <span>Item</span>
+                  <span>Ambiente</span>
+                  <span>Produto</span>
+                  <span>Medidas</span>
+                  <span></span>
+                </div>
+                {itens.map((it, i) => {
                   const marcado = sel.has(it.id);
                   return (
-                    <label key={it.id} className={`msi-card${marcado ? " is-selecionado" : ""}`}>
-                      <span className="msi-checkbox">
-                        <input type="checkbox" checked={marcado} onChange={() => toggle(it.id)} />
-                        <span className="msi-checkbox-marca" aria-hidden="true" />
+                    <div
+                      key={it.id}
+                      className={`vim-row vim-fichas${marcado ? " is-selecionado" : ""}`}
+                      onClick={() => toggle(it.id)}
+                    >
+                      <span className="vim-num">{Number.isFinite(it.ordem) ? it.ordem + 1 : i + 1}</span>
+                      <span className="vim-ambiente">{it.ambiente || "—"}</span>
+                      <span className="vim-desc">
+                        <strong>{it.descricao || `Item ${it.id}`}</strong>
+                        {it.logistica_interna_dias != null && (
+                          <span className="vim-desc-sub">prazo mínimo: {totalDias(it)} dias úteis</span>
+                        )}
                       </span>
-                      <span className="msi-card-conteudo">
-                        <span className="msi-card-topo">
-                          <span className="msi-card-num">{Number.isFinite(it.ordem) ? it.ordem + 1 : "—"}</span>
-                          <strong className="msi-card-titulo">{it.descricao || `Item ${it.id}`}</strong>
-                          {it.ambiente && <span className="msi-badge">{it.ambiente}</span>}
-                        </span>
-                        <span className="msi-card-meta">
-                          {it.medidas && (
-                            <>
-                              <span className="msi-meta-medidas">📐 {it.medidas}</span>
-                              <span className="msi-meta-ponto">·</span>
-                            </>
-                          )}
-                          <span className="msi-meta-item">{it.categoria_nome || "Sem categoria"}</span>
-                          {it.logistica_interna_dias != null && (
-                            <>
-                              <span className="msi-meta-ponto">·</span>
-                              <span className="msi-meta-item">prazo mínimo: {totalDias(it)} dias úteis</span>
-                            </>
-                          )}
+                      <span className="vim-medidas">{fmtMedidas(it)}</span>
+                      <span className="vim-acao">
+                        <span className="msi-checkbox" onClick={(e) => e.stopPropagation()}>
+                          <input type="checkbox" checked={marcado} onChange={() => toggle(it.id)} />
+                          <span className="msi-checkbox-marca" aria-hidden="true" />
                         </span>
                       </span>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
             </>
           )}
         </div>
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={onClose}>Cancelar</button>
-          <button className="btn-primary" disabled={sel.size === 0} onClick={continuar}>
-            Continuar ({sel.size})
-          </button>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, padding: "12px 24px", borderTop: "1px solid var(--pf-separador)" }}>
+          {!loading && !erro && itens.length > 0 ? (
+            <>
+              <button className="pf-btn-secondary" onClick={onClose}>Cancelar</button>
+              <button className="pf-btn-primary" disabled={sel.size === 0} onClick={continuar}>
+                Continuar ({sel.size})
+              </button>
+            </>
+          ) : (
+            <button className="pf-btn-primary" onClick={onClose}>Fechar</button>
+          )}
         </div>
       </div>
     </div>
