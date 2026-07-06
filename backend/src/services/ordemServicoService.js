@@ -249,7 +249,7 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados, empresaId) {
 
 async function salvarDadosTecnicos(id, userId, dadosTecnicos, empresaId) {
   const { rows: osRows } = await db.query(
-    `SELECT os.dados_conferencia_consultoras
+    `SELECT os.dados_conferencia_consultoras, os.pedido_item_id
      FROM ordem_servico os
      JOIN pedido_itens pi ON pi.id = os.pedido_item_id
      JOIN pedidos p ON p.id = pi.pedido_id
@@ -259,6 +259,19 @@ async function salvarDadosTecnicos(id, userId, dadosTecnicos, empresaId) {
   if (!osRows.length) throw Object.assign(new Error('OS não encontrada'), { status: 404 });
   if (!osRows[0].dados_conferencia_consultoras) {
     throw Object.assign(new Error('Ficha de Conferência Consultoras precisa ser preenchida antes da Conferência Técnica.'), { status: 400 });
+  }
+
+  const { rows: agRows } = await db.query(
+    `SELECT a.status
+     FROM agendamento_itens ai
+     JOIN agendamentos a ON a.id = ai.agendamento_id
+     WHERE ai.pedido_item_id = $1 AND a.tipo = 'Conferência' AND a.status NOT IN ('cancelado','rejeitado')
+     ORDER BY a.data DESC
+     LIMIT 1`,
+    [osRows[0].pedido_item_id]
+  );
+  if (!agRows.length || agRows[0].status !== 'andamento') {
+    throw Object.assign(new Error('O atendimento de conferência precisa estar iniciado para preencher a Conferência Técnica.'), { status: 400 });
   }
 
   // Validações estritas dos dados reais (dados verdadeiros)

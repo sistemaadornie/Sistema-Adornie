@@ -293,13 +293,14 @@ describe('salvarDadosTecnicos', () => {
     assinatura_tecnico: 'data:image/png;base64,foo'
   };
 
-  test('salva com sucesso quando ficha de confecção já está preenchida', async () => {
+  test('salva com sucesso quando ficha de confecção já está preenchida e atendimento está em andamento', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 } }] })
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'andamento' }] })
       .mockResolvedValueOnce({ rows: [{ id: 1, dados_tecnicos: validData, status: 'em_andamento' }] });
 
     const result = await svc.salvarDadosTecnicos(1, 2, validData);
-    expect(db.query).toHaveBeenNthCalledWith(2,
+    expect(db.query).toHaveBeenNthCalledWith(3,
       expect.stringContaining('dados_tecnicos = $1'),
       [JSON.stringify(validData), 2, 1]
     );
@@ -307,7 +308,7 @@ describe('salvarDadosTecnicos', () => {
   });
 
   test('lança erro 400 quando a ficha de confecção ainda não foi preenchida', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: null }] });
+    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: null, pedido_item_id: 10 }] });
     await expect(svc.salvarDadosTecnicos(1, 2, validData)).rejects.toMatchObject({ status: 400 });
   });
 
@@ -316,26 +317,48 @@ describe('salvarDadosTecnicos', () => {
     await expect(svc.salvarDadosTecnicos(999, 2, validData)).rejects.toMatchObject({ status: 404 });
   });
 
+  test('lança erro 400 quando não há agendamento de conferência ativo para o item', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [] });
+    await expect(svc.salvarDadosTecnicos(1, 2, validData)).rejects.toMatchObject({ status: 400, message: expect.stringContaining('iniciado') });
+  });
+
+  test('lança erro 400 quando o atendimento de conferência ainda não foi iniciado (status agendado)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'agendado' }] });
+    await expect(svc.salvarDadosTecnicos(1, 2, validData)).rejects.toMatchObject({ status: 400, message: expect.stringContaining('iniciado') });
+  });
+
   test('lança erro se largura técnica for inválida', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 } }] });
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'andamento' }] });
     const data = { ...validData, largura: '0' };
     await expect(svc.salvarDadosTecnicos(1, 2, data)).rejects.toThrow('largura');
   });
 
   test('lança erro se altura esquerda for inválida', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 } }] });
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'andamento' }] });
     const data = { ...validData, altura_esq: null };
     await expect(svc.salvarDadosTecnicos(1, 2, data)).rejects.toThrow('esquerda');
   });
 
   test('lança erro se responsável não for preenchido', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 } }] });
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'andamento' }] });
     const data = { ...validData, responsavel_conferencia: '' };
     await expect(svc.salvarDadosTecnicos(1, 2, data)).rejects.toThrow('responsável');
   });
 
   test('lança erro se assinatura do técnico não for fornecida', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 } }] });
+    db.query
+      .mockResolvedValueOnce({ rows: [{ dados_conferencia_consultoras: { larguraTrilho: 4.92 }, pedido_item_id: 10 }] })
+      .mockResolvedValueOnce({ rows: [{ status: 'andamento' }] });
     const data = { ...validData, assinatura_tecnico: '' };
     await expect(svc.salvarDadosTecnicos(1, 2, data)).rejects.toThrow('Assinatura');
   });
