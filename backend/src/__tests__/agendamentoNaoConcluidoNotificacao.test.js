@@ -27,7 +27,9 @@ function mockMontarAgendamento() {
 
 describe('alterarStatus — nao_concluido notifica pedido e consultor', () => {
   test('grava notificação com link /pedidos/{id}/fluxo, notifica consultor e grava auditoria', async () => {
-    db.query.mockResolvedValueOnce({ rows: [AG_CONFERENCIA] }); // existe
+    db.query
+      .mockResolvedValueOnce({ rows: [AG_CONFERENCIA] })              // existe
+      .mockResolvedValueOnce({ rows: [{ pendentes: '1', total: '1' }] }); // pendentesCheck (nao_concluido exige algo pendente)
     const client = mockClient();
     db.connect.mockResolvedValueOnce(client); // transação (UPDATE agendamentos)
     db.query.mockResolvedValueOnce({ rows: [] }); // gravarLog (status_alterado), fora da transação

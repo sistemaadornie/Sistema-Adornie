@@ -742,7 +742,7 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     throw e;
   }
 
-  if (status === "concluido" && existe.rows[0]?.tipo === "Conferência") {
+  if ((status === "concluido" || status === "nao_concluido") && existe.rows[0]?.tipo === "Conferência") {
     const pendentesCheck = await db.query(
       `SELECT COUNT(*) FILTER (WHERE os.dados_tecnicos IS NULL) AS pendentes, COUNT(*) AS total
        FROM agendamento_itens ai
@@ -752,8 +752,13 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
       [id]
     );
     const { pendentes, total } = pendentesCheck.rows[0];
-    if (Number(pendentes) > 0) {
+    if (status === "concluido" && Number(pendentes) > 0) {
       const e = new Error(`Ainda há ${pendentes} de ${total} item(ns) pendente(s) de conferência. Confira todos os itens antes de concluir o agendamento.`);
+      e.status = 400;
+      throw e;
+    }
+    if (status === "nao_concluido" && Number(pendentes) === 0) {
+      const e = new Error(`Todos os itens já têm a Conferência Técnica preenchida — conclua o agendamento em vez de marcá-lo como não concluído.`);
       e.status = 400;
       throw e;
     }
@@ -769,8 +774,26 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
       [id]
     );
     if (pendentesFoto.rows.length > 0) {
-      const nomes = pendentesFoto.rows.map((r) => r.nome).join(", ");
-      const e = new Error(`Falta foto de ${pendentesFoto.rows.length} item(ns): ${nomes}. Adicione uma foto de cada item antes de concluir o agendamento.`);
+      const nomesItens = pendentesFoto.rows.map((r) => r.nome).join(", ");
+      const e = new Error(`Falta foto de ${pendentesFoto.rows.length} item(ns): ${nomesItens}. Adicione uma foto de cada item antes de concluir o agendamento.`);
+      e.status = 400;
+      throw e;
+    }
+  }
+
+  if (status === "andamento" && existe.rows[0]?.tipo === "Conferência") {
+    const { rows: ambRows } = await db.query(
+      `SELECT DISTINCT pi.ambiente
+       FROM agendamento_itens ai
+       JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
+       WHERE ai.agendamento_id = $1 AND ai.pedido_item_id IS NOT NULL
+         AND pi.ambiente IS NOT NULL AND pi.ambiente <> ''`,
+      [id]
+    );
+    const ambientesEnviados = new Set((nomes || []).map((n) => (n || "").trim()));
+    const ambientesFaltando = ambRows.map((r) => r.ambiente).filter((a) => !ambientesEnviados.has(a));
+    if (ambientesFaltando.length > 0) {
+      const e = new Error(`Falta foto de ${ambientesFaltando.length} ambiente(s): ${ambientesFaltando.join(", ")}. Adicione uma foto de cada ambiente antes de iniciar o atendimento.`);
       e.status = 400;
       throw e;
     }
