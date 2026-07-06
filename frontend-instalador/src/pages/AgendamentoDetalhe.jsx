@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   FiMapPin, FiClock, FiUser, FiFileText, FiCamera,
   FiExternalLink, FiUsers, FiPackage, FiTag, FiX, FiCheck, FiInfo,
-  FiLogIn, FiChevronRight,
+  FiEdit3, FiEye, FiChevronRight,
 } from "react-icons/fi";
 import { api } from "../services/api";
 import { estadoFichaTecnica } from "../utils/fichaTecnica";
@@ -138,7 +138,7 @@ function FilePicker({ files, setFiles }) {
 }
 
 /* ── ItemComFoto ── */
-function ItemComFoto({ agendamentoId, item, index, podeFotografar, onFotoEnviada, estado, onAbrirFicha }) {
+function ItemComFoto({ agendamentoId, item, index, podeFotografar, agendamentoStatus, onFotoEnviada, estado, onAbrirFicha }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -196,11 +196,24 @@ function ItemComFoto({ agendamentoId, item, index, podeFotografar, onFotoEnviada
       )}
 
       {estado && (estado.acao ? (
-        <button type="button" className="item-row-ficha-btn" onClick={() => onAbrirFicha(item)}>
-          <FiLogIn size={18} />
-          <span>{estado.label}</span>
-          <FiChevronRight size={16} />
-        </button>
+        podeFotografar ? (
+          <button
+            type="button"
+            className={`item-row-ficha-btn ${estado.preenchida ? "item-row-ficha-btn-ver" : "item-row-ficha-btn-preencher"}`}
+            onClick={() => onAbrirFicha(item)}
+          >
+            {estado.preenchida ? <FiEye size={18} /> : <FiEdit3 size={18} />}
+            <span>{estado.label}</span>
+            <FiChevronRight size={16} />
+          </button>
+        ) : (
+          <span className="item-row-status item-row-status-aviso">
+            <span className="item-row-status-dot" />
+            {["concluido", "nao_concluido"].includes(agendamentoStatus)
+              ? "Concluído"
+              : "Disponível após iniciar o atendimento"}
+          </span>
+        )
       ) : (
         <span className="item-row-status item-row-status-aviso">
           <span className="item-row-status-dot" /> {estado.texto}
@@ -244,6 +257,7 @@ export default function AgendamentoDetalhe() {
 
   const [sheetStatus,   setSheetStatus]   = useState(null);
   const [sheetFiles,    setSheetFiles]    = useState([]);
+  const [sheetFotosPorAmbiente, setSheetFotosPorAmbiente] = useState({});
   const [sheetMotivo,   setSheetMotivo]   = useState("");
   const [sheetEnviando, setSheetEnviando] = useState(false);
   const [sheetMsg,      setSheetMsg]      = useState("");
@@ -283,8 +297,27 @@ export default function AgendamentoDetalhe() {
   function abrirSheet(status) {
     setSheetStatus(status);
     setSheetFiles([]);
+    setSheetFotosPorAmbiente({});
     setSheetMotivo("");
     setSheetMsg("");
+  }
+
+  function adicionarArquivosAmbiente(ambiente, files) {
+    if (!files.length) return;
+    setSheetFotosPorAmbiente((prev) => ({
+      ...prev,
+      [ambiente]: [...(prev[ambiente] || []), ...files],
+    }));
+  }
+
+  function removerArquivoAmbiente(ambiente, idx) {
+    setSheetFotosPorAmbiente((prev) => {
+      const arquivos = (prev[ambiente] || []).filter((_, i) => i !== idx);
+      const next = { ...prev };
+      if (arquivos.length) next[ambiente] = arquivos;
+      else delete next[ambiente];
+      return next;
+    });
   }
 
   function fecharSheet() {
@@ -298,7 +331,12 @@ export default function AgendamentoDetalhe() {
         setSheetMsg("Adicione uma foto em cada item antes de continuar.");
         return;
       }
-    } else if (!sheetFiles.length) {
+    } else if (exigeFotoPorAmbiente) {
+      if (ambientesSemFoto.length > 0) {
+        setSheetMsg("Adicione ao menos uma foto ou vídeo de cada ambiente antes de continuar.");
+        return;
+      }
+    } else if (exigeFotoGeral && !sheetFiles.length) {
       setSheetMsg("Adicione pelo menos uma foto para continuar.");
       return;
     }
@@ -308,7 +346,16 @@ export default function AgendamentoDetalhe() {
       const fd = new FormData();
       fd.append("status", sheetStatus);
       if (sheetMotivo.trim()) fd.append("motivo", sheetMotivo.trim());
-      if (!exigeFotoPorItem) sheetFiles.forEach((f) => fd.append("arquivos", f));
+      if (exigeFotoPorAmbiente) {
+        ambientesConferencia.forEach((amb) => {
+          (sheetFotosPorAmbiente[amb] || []).forEach((file) => {
+            fd.append("arquivos", file);
+            fd.append("nomes", amb);
+          });
+        });
+      } else if (!exigeFotoPorItem) {
+        sheetFiles.forEach((f) => fd.append("arquivos", f));
+      }
       await api.put(`/agendamentos/${id}/status`, fd, true);
       setSheetStatus(null);
       carregar();
@@ -348,7 +395,13 @@ export default function AgendamentoDetalhe() {
   const itensSemFoto = (ag.itens_raw || []).filter(
     (it) => it.pedido_item_id != null && !(it.fotos?.length)
   );
-  const exigeFotoGeral = !(sheetStatus === "andamento" && ag.tipo === "Conferência");
+  const exigeFotoPorAmbiente = sheetStatus === "andamento" && ag.tipo === "Conferência";
+  const ambientesConferencia = exigeFotoPorAmbiente
+    ? [...new Set((ag.itens_raw || []).map((it) => it.item_ambiente).filter(Boolean))]
+    : [];
+  const ambientesSemFoto = ambientesConferencia.filter((amb) => !(sheetFotosPorAmbiente[amb]?.length));
+  const exigeFotoGeral = !exigeFotoPorAmbiente
+    && !(sheetStatus === "concluido" && ag.tipo === "Conferência");
 
   return (
     <>
@@ -451,6 +504,7 @@ export default function AgendamentoDetalhe() {
                     agendamentoId={ag.id}
                     item={item}
                     podeFotografar={ag.status === "andamento"}
+                    agendamentoStatus={ag.status}
                     onFotoEnviada={atualizarFotosItem}
                     estado={estado}
                     onAbrirFicha={() => {
@@ -577,9 +631,70 @@ export default function AgendamentoDetalhe() {
                   </p>
                 )}
               </>
-            ) : (
+            ) : exigeFotoPorAmbiente ? (
               <>
-                {exigeFotoGeral && AVISO_FOTO[sheetStatus] && (
+                <div className="bs-aviso">
+                  <strong>📷 Fotos e/ou vídeos obrigatórios</strong>
+                  <p>
+                    Fotos e/ou vídeos são obrigatórios e servem como prova do estado do ambiente na
+                    data da conferência técnica (sujeira, falta de gesso, avanço de marcenaria, etc.).
+                    Capture o suficiente para documentar bem o ambiente — teto, paredes, piso e
+                    detalhes relevantes — sem excessos, com boa iluminação e sem cortes.
+                  </p>
+                </div>
+
+                {ambientesConferencia.map((amb) => {
+                  const arquivos = sheetFotosPorAmbiente[amb] || [];
+                  return (
+                    <div className="item-row" key={amb}>
+                      <div className="item-row-top">
+                        <span className="item-row-titulo">{amb}</span>
+                      </div>
+                      <div className="photo-grid">
+                        {arquivos.map((file, idx) => (
+                          <div
+                            className="photo-thumb"
+                            key={idx}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => removerArquivoAmbiente(amb, idx)}
+                          >
+                            {file.type?.startsWith("video/") ? (
+                              <video src={URL.createObjectURL(file)} muted />
+                            ) : (
+                              <img src={URL.createObjectURL(file)} alt={amb} />
+                            )}
+                            <span className="photo-tag">✕ Remover</span>
+                          </div>
+                        ))}
+                        <label className="upload-btn">
+                          <FiCamera />
+                          Adicionar
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            capture="environment"
+                            multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              e.target.value = "";
+                              adicionarArquivosAmbiente(amb, files);
+                            }}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+                {ambientesSemFoto.length > 0 && (
+                  <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
+                    Falta foto/vídeo de {ambientesSemFoto.length} ambiente(s): {ambientesSemFoto.join(", ")}.
+                  </p>
+                )}
+              </>
+            ) : exigeFotoGeral ? (
+              <>
+                {AVISO_FOTO[sheetStatus] && (
                   <div className="bs-aviso">
                     <strong>{AVISO_FOTO[sheetStatus].titulo}</strong>
                     <p>{AVISO_FOTO[sheetStatus].texto}</p>
@@ -590,17 +705,17 @@ export default function AgendamentoDetalhe() {
                   fontSize: 11, fontWeight: 700, textTransform: "uppercase",
                   letterSpacing: "0.5px", color: "var(--color-text-muted)", marginBottom: 8,
                 }}>
-                  Fotos {exigeFotoGeral && <span style={{ color: "var(--color-danger)" }}>*</span>}
+                  Fotos <span style={{ color: "var(--color-danger)" }}>*</span>
                 </div>
                 <FilePicker files={sheetFiles} setFiles={setSheetFiles} />
 
-                {exigeFotoGeral && sheetFiles.length === 0 && (
+                {sheetFiles.length === 0 && (
                   <p style={{ fontSize: 12, color: "var(--color-danger)", margin: "8px 0 0", textAlign: "center" }}>
                     Adicione pelo menos uma foto para continuar.
                   </p>
                 )}
               </>
-            )}
+            ) : null}
 
             {sheetStatus === "nao_concluido" && (
               <div className="form-group" style={{ marginTop: 14 }}>
@@ -622,7 +737,14 @@ export default function AgendamentoDetalhe() {
             <button
               className="btn btn-primary btn-block"
               style={{ marginTop: 16 }}
-              disabled={sheetEnviando || (exigeFotoPorItem ? itensSemFoto.length > 0 : (exigeFotoGeral && sheetFiles.length === 0))}
+              disabled={
+                sheetEnviando ||
+                (exigeFotoPorItem
+                  ? itensSemFoto.length > 0
+                  : exigeFotoPorAmbiente
+                  ? ambientesSemFoto.length > 0
+                  : exigeFotoGeral && sheetFiles.length === 0)
+              }
               onClick={confirmarAcao}
             >
               {sheetEnviando ? "Enviando..." : `Confirmar — ${statusLabel(sheetStatus)}`}

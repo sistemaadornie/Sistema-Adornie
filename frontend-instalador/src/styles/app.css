@@ -533,7 +533,8 @@ textarea.input-base {
   background: var(--color-surface-soft);
 }
 
-.photo-thumb img {
+.photo-thumb img,
+.photo-thumb video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1024,9 +1025,7 @@ textarea.input-base {
   width: calc(100% - 28px);
   padding: 10px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-primary);
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+  border: 1px solid transparent;
   font-size: 13px;
   font-weight: 700;
   text-align: left;
@@ -1044,6 +1043,20 @@ textarea.input-base {
 .item-row-ficha-btn svg:last-child {
   flex-shrink: 0;
   opacity: 0.75;
+}
+
+/* Ação pendente: precisa preencher a ficha */
+.item-row-ficha-btn-preencher {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+}
+
+/* Já preenchida: só consulta */
+.item-row-ficha-btn-ver {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .item-row-fotos {
