@@ -23,7 +23,7 @@ const AgendamentosMapa       = lazy(() => import("./pages/agendamentos/MapaAgend
 const Veiculos               = lazy(() => import("./pages/veiculos/Veiculos"));
 const VeiculosHistorico      = lazy(() => import("./pages/veiculos/VeiculosHistorico"));
 const Pedidos                = lazy(() => import("./pages/pedidos/Pedidos"));
-const OrdemServicoPage       = lazy(() => import("./pages/pedidos/OrdemServicoPage"));
+const FichaConferenciaTecnicos = lazy(() => import("./pages/pedidos/FichaConferenciaTecnicos"));
 const FichaConfeccao         = lazy(() => import("./pages/pedidos/FichaConfeccao"));
 const FichaConferenciaConsultoras = lazy(() => import("./pages/pedidos/FichaConferenciaConsultoras"));
 const EditarPedido = lazy(() => import("./pages/pedidos/EditarPedido"));
@@ -100,7 +100,7 @@ export default function App() {
 
                 <Route element={<PermissionRoute perms={["COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/pedidos" element={<Pedidos />} />
-                  <Route path="/pedidos/os/:osId" element={<OrdemServicoPage />} />
+                  <Route path="/pedidos/os/:osId" element={<FichaConferenciaTecnicos />} />
                   <Route path="/pedidos/os/:osId/confeccao" element={<FichaConfeccao />} />
                   <Route path="/pedidos/os/:osId/conferencia-consultoras" element={<FichaConferenciaConsultoras />} />
                   <Route path="/pedidos/:id/fluxo"    element={<PedidoFluxo />} />
