@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FiCamera } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TopBar from "../components/TopBar";
@@ -85,54 +84,14 @@ function CanvasDraw({ value, onSave }) {
         onTouchStart={startDraw}
         onTouchMove={draw}
         onTouchEnd={stopDraw}
+        onMouseDown={startDraw}
+        onMouseMove={draw}
+        onMouseUp={stopDraw}
+        onMouseLeave={stopDraw}
       />
       <button type="button" className="btn" style={{ marginTop: 8 }} onClick={limpar}>
         Limpar assinatura
       </button>
-    </div>
-  );
-}
-
-function FotosConferencia({ agendamentoId, itemId, fotos, onFotosEnviadas }) {
-  const [enviando, setEnviando] = useState(false);
-  const [erro, setErro] = useState("");
-
-  async function onChange(e) {
-    const arquivos = Array.from(e.target.files || []);
-    e.target.value = "";
-    if (!arquivos.length || itemId == null) return;
-    setEnviando(true);
-    setErro("");
-    try {
-      const fd = new FormData();
-      arquivos.forEach((f) => fd.append("arquivos", f));
-      const data = await api.post(`/agendamentos/${agendamentoId}/itens/${itemId}/fotos`, fd, true);
-      onFotosEnviadas(data.fotos || []);
-    } catch (err) {
-      setErro(err.message || "Erro ao enviar foto.");
-    } finally {
-      setEnviando(false);
-    }
-  }
-
-  return (
-    <div className="card">
-      <h3 style={{ marginTop: 0 }}>Fotos da Conferência</h3>
-      <div className="photo-grid">
-        {fotos.map((f) => (
-          <div className="photo-thumb" key={f.id}>
-            <img src={f.url} alt="" />
-          </div>
-        ))}
-        {itemId != null && (
-          <label className="upload-btn" style={{ opacity: enviando ? 0.5 : 1, pointerEvents: enviando ? "none" : "auto" }}>
-            <FiCamera />
-            Adicionar foto
-            <input type="file" accept="image/*" capture="environment" multiple onChange={onChange} style={{ display: "none" }} />
-          </label>
-        )}
-      </div>
-      {erro && <div className="banner banner-danger" style={{ marginTop: 8 }}>{erro}</div>}
     </div>
   );
 }
@@ -175,47 +134,33 @@ function painelConfeccao(dc, tipo) {
     ["Tipo wave", dc.tipoWave],
     ["Abertura", dc.abertura],
     ["Componente", dc.componente],
+    ["Motorizado", dc.componente ? (/motorizad/i.test(dc.componente) ? "Sim" : "Não") : null],
   ];
 }
 
 export default function FichaTecnicaInstalador() {
   const { agendamentoId, osId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [osData, setOsData] = useState(null);
+  const [agStatus, setAgStatus] = useState(null);
   const [dados, setDados] = useState(DADOS_TECNICOS_VAZIO);
-  const [itemId, setItemId] = useState(location.state?.itemId ?? null);
-  const [fotos, setFotos] = useState(location.state?.fotos ?? []);
-
   useEffect(() => { carregar(); }, [osId]);
-
-  // Fallback: se a tela foi aberta sem o state de navegação (ex: refresh),
-  // descobre o item do agendamento cruzando pedido_item_id com a OS carregada.
-  useEffect(() => {
-    if (itemId != null || !osData?.pedido_item_id) return;
-    api.get(`/agendamentos/${agendamentoId}`)
-      .then((data) => {
-        const item = (data.agendamento?.itens_raw || [])
-          .find((it) => String(it.pedido_item_id) === String(osData.pedido_item_id));
-        if (item) {
-          setItemId(item.id);
-          setFotos(item.fotos || []);
-        }
-      })
-      .catch(() => {});
-  }, [itemId, osData, agendamentoId]);
 
   async function carregar() {
     setLoading(true);
     setErro("");
     try {
-      const res = await api.get(`/os/${osId}`);
+      const [res, agData] = await Promise.all([
+        api.get(`/os/${osId}`),
+        api.get(`/agendamentos/${agendamentoId}`).catch(() => null),
+      ]);
       setOsData(res);
+      setAgStatus(agData?.agendamento?.status ?? null);
       if (res.dados_tecnicos) {
         setDados((prev) => ({ ...prev, ...res.dados_tecnicos }));
       } else {
@@ -236,37 +181,42 @@ export default function FichaTecnicaInstalador() {
     navigate(`/agenda/${agendamentoId}`);
   }
 
+  function mostrarErro(msg) {
+    setErro(msg);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function salvar() {
     setErro("");
     const { largura, altura_esq, altura_meio, altura_dir, responsavel_conferencia, data_conferencia, assinatura_tecnico } = dados;
     const parseNum = (v) => parseFloat(String(v).replace(",", "."));
 
     if (!largura || isNaN(parseNum(largura)) || parseNum(largura) <= 0) {
-      setErro("A largura real é obrigatória e deve ser maior que zero.");
+      mostrarErro("A largura real é obrigatória e deve ser maior que zero.");
       return;
     }
     if (!altura_esq || isNaN(parseNum(altura_esq)) || parseNum(altura_esq) <= 0) {
-      setErro("A altura esquerda é obrigatória e deve ser maior que zero.");
+      mostrarErro("A altura esquerda é obrigatória e deve ser maior que zero.");
       return;
     }
     if (!altura_meio || isNaN(parseNum(altura_meio)) || parseNum(altura_meio) <= 0) {
-      setErro("A altura do meio é obrigatória e deve ser maior que zero.");
+      mostrarErro("A altura do meio é obrigatória e deve ser maior que zero.");
       return;
     }
     if (!altura_dir || isNaN(parseNum(altura_dir)) || parseNum(altura_dir) <= 0) {
-      setErro("A altura direita é obrigatória e deve ser maior que zero.");
+      mostrarErro("A altura direita é obrigatória e deve ser maior que zero.");
       return;
     }
     if (!responsavel_conferencia?.trim()) {
-      setErro("O responsável pela conferência é obrigatório.");
+      mostrarErro("O responsável pela conferência é obrigatório.");
       return;
     }
     if (!data_conferencia) {
-      setErro("A data da conferência é obrigatória.");
+      mostrarErro("A data da conferência é obrigatória.");
       return;
     }
     if (!assinatura_tecnico?.trim()) {
-      setErro("A assinatura do técnico é obrigatória.");
+      mostrarErro("A assinatura do técnico é obrigatória.");
       return;
     }
 
@@ -275,7 +225,7 @@ export default function FichaTecnicaInstalador() {
       await api.put(`/os/${osId}`, dados);
       voltar();
     } catch (err) {
-      setErro(err.message || "Erro ao salvar ordem de serviço.");
+      mostrarErro(err.message || "Erro ao salvar ordem de serviço.");
     } finally {
       setSalvando(false);
     }
@@ -308,6 +258,19 @@ export default function FichaTecnicaInstalador() {
         <div className="page">
           <div className="banner banner-warning">
             Aguardando a Ficha de Conferência Consultoras. A consultora ainda não preencheu a Ficha de Conferência Consultoras deste item, na Etapa 1 do pedido.
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (agStatus !== "andamento") {
+    return (
+      <>
+        <TopBar title="Conferência Técnica" back />
+        <div className="page">
+          <div className="banner banner-warning">
+            O atendimento de conferência ainda não foi iniciado. Volte para a tela do agendamento e inicie o atendimento para preencher esta ficha.
           </div>
         </div>
       </>
@@ -435,7 +398,7 @@ export default function FichaTecnicaInstalador() {
           </div>
           <div className="form-group">
             <label>Data Conferência</label>
-            <input className="input-base" type="date" value={dados.data_conferencia} onChange={(e) => setCampo("data_conferencia", e.target.value)} />
+            <input className="input-base" type="date" value={dados.data_conferencia} disabled />
           </div>
         </div>
 
@@ -443,13 +406,6 @@ export default function FichaTecnicaInstalador() {
           <h3 style={{ marginTop: 0 }}>Assinatura do Técnico</h3>
           <CanvasDraw value={dados.assinatura_tecnico} onSave={(val) => setCampo("assinatura_tecnico", val)} />
         </div>
-
-        <FotosConferencia
-          agendamentoId={agendamentoId}
-          itemId={itemId}
-          fotos={fotos}
-          onFotosEnviadas={(novasFotos) => setFotos((prev) => [...prev, ...novasFotos])}
-        />
 
         <button className="btn btn-primary btn-block" disabled={salvando} onClick={salvar}>
           {salvando ? "Salvando..." : "✓ Salvar Conferência Técnica"}
