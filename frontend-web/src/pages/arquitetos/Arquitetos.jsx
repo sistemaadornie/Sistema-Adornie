@@ -3,6 +3,10 @@ import { FaPlus, FaEdit, FaTrash, FaDraftingCompass, FaSort, FaSortUp, FaSortDow
 import { api } from "../../services/api";
 import ConfirmModal from "../../components/ConfirmModal";
 import ImportarArquitetosModal from "./ImportarArquitetosModal";
+import {
+  OPCOES_SIM_NAO, OPCOES_COMUNICACAO, OPCOES_PADRAO_ATENDIMENTO, OPCOES_ESTILO,
+  OPCOES_PRODUTOS, OPCOES_QUEM_DECIDE, OPCOES_MOMENTO, OPCOES_TRAUMA,
+} from "./perfilOpcoes";
 import "./Arquitetos.css";
 
 const PERFIL_VAZIO = {
@@ -15,43 +19,6 @@ const PERFIL_VAZIO = {
 const FORM_VAZIO = { nome: "", tipo_pessoa: "PF", cpf_cnpj: "", telefone: "", outro_telefone: "", email: "", escritorio: "", cau: "", observacoes: "", consultor_id: "", perfil_checklist: PERFIL_VAZIO };
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-
-/* ── Checklist de Perfil do Arquiteto — opções ── */
-const OPCOES_COMUNICACAO = [
-  { value: "whatsapp", label: "WhatsApp rápido" },
-  { value: "ligacao",  label: "Ligação" },
-  { value: "reuniao",  label: "Reunião presencial" },
-];
-const OPCOES_PADRAO_ATENDIMENTO = [
-  { value: "alto",      label: "Alto Padrão / Luxo" },
-  { value: "medio",     label: "Médio Padrão" },
-  { value: "comercial", label: "Comercial/Corporativo" },
-];
-const OPCOES_ESTILO = [
-  { value: "minimalista",   label: "Minimalista/Moderno" },
-  { value: "classico",      label: "Clássico/Imponente" },
-  { value: "rustico",       label: "Rústico/Orgânico" },
-  { value: "contemporaneo", label: "Contemporâneo" },
-];
-const OPCOES_PRODUTOS = [
-  { value: "cortinas_persianas", label: "Cortinas/Persianas" },
-  { value: "papeis_parede",      label: "Papéis de Parede" },
-  { value: "tecidos_exclusivos", label: "Tecidos Exclusivos" },
-];
-const OPCOES_QUEM_DECIDE = [
-  { value: "arquiteto", label: "O próprio arquiteto" },
-  { value: "equipe",    label: "Um funcionário/especificador da equipe" },
-];
-const OPCOES_MOMENTO = [
-  { value: "projeto", label: "Projeto/Detalhamento" },
-  { value: "obra",    label: "Obra/Medição final" },
-];
-const OPCOES_TRAUMA = [
-  { value: "atraso",       label: "Atraso na entrega" },
-  { value: "erro_medida",  label: "Erro de instalação/medida" },
-  { value: "assistencia",  label: "Falta de assistência pós-venda" },
-  { value: "orcamento",    label: "Orçamento confuso" },
-];
 
 /* ── Máscaras de input ── */
 function mascaraCpfCnpj(val) {
@@ -299,15 +266,15 @@ function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando })
             <div className="perfil-checklist">
               <PerfilSecao emoji="👤" titulo="Conexão Pessoal" cor="primary">
                 <PerfilCampo label="Tem filhos?">
-                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                  <PerfilPillGroup options={OPCOES_SIM_NAO}
                     value={perfil.tem_filhos} onChange={(v) => setPerfil("tem_filhos", v)} />
                 </PerfilCampo>
                 <PerfilCampo label="Casado(a)?">
-                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                  <PerfilPillGroup options={OPCOES_SIM_NAO}
                     value={perfil.casado} onChange={(v) => setPerfil("casado", v)} />
                 </PerfilCampo>
                 <PerfilCampo label="Tem animais de estimação?">
-                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                  <PerfilPillGroup options={OPCOES_SIM_NAO}
                     value={perfil.tem_pets} onChange={(v) => setPerfil("tem_pets", v)} />
                 </PerfilCampo>
                 {perfil.tem_pets === "sim" && (

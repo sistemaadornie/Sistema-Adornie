@@ -1,5 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../services/api";
+import {
+  MESES_NOME, OPCOES_SIM_NAO, OPCOES_COMUNICACAO, OPCOES_PADRAO_ATENDIMENTO,
+  OPCOES_ESTILO, OPCOES_PRODUTOS, OPCOES_QUEM_DECIDE, OPCOES_MOMENTO, OPCOES_TRAUMA,
+} from "./arquitetos/perfilOpcoes";
 import "./Relatorios.css";
 
 /* ── helpers ── */
@@ -41,6 +45,19 @@ const PERIODOS = [
   { value:"90d", label:"90 dias" },
   { value:"6m",  label:"6 meses" },
   { value:"1a",  label:"1 ano" },
+];
+
+const FILTROS_PERFIL = [
+  { key: "tem_filhos",          label: "Tem filhos",                    options: OPCOES_SIM_NAO },
+  { key: "casado",              label: "Casado(a)",                     options: OPCOES_SIM_NAO },
+  { key: "tem_pets",            label: "Tem pets",                      options: OPCOES_SIM_NAO },
+  { key: "padrao_atendimento",  label: "Padrão de atendimento",         options: OPCOES_PADRAO_ATENDIMENTO },
+  { key: "estilo_predominante", label: "Estilo predominante",           options: OPCOES_ESTILO },
+  { key: "produtos_especifica", label: "Produtos que mais especifica",  options: OPCOES_PRODUTOS, multi: true },
+  { key: "quem_decide",         label: "Quem decide a especificação",   options: OPCOES_QUEM_DECIDE },
+  { key: "momento_abordagem",   label: "Momento da abordagem",          options: OPCOES_MOMENTO },
+  { key: "comunicacao",         label: "Comunicação preferida",         options: OPCOES_COMUNICACAO },
+  { key: "maior_trauma",        label: "Maior trauma com fornecedores", options: OPCOES_TRAUMA },
 ];
 
 /* ═══════════════════════════════════════════════════
@@ -610,6 +627,160 @@ function AbaVeiculos({ periodo }) {
   );
 }
 
+/* ── ABA: ARQUITETOS (Checklist de Perfil) ── */
+function AbaArquitetosPerfil() {
+  const [arquitetos, setArquitetos] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mes, setMes] = useState(new Date().getMonth() + 1);
+  const [filtros, setFiltros] = useState({});
+
+  useEffect(() => {
+    setLoading(true);
+    api.get("/arquitetos")
+      .then((r) => setArquitetos(r.arquitetos || []))
+      .catch(() => setArquitetos(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const setFiltro = (key, value, multi) => {
+    setFiltros((f) => {
+      if (!multi) return { ...f, [key]: f[key] === value ? undefined : value };
+      const atual = f[key] || [];
+      const novo = atual.includes(value) ? atual.filter((v) => v !== value) : [...atual, value];
+      return { ...f, [key]: novo.length ? novo : undefined };
+    });
+  };
+
+  const comPerfil = useMemo(
+    () => (arquitetos || []).filter((a) =>
+      a.perfil_checklist && Object.values(a.perfil_checklist).some((v) => (Array.isArray(v) ? v.length : v))
+    ),
+    [arquitetos]
+  );
+
+  const aniversariantes = useMemo(() => {
+    return (arquitetos || [])
+      .filter((a) => Number(a.perfil_checklist?.aniversario_mes) === Number(mes))
+      .sort((a, b) => Number(a.perfil_checklist?.aniversario_dia || 0) - Number(b.perfil_checklist?.aniversario_dia || 0));
+  }, [arquitetos, mes]);
+
+  const filtrosAtivos = Object.entries(filtros).filter(([, v]) => v !== undefined && (!Array.isArray(v) || v.length));
+
+  const filtrados = useMemo(() => {
+    if (!filtrosAtivos.length) return [];
+    return (arquitetos || []).filter((a) => {
+      const p = a.perfil_checklist || {};
+      return filtrosAtivos.every(([key, value]) => {
+        if (Array.isArray(value)) {
+          const campo = p[key] || [];
+          return value.some((v) => campo.includes(v));
+        }
+        return p[key] === value;
+      });
+    });
+  }, [arquitetos, filtrosAtivos]);
+
+  if (loading) return <Skeleton />;
+  if (!arquitetos) return <Empty />;
+
+  return (
+    <div className="rel-aba-content">
+
+      <div className="rel-kpis">
+        <KpiCard label="Arquitetos cadastrados" value={fmtN(arquitetos.length)}     cor="#6B4EFF" icon="🏛️" />
+        <KpiCard label="Com checklist de perfil" value={fmtN(comPerfil.length)}      cor="#22c55e" icon="📝" />
+        <KpiCard label="Aniversariantes do mês"  value={fmtN(aniversariantes.length)} cor="#eab308" icon="🎂" />
+        <KpiCard label="Resultado do filtro"     value={fmtN(filtrados.length)}       cor="#3b82f6" icon="🔎" />
+      </div>
+
+      {/* Aniversariantes do mês */}
+      <div className="rel-card">
+        <div className="rel-card-title rel-card-title-flex">
+          <span>Aniversariantes do mês</span>
+          <select className="rel-mes-select" value={mes} onChange={(e) => setMes(Number(e.target.value))}>
+            {MESES_NOME.map((nome, i) => (
+              <option key={nome} value={i + 1}>{nome}</option>
+            ))}
+          </select>
+        </div>
+        {aniversariantes.length ? (
+          <div className="rel-table-wrap">
+            <table className="rel-table">
+              <thead>
+                <tr><th>Dia</th><th>Nome</th><th>Escritório</th><th>Telefone</th></tr>
+              </thead>
+              <tbody>
+                {aniversariantes.map((a) => (
+                  <tr key={a.id}>
+                    <td><strong>{a.perfil_checklist.aniversario_dia}</strong></td>
+                    <td>{a.nome}</td>
+                    <td>{a.escritorio || <span className="rel-td-muted">—</span>}</td>
+                    <td>{a.telefone || <span className="rel-td-muted">—</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <Empty />}
+      </div>
+
+      {/* Filtrar por perfil */}
+      <div className="rel-card">
+        <div className="rel-card-title rel-card-title-flex">
+          <span>Filtrar por perfil</span>
+          {filtrosAtivos.length > 0 && (
+            <button className="rel-limpar-filtros" onClick={() => setFiltros({})}>Limpar filtros</button>
+          )}
+        </div>
+        <div className="rel-filtro-grid">
+          {FILTROS_PERFIL.map((f) => (
+            <div key={f.key} className="rel-filtro-campo">
+              <label>{f.label}</label>
+              <div className="rel-pill-group">
+                {f.options.map((opt) => {
+                  const ativo = f.multi
+                    ? (filtros[f.key] || []).includes(opt.value)
+                    : filtros[f.key] === opt.value;
+                  return (
+                    <button type="button" key={opt.value}
+                      className={`rel-pill${ativo ? " rel-pill-ativo" : ""}`}
+                      onClick={() => setFiltro(f.key, opt.value, f.multi)}>
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filtrosAtivos.length > 0 && (
+          filtrados.length ? (
+            <div className="rel-table-wrap" style={{ marginTop: 14 }}>
+              <table className="rel-table">
+                <thead>
+                  <tr><th>Nome</th><th>Escritório</th><th>Telefone</th><th>Consultor</th></tr>
+                </thead>
+                <tbody>
+                  {filtrados.map((a) => (
+                    <tr key={a.id}>
+                      <td><strong>{a.nome}</strong></td>
+                      <td>{a.escritorio || <span className="rel-td-muted">—</span>}</td>
+                      <td>{a.telefone || <span className="rel-td-muted">—</span>}</td>
+                      <td>{a.consultor_nome || <span className="rel-td-muted">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : <div style={{ marginTop: 14 }}><Empty /></div>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════
    COMPONENTE PRINCIPAL
 ═══════════════════════════════════════════════════ */
@@ -618,6 +789,7 @@ const ABAS = [
   { id:"equipe",       label:"👷 Equipe",        temPeriodo: true },
   { id:"clientes",     label:"👥 Clientes",       temPeriodo: true },
   { id:"veiculos",     label:"🚗 Veículos",       temPeriodo: true },
+  { id:"arquitetos",   label:"🏛️ Arquitetos",    temPeriodo: false },
 ];
 
 export default function Relatorios() {
@@ -665,6 +837,7 @@ export default function Relatorios() {
         {aba === "equipe"       && <AbaEquipe       periodo={periodo} />}
         {aba === "clientes"     && <AbaClientes     periodo={periodo} />}
         {aba === "veiculos"     && <AbaVeiculos     periodo={periodo} />}
+        {aba === "arquitetos"   && <AbaArquitetosPerfil />}
       </div>
     </div>
   );
