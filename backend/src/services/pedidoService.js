@@ -608,18 +608,29 @@ async function importar(empresaId, userId, dados) {
     } catch (_) {}
   }
 
-  // Resolve arquiteto: usa o id já conhecido, busca por nome ou cria se não existir
+  // Resolve arquiteto: usa o id já conhecido, busca por nome/escritorio ou cria se não existir
   let arquitetoId = dados.arquiteto_id ? Number(dados.arquiteto_id) : null;
   if (!arquitetoId && dados.arquiteto_nome?.trim()) {
-    const r = await db.query(
+    const porNome = await db.query(
       `SELECT id FROM arquitetos WHERE empresa_id=$1 AND nome ILIKE $2 AND deleted_at IS NULL LIMIT 1`,
       [empresaId, `%${dados.arquiteto_nome.trim()}%`]
     );
-    if (r.rows.length > 0) {
-      arquitetoId = r.rows[0].id;
+    if (porNome.rows.length > 0) {
+      arquitetoId = porNome.rows[0].id;
     } else {
-      const novoArq = await arqSvc.criar(empresaId, { nome: dados.arquiteto_nome.trim() });
-      arquitetoId = novoArq.id;
+      const porEscritorio = await db.query(
+        `SELECT a.id FROM arquitetos a
+         JOIN escritorios e ON e.id = a.escritorio_id
+         WHERE a.empresa_id=$1 AND a.deleted_at IS NULL AND e.nome ILIKE $2
+         LIMIT 1`,
+        [empresaId, `%${dados.arquiteto_nome.trim()}%`]
+      );
+      if (porEscritorio.rows.length > 0) {
+        arquitetoId = porEscritorio.rows[0].id;
+      } else {
+        const novoArq = await arqSvc.criar(empresaId, { nome: dados.arquiteto_nome.trim() });
+        arquitetoId = novoArq.id;
+      }
     }
   }
 

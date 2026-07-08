@@ -233,4 +233,40 @@ describe('importar', () => {
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+
+  test('resolve arquiteto_id pelo nome do escritorio quando nao acha pelo nome da pessoa', async () => {
+    const pedidoRow = {
+      id: 51, empresa_id: 10, status: 'pendente',
+      numero_origem: null, numero_sequencial: 6,
+      cliente_nome: null, cliente_telefone: null,
+      consultor_nome: null, arquiteto_nome: 'Fulana da Silva', arquiteto_id: 42,
+      tem_anexo_pdf: false,
+    };
+
+    db.query
+      .mockResolvedValueOnce({ rows: [] })            // arquiteto por nome: nao encontrado
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })  // arquiteto por escritorio: encontrado
+      .mockResolvedValueOnce({ rows: [pedidoRow] })   // montarPedido: SELECT pedidos
+      .mockResolvedValueOnce({ rows: [] })            // montarPedido: SELECT pedido_itens
+      .mockResolvedValueOnce({ rows: [] })            // montarPedido: SELECT pedido_pagamentos
+      .mockResolvedValueOnce({ rows: [] });           // INSERT pedido_auditoria (importacao)
+
+    const client = { query: jest.fn(), release: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [] })           // BEGIN
+      .mockResolvedValueOnce({ rows: [{ seq: 6 }] }) // nextval
+      .mockResolvedValueOnce({ rows: [{ id: 51 }] }) // INSERT pedidos
+      .mockResolvedValueOnce({ rows: [] })           // SELECT existing item ids
+      .mockResolvedValueOnce({ rows: [] })           // DELETE pedido_pagamentos
+      .mockResolvedValueOnce({ rows: [] });          // COMMIT
+    db.connect.mockResolvedValue(client);
+    vinculoAutoSvc.processarPedido.mockResolvedValue();
+
+    const pedido = await svc.importar(10, 99, {
+      status: 'pendente', itens: [], pagamentos: [],
+      arquiteto_nome: 'Estudio Exemplo',
+    });
+
+    expect(pedido.arquiteto_id).toBe(42);
+  });
 });

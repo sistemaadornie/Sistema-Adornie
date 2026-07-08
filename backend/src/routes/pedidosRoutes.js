@@ -970,11 +970,22 @@ router.post("/importar-texto", authMiddleware, async (req, res) => {
     let arquiteto_id = null;
     if (campos.arquiteto_nome) {
       try {
-        const r = await db.query(
+        const porNome = await db.query(
           `SELECT id FROM arquitetos WHERE empresa_id=$1 AND nome ILIKE $2 AND deleted_at IS NULL ORDER BY nome LIMIT 1`,
           [req.user.empresa_id, `%${campos.arquiteto_nome}%`]
         );
-        if (r.rows.length > 0) arquiteto_id = r.rows[0].id;
+        if (porNome.rows.length > 0) {
+          arquiteto_id = porNome.rows[0].id;
+        } else {
+          const porEscritorio = await db.query(
+            `SELECT a.id FROM arquitetos a
+             JOIN escritorios e ON e.id = a.escritorio_id
+             WHERE a.empresa_id=$1 AND a.deleted_at IS NULL AND e.nome ILIKE $2
+             ORDER BY a.nome LIMIT 1`,
+            [req.user.empresa_id, `%${campos.arquiteto_nome}%`]
+          );
+          if (porEscritorio.rows.length > 0) arquiteto_id = porEscritorio.rows[0].id;
+        }
       } catch (_) {}
     }
 

@@ -55,4 +55,20 @@ describe('POST /api/pedidos/importar-texto — detecção de modelo/acionamento'
     expect(trilho.modelo).toBeNull();
     expect(trilho.especificacoes).toBeNull();
   });
+
+  test('casa arquiteto_id pelo nome do escritorio quando nao bate pelo nome da pessoa', async () => {
+    db.query.mockImplementation((sql, params) => {
+      if (sql.includes('FROM usuarios')) return Promise.resolve({ rows: [] });
+      if (sql.includes('FROM arquitetos') && sql.includes('a.nome ILIKE')) return Promise.resolve({ rows: [] });
+      if (sql.includes('FROM arquitetos') && sql.includes('e.nome ILIKE')) return Promise.resolve({ rows: [{ id: 42 }] });
+      if (sql.includes('FROM categorias')) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    const res = await request(app)
+      .post('/api/pedidos/importar-texto')
+      .send({ texto: 'Arquiteto:\nEstudio Exemplo\nCPF: 000.000.000-00' });
+
+    expect(res.body.extraido.arquiteto_id).toBe(42);
+  });
 });
