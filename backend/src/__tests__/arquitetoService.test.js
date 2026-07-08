@@ -73,4 +73,53 @@ describe('importar — registros PJ viram escritorios, nao arquitetos', () => {
     expect(resultado.escritorios_criados).toBe(1);
     expect(resultado.importados).toBe(1);
   });
+
+  test('duas linhas PJ com mesmo nome e sem CNPJ reaproveitam o mesmo escritorio (dedup por nome)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // _carregarExistentes: arquitetos
+      .mockResolvedValueOnce({ rows: [] }) // _carregarEscritoriosExistentes (nenhum existente)
+      .mockResolvedValueOnce({ rows: [{ id: 30 }] }); // INSERT escritorios (apenas a primeira linha deve inserir)
+
+    const registros = [
+      { tipo_pessoa: 'PJ', nome: 'Estudio Sem Cnpj' },
+      { tipo_pessoa: 'PJ', nome: 'Estudio Sem Cnpj' },
+    ];
+
+    const resultado = await svc.importar(1, registros);
+
+    expect(resultado.escritorios_criados).toBe(1);
+    const insertCalls = db.query.mock.calls.filter((c) => c[0].includes('INSERT INTO escritorios'));
+    expect(insertCalls.length).toBe(1);
+  });
+});
+
+describe('importar — atualizacao de arquiteto existente mantem consultor_id em dia', () => {
+  test('reimportacao com novo consultor_id atualiza o arquiteto existente', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 42, nome: 'Fulana da Silva', telefone: null, outro_telefone: null, email: null,
+          escritorio: null, escritorio_id: null, cau: null, tipo_pessoa: 'PF',
+          cpf_cnpj: '111.222.333-44', observacoes: null, consultor_id: 7, data_nascimento: null,
+          rua: null, numero: null, complemento: null, bairro: null, cidade: null, estado: null,
+          cep: null, comprou_optin: null, chave_pix: null,
+        }],
+      }) // _carregarExistentes: arquitetos (ja existe, consultor_id atual = 7)
+      .mockResolvedValueOnce({ rows: [] }) // _carregarEscritoriosExistentes
+      .mockResolvedValueOnce({ rows: [] }); // UPDATE arquitetos
+
+    const registros = [{
+      tipo_pessoa: 'PF',
+      nome: 'Fulana da Silva',
+      cpf_cnpj: '111.222.333-44',
+      consultor_id: 9, // novo responsavel
+    }];
+
+    const resultado = await svc.importar(1, registros);
+
+    expect(resultado.atualizados).toBe(1);
+    const updateCall = db.query.mock.calls.find((c) => c[0].includes('UPDATE arquitetos'));
+    expect(updateCall).toBeTruthy();
+    expect(updateCall[1]).toContain(9);
+  });
 });

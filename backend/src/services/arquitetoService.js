@@ -162,7 +162,7 @@ async function excluir(id, empresaId) {
 async function _carregarExistentes(empresaId) {
   const res = await db.query(
     `SELECT id, nome, telefone, outro_telefone, email, escritorio, escritorio_id, cau, tipo_pessoa,
-            cpf_cnpj, observacoes, data_nascimento, rua, numero, complemento, bairro, cidade, estado,
+            cpf_cnpj, observacoes, consultor_id, data_nascimento, rua, numero, complemento, bairro, cidade, estado,
             cep, comprou_optin, chave_pix
      FROM arquitetos
      WHERE empresa_id=$1 AND deleted_at IS NULL`,
@@ -197,25 +197,28 @@ async function _carregarEscritoriosExistentes(empresaId) {
     [empresaId]
   );
   const porCnpj = new Map();
+  const porNome = new Map();
   for (const row of res.rows) {
     const d = digitos(row.cnpj);
     if (d) porCnpj.set(d, row);
+    porNome.set(row.nome.trim().toLowerCase(), row);
   }
-  return porCnpj;
+  return { porCnpj, porNome };
 }
 
 /**
- * Encontra (por CNPJ) ou cria um escritório a partir dos dados fornecidos.
- * `porCnpj` é o Map retornado por _carregarEscritoriosExistentes — é mutado
- * (novos escritórios entram nele) para que registros seguintes no mesmo
- * lote de importação reaproveitem o escritório recém-criado em vez de
- * duplicar.
+ * Encontra (por CNPJ, com fallback por nome quando não há CNPJ) ou cria um
+ * escritório a partir dos dados fornecidos. `porCnpj`/`porNome` são os Maps
+ * retornados por _carregarEscritoriosExistentes — são mutados (novos
+ * escritórios entram neles) para que registros seguintes no mesmo lote de
+ * importação reaproveitem o escritório recém-criado em vez de duplicar.
  */
-async function _resolverEscritorio(empresaId, dadosBrutos, porCnpj, contadores) {
+async function _resolverEscritorio(empresaId, dadosBrutos, { porCnpj, porNome }, contadores) {
   if (!dadosBrutos.nome?.trim()) return null;
   const d = fmtEscritorio(dadosBrutos);
   const chaveCnpj = digitos(d.cnpj);
-  const existente = chaveCnpj ? porCnpj.get(chaveCnpj) : null;
+  const nomeNormalizado = d.nome.trim().toLowerCase();
+  const existente = (chaveCnpj ? porCnpj.get(chaveCnpj) : null) || porNome.get(nomeNormalizado) || null;
 
   if (existente) {
     const temNovoDado = (
@@ -266,6 +269,7 @@ async function _resolverEscritorio(empresaId, dadosBrutos, porCnpj, contadores) 
   );
   const novoId = res.rows[0].id;
   if (chaveCnpj) porCnpj.set(chaveCnpj, { id: novoId, ...d });
+  porNome.set(nomeNormalizado, { id: novoId, ...d });
   if (contadores) contadores.escritorios_criados++;
   return novoId;
 }
@@ -298,7 +302,7 @@ async function verificarDuplicatas(empresaId, registros) {
 
 async function importar(empresaId, registros) {
   const { porNome, porCpf } = await _carregarExistentes(empresaId);
-  const porCnpjEscritorio = await _carregarEscritoriosExistentes(empresaId);
+  const escritoriosExistentes = await _carregarEscritoriosExistentes(empresaId);
   const contadores = { importados: 0, atualizados: 0, ignorados: 0, escritorios_criados: 0, escritorios_atualizados: 0 };
   const erros = [];
 
@@ -313,7 +317,7 @@ async function importar(empresaId, registros) {
           rua: raw.rua, numero: raw.numero, complemento: raw.complemento, bairro: raw.bairro,
           cidade: raw.cidade, estado: raw.estado, cep: raw.cep,
           comprou_optin: raw.comprou_optin, chave_pix: raw.chave_pix,
-        }, porCnpjEscritorio, contadores);
+        }, escritoriosExistentes, contadores);
         continue;
       }
 
@@ -323,7 +327,7 @@ async function importar(empresaId, registros) {
         escritorioId = await _resolverEscritorio(empresaId, {
           nome: raw.escritorio_nome, cnpj: raw.escritorio_cpf_cnpj,
           telefone: raw.escritorio_telefone, email: raw.escritorio_email,
-        }, porCnpjEscritorio, contadores);
+        }, escritoriosExistentes, contadores);
       }
 
       const r = fmtArquiteto({ ...raw, escritorio: raw.escritorio_nome, escritorio_id: escritorioId });
@@ -348,7 +352,8 @@ async function importar(empresaId, registros) {
           (r.cep                           && r.cep                           !== existente.cep)                           ||
           (r.comprou_optin                  && r.comprou_optin                  !== existente.comprou_optin)                  ||
           (r.chave_pix                       && r.chave_pix                       !== existente.chave_pix)                       ||
-          (escritorioId                        && escritorioId                        !== existente.escritorio_id)
+          (escritorioId                        && escritorioId                        !== existente.escritorio_id)                ||
+          (raw.consultor_id                    && raw.consultor_id                    !== existente.consultor_id)
         );
 
         if (temNovoDado) {
@@ -372,12 +377,13 @@ async function importar(empresaId, registros) {
                cep              = COALESCE(NULLIF($16, ''), cep),
                comprou_optin    = COALESCE(NULLIF($17, ''), comprou_optin),
                chave_pix        = COALESCE(NULLIF($18, ''), chave_pix),
+               consultor_id     = COALESCE($19, consultor_id),
                updated_at       = NOW()
-             WHERE id=$19 AND empresa_id=$20 AND deleted_at IS NULL`,
+             WHERE id=$20 AND empresa_id=$21 AND deleted_at IS NULL`,
             [r.telefone||null, r.outro_telefone||null, r.email||null, r.escritorio||null, escritorioId||null,
              r.cau||null, r.tipo_pessoa||null, r.cpf_cnpj||null, r.data_nascimento||null,
              r.rua||null, r.numero||null, r.complemento||null, r.bairro||null, r.cidade||null,
-             r.estado||null, r.cep||null, r.comprou_optin||null, r.chave_pix||null,
+             r.estado||null, r.cep||null, r.comprou_optin||null, r.chave_pix||null, raw.consultor_id||null,
              existente.id, empresaId]
           );
           contadores.atualizados++;
