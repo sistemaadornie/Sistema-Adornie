@@ -93,6 +93,43 @@ describe('importar — registros PJ viram escritorios, nao arquitetos', () => {
   });
 });
 
+describe('criar/atualizar — perfil_checklist (Checklist de Perfil do Arquiteto)', () => {
+  test('criar grava perfil_checklist serializado como JSON', async () => {
+    const perfil = { tem_filhos: 'sim', hobbies: 'Vinho, viagem', produtos_especifica: ['cortinas_persianas'] };
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 55 }] }) // INSERT arquitetos
+      .mockResolvedValueOnce({ rows: [{ id: 55, nome: 'Fulano', perfil_checklist: perfil }] }); // buscar()
+
+    await svc.criar(1, { nome: 'Fulano', perfil_checklist: perfil });
+
+    const insertCall = db.query.mock.calls.find((c) => c[0].includes('INSERT INTO arquitetos'));
+    expect(insertCall[1]).toContain(JSON.stringify(perfil));
+  });
+
+  test('criar sem perfil_checklist grava null', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 56 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 56, nome: 'Fulano' }] });
+
+    await svc.criar(1, { nome: 'Fulano' });
+
+    const insertCall = db.query.mock.calls.find((c) => c[0].includes('INSERT INTO arquitetos'));
+    expect(insertCall[1][insertCall[1].length - 1]).toBeNull();
+  });
+
+  test('atualizar grava perfil_checklist serializado como JSON', async () => {
+    const perfil = { maior_trauma: 'atraso' };
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 55 }] }) // UPDATE arquitetos
+      .mockResolvedValueOnce({ rows: [{ id: 55, nome: 'Fulano', perfil_checklist: perfil }] }); // buscar()
+
+    await svc.atualizar(55, 1, { nome: 'Fulano', perfil_checklist: perfil });
+
+    const updateCall = db.query.mock.calls.find((c) => c[0].includes('UPDATE arquitetos'));
+    expect(updateCall[1]).toContain(JSON.stringify(perfil));
+  });
+});
+
 describe('importar — atualizacao de arquiteto existente mantem consultor_id em dia', () => {
   test('reimportacao com novo consultor_id atualiza o arquiteto existente', async () => {
     db.query

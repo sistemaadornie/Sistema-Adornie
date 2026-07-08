@@ -5,7 +5,53 @@ import ConfirmModal from "../../components/ConfirmModal";
 import ImportarArquitetosModal from "./ImportarArquitetosModal";
 import "./Arquitetos.css";
 
-const FORM_VAZIO = { nome: "", tipo_pessoa: "PF", cpf_cnpj: "", telefone: "", outro_telefone: "", email: "", escritorio: "", cau: "", observacoes: "", consultor_id: "" };
+const PERFIL_VAZIO = {
+  tem_filhos: "", casado: "", tem_pets: "", qual_pet: "", hobbies: "",
+  aniversario_dia: "", aniversario_mes: "", comunicacao: "",
+  padrao_atendimento: "", estilo_predominante: "", produtos_especifica: [], produtos_outros: "",
+  quem_decide: "", momento_abordagem: "", contato_equipe: "", maior_trauma: "",
+};
+
+const FORM_VAZIO = { nome: "", tipo_pessoa: "PF", cpf_cnpj: "", telefone: "", outro_telefone: "", email: "", escritorio: "", cau: "", observacoes: "", consultor_id: "", perfil_checklist: PERFIL_VAZIO };
+
+const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+/* ── Checklist de Perfil do Arquiteto — opções ── */
+const OPCOES_COMUNICACAO = [
+  { value: "whatsapp", label: "WhatsApp rápido" },
+  { value: "ligacao",  label: "Ligação" },
+  { value: "reuniao",  label: "Reunião presencial" },
+];
+const OPCOES_PADRAO_ATENDIMENTO = [
+  { value: "alto",      label: "Alto Padrão / Luxo" },
+  { value: "medio",     label: "Médio Padrão" },
+  { value: "comercial", label: "Comercial/Corporativo" },
+];
+const OPCOES_ESTILO = [
+  { value: "minimalista",   label: "Minimalista/Moderno" },
+  { value: "classico",      label: "Clássico/Imponente" },
+  { value: "rustico",       label: "Rústico/Orgânico" },
+  { value: "contemporaneo", label: "Contemporâneo" },
+];
+const OPCOES_PRODUTOS = [
+  { value: "cortinas_persianas", label: "Cortinas/Persianas" },
+  { value: "papeis_parede",      label: "Papéis de Parede" },
+  { value: "tecidos_exclusivos", label: "Tecidos Exclusivos" },
+];
+const OPCOES_QUEM_DECIDE = [
+  { value: "arquiteto", label: "O próprio arquiteto" },
+  { value: "equipe",    label: "Um funcionário/especificador da equipe" },
+];
+const OPCOES_MOMENTO = [
+  { value: "projeto", label: "Projeto/Detalhamento" },
+  { value: "obra",    label: "Obra/Medição final" },
+];
+const OPCOES_TRAUMA = [
+  { value: "atraso",       label: "Atraso na entrega" },
+  { value: "erro_medida",  label: "Erro de instalação/medida" },
+  { value: "assistencia",  label: "Falta de assistência pós-venda" },
+  { value: "orcamento",    label: "Orçamento confuso" },
+];
 
 /* ── Máscaras de input ── */
 function mascaraCpfCnpj(val) {
@@ -43,8 +89,55 @@ function Th({ label, campo, sort, onSort }) {
   );
 }
 
+/* ── Checklist de Perfil — grupo de opções em pílula (single ou multi-select) ── */
+function PerfilPillGroup({ options, value, onChange, multi = false }) {
+  const isActive = (opt) => (multi ? (value || []).includes(opt.value) : value === opt.value);
+  const toggle = (opt) => {
+    if (multi) {
+      const atual = value || [];
+      onChange(atual.includes(opt.value) ? atual.filter((v) => v !== opt.value) : [...atual, opt.value]);
+    } else {
+      onChange(value === opt.value ? "" : opt.value);
+    }
+  };
+  return (
+    <div className="perfil-pill-group">
+      {options.map((opt) => (
+        <button type="button" key={opt.value}
+          className={`perfil-pill${isActive(opt) ? " perfil-pill-ativo" : ""}`}
+          onClick={() => toggle(opt)}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Checklist de Perfil — cartão de seção com selo de emoji ── */
+function PerfilSecao({ emoji, titulo, cor, children }) {
+  return (
+    <div className="perfil-secao" style={{ "--perfil-accent": `var(--color-${cor})` }}>
+      <div className="perfil-secao-header">
+        <span className="perfil-secao-selo">{emoji}</span>
+        <h3>{titulo}</h3>
+      </div>
+      <div className="perfil-secao-corpo">{children}</div>
+    </div>
+  );
+}
+
+function PerfilCampo({ label, children, full }) {
+  return (
+    <div className={`perfil-campo${full ? " perfil-campo-full" : ""}`}>
+      <label>{label}</label>
+      {children}
+    </div>
+  );
+}
+
 /* ── Modal de cadastro/edição ── */
 function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando }) {
+  const [aba, setAba] = useState("dados");
   const [form, setForm] = useState(
     arquiteto
       ? {
@@ -58,12 +151,15 @@ function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando })
           cau:            arquiteto.cau             || "",
           observacoes:    arquiteto.observacoes     || "",
           consultor_id:   arquiteto.consultor_id    || "",
+          perfil_checklist: { ...PERFIL_VAZIO, ...(arquiteto.perfil_checklist || {}) },
         }
       : FORM_VAZIO
   );
   const [erro, setErro] = useState(null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const setPerfil = (k, v) => setForm((f) => ({ ...f, perfil_checklist: { ...f.perfil_checklist, [k]: v } }));
+  const perfil = form.perfil_checklist;
 
   useEffect(() => {
     const fn = (e) => e.key === "Escape" && onClose();
@@ -85,8 +181,16 @@ function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando })
           <h2 className="modal-title">{arquiteto ? "Editar Arquiteto" : "Novo Arquiteto"}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
+        <div className="arq-tipo-toggle arq-aba-toggle">
+          <button type="button"
+            className={`arq-tipo-btn${aba === "dados" ? " arq-tipo-ativo" : ""}`}
+            onClick={() => setAba("dados")}>Dados Cadastrais</button>
+          <button type="button"
+            className={`arq-tipo-btn${aba === "perfil" ? " arq-tipo-ativo" : ""}`}
+            onClick={() => setAba("perfil")}>Checklist de Perfil</button>
+        </div>
         <form className="modal-body" onSubmit={handleSubmit}>
-          <div className="arq-form-grid">
+          <div className="arq-form-grid" style={{ display: aba === "dados" ? "grid" : "none" }}>
             {/* Tipo de Pessoa */}
             <div className="ag-form-field arq-span-full">
               <label>Tipo de Pessoa</label>
@@ -190,6 +294,96 @@ function ArquitetoModal({ arquiteto, consultores, onClose, onSalvar, salvando })
                 rows={3} placeholder="Informações adicionais…" />
             </div>
           </div>
+
+          {aba === "perfil" && (
+            <div className="perfil-checklist">
+              <PerfilSecao emoji="👤" titulo="Conexão Pessoal" cor="primary">
+                <PerfilCampo label="Tem filhos?">
+                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                    value={perfil.tem_filhos} onChange={(v) => setPerfil("tem_filhos", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Casado(a)?">
+                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                    value={perfil.casado} onChange={(v) => setPerfil("casado", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Tem animais de estimação?">
+                  <PerfilPillGroup options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                    value={perfil.tem_pets} onChange={(v) => setPerfil("tem_pets", v)} />
+                </PerfilCampo>
+                {perfil.tem_pets === "sim" && (
+                  <PerfilCampo label="Qual?">
+                    <input value={perfil.qual_pet} onChange={(e) => setPerfil("qual_pet", e.target.value)}
+                      placeholder="Ex: um golden chamado Toby" />
+                  </PerfilCampo>
+                )}
+                <PerfilCampo label="Hobbies / Paixões" full>
+                  <input value={perfil.hobbies} onChange={(e) => setPerfil("hobbies", e.target.value)}
+                    placeholder="Ex: Vinho, Viagem, Gastronomia, Esportes" />
+                </PerfilCampo>
+                <PerfilCampo label="Aniversário">
+                  <div className="perfil-data-nascimento">
+                    <select value={perfil.aniversario_dia} onChange={(e) => setPerfil("aniversario_dia", e.target.value)}>
+                      <option value="">Dia</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <select value={perfil.aniversario_mes} onChange={(e) => setPerfil("aniversario_mes", e.target.value)}>
+                      <option value="">Mês</option>
+                      {MESES.map((m, i) => (
+                        <option key={m} value={i + 1}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </PerfilCampo>
+                <PerfilCampo label="Estilo de Comunicação" full>
+                  <PerfilPillGroup options={OPCOES_COMUNICACAO}
+                    value={perfil.comunicacao} onChange={(v) => setPerfil("comunicacao", v)} />
+                </PerfilCampo>
+              </PerfilSecao>
+
+              <PerfilSecao emoji="🎨" titulo="Estilo e Nicho de Mercado" cor="info">
+                <PerfilCampo label="Padrão de Atendimento" full>
+                  <PerfilPillGroup options={OPCOES_PADRAO_ATENDIMENTO}
+                    value={perfil.padrao_atendimento} onChange={(v) => setPerfil("padrao_atendimento", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Estilo Predominante" full>
+                  <PerfilPillGroup options={OPCOES_ESTILO}
+                    value={perfil.estilo_predominante} onChange={(v) => setPerfil("estilo_predominante", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Produtos que mais especifica" full>
+                  <PerfilPillGroup options={OPCOES_PRODUTOS} multi
+                    value={perfil.produtos_especifica} onChange={(v) => setPerfil("produtos_especifica", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Outros produtos" full>
+                  <input value={perfil.produtos_outros} onChange={(e) => setPerfil("produtos_outros", e.target.value)}
+                    placeholder="Ex: iluminação, marcenaria…" />
+                </PerfilCampo>
+              </PerfilSecao>
+
+              <PerfilSecao emoji="⚙️" titulo="Processo Operacional" cor="success">
+                <PerfilCampo label="Quem decide a especificação?" full>
+                  <PerfilPillGroup options={OPCOES_QUEM_DECIDE}
+                    value={perfil.quem_decide} onChange={(v) => setPerfil("quem_decide", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Momento da abordagem" full>
+                  <PerfilPillGroup options={OPCOES_MOMENTO}
+                    value={perfil.momento_abordagem} onChange={(v) => setPerfil("momento_abordagem", v)} />
+                </PerfilCampo>
+                <PerfilCampo label="Contato da equipe (braço-direito responsável pela obra)" full>
+                  <input value={perfil.contato_equipe} onChange={(e) => setPerfil("contato_equipe", e.target.value)}
+                    placeholder="Nome do contato" />
+                </PerfilCampo>
+              </PerfilSecao>
+
+              <PerfilSecao emoji="🚨" titulo="Filtro de Dores" cor="danger">
+                <PerfilCampo label="Maior trauma com fornecedores" full>
+                  <PerfilPillGroup options={OPCOES_TRAUMA}
+                    value={perfil.maior_trauma} onChange={(v) => setPerfil("maior_trauma", v)} />
+                </PerfilCampo>
+              </PerfilSecao>
+            </div>
+          )}
 
           {erro && <p className="arq-form-erro">{erro}</p>}
 

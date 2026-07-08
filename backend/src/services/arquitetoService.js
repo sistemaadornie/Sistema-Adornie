@@ -120,14 +120,16 @@ async function criar(empresaId, dados) {
     `INSERT INTO arquitetos
        (empresa_id, nome, telefone, outro_telefone, email, escritorio, escritorio_id, cau,
         tipo_pessoa, cpf_cnpj, observacoes, consultor_id, data_nascimento,
-        rua, numero, complemento, bairro, cidade, estado, cep, comprou_optin, chave_pix)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+        rua, numero, complemento, bairro, cidade, estado, cep, comprou_optin, chave_pix,
+        perfil_checklist)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
      RETURNING id`,
     [empresaId, d.nome.trim(), d.telefone||null, d.outro_telefone||null, d.email||null,
      d.escritorio||null, d.escritorio_id||null, d.cau||null, d.tipo_pessoa||null, d.cpf_cnpj||null,
      d.observacoes||null, d.consultor_id||null, d.data_nascimento||null,
      d.rua||null, d.numero||null, d.complemento||null, d.bairro||null, d.cidade||null,
-     d.estado||null, d.cep||null, d.comprou_optin||null, d.chave_pix||null]
+     d.estado||null, d.cep||null, d.comprou_optin||null, d.chave_pix||null,
+     d.perfil_checklist ? JSON.stringify(d.perfil_checklist) : null]
   );
   return buscar(res.rows[0].id, empresaId);
 }
@@ -139,10 +141,11 @@ async function atualizar(id, empresaId, dados) {
   const res = await db.query(
     `UPDATE arquitetos
      SET nome=$1, telefone=$2, outro_telefone=$3, email=$4, escritorio=$5, cau=$6,
-         tipo_pessoa=$7, cpf_cnpj=$8, observacoes=$9, consultor_id=$10, updated_at=NOW()
-     WHERE id=$11 AND empresa_id=$12 AND deleted_at IS NULL RETURNING id`,
+         tipo_pessoa=$7, cpf_cnpj=$8, observacoes=$9, consultor_id=$10, perfil_checklist=$11, updated_at=NOW()
+     WHERE id=$12 AND empresa_id=$13 AND deleted_at IS NULL RETURNING id`,
     [d.nome.trim(), d.telefone||null, d.outro_telefone||null, d.email||null, d.escritorio||null,
      d.cau||null, d.tipo_pessoa||null, d.cpf_cnpj||null, d.observacoes||null, d.consultor_id||null,
+     d.perfil_checklist ? JSON.stringify(d.perfil_checklist) : null,
      id, empresaId]
   );
   if (!res.rows.length) throw Object.assign(new Error("Arquiteto não encontrado."), { status: 404 });
