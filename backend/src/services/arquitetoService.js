@@ -32,9 +32,24 @@ function formatarTelefone(str) {
   return String(str).trim();
 }
 
+function fmtEndereco(r) {
+  return {
+    rua:             r.rua             ? String(r.rua).trim() : r.rua,
+    numero:          r.numero          ? String(r.numero).trim() : r.numero,
+    complemento:     r.complemento     ? String(r.complemento).trim() : r.complemento,
+    bairro:          r.bairro          ? String(r.bairro).trim() : r.bairro,
+    cidade:          r.cidade          ? titleCase(r.cidade) : r.cidade,
+    estado:          r.estado          ? String(r.estado).trim().toUpperCase().slice(0, 2) : r.estado,
+    cep:             r.cep             ? String(r.cep).trim() : r.cep,
+    comprou_optin:   r.comprou_optin   ? String(r.comprou_optin).trim() : r.comprou_optin,
+    chave_pix:       r.chave_pix       ? String(r.chave_pix).trim() : r.chave_pix,
+  };
+}
+
 function fmtArquiteto(r) {
   return {
     ...r,
+    ...fmtEndereco(r),
     nome:            titleCase(r.nome),
     escritorio:      r.escritorio      ? titleCase(r.escritorio) : r.escritorio,
     email:           r.email           ? r.email.trim().toLowerCase() : r.email,
@@ -42,34 +57,17 @@ function fmtArquiteto(r) {
     telefone:        r.telefone        ? formatarTelefone(r.telefone) : r.telefone,
     outro_telefone:  r.outro_telefone  ? formatarTelefone(r.outro_telefone) : r.outro_telefone,
     cau:             r.cau             ? String(r.cau).trim().toUpperCase() : r.cau,
-    rua:             r.rua             ? String(r.rua).trim() : r.rua,
-    numero:          r.numero          ? String(r.numero).trim() : r.numero,
-    complemento:     r.complemento     ? String(r.complemento).trim() : r.complemento,
-    bairro:          r.bairro          ? String(r.bairro).trim() : r.bairro,
-    cidade:          r.cidade          ? titleCase(r.cidade) : r.cidade,
-    estado:          r.estado          ? String(r.estado).trim().toUpperCase().slice(0, 2) : r.estado,
-    cep:             r.cep             ? String(r.cep).trim() : r.cep,
-    comprou_optin:   r.comprou_optin   ? String(r.comprou_optin).trim() : r.comprou_optin,
-    chave_pix:       r.chave_pix       ? String(r.chave_pix).trim() : r.chave_pix,
     data_nascimento: r.data_nascimento || null,
   };
 }
 
 function fmtEscritorio(r) {
   return {
+    ...fmtEndereco(r),
     nome:            titleCase(r.nome),
     cnpj:            r.cnpj            ? formatarCpfCnpj(r.cnpj) : r.cnpj,
     telefone:        r.telefone        ? formatarTelefone(r.telefone) : r.telefone,
     email:           r.email           ? r.email.trim().toLowerCase() : r.email,
-    rua:             r.rua             ? String(r.rua).trim() : r.rua,
-    numero:          r.numero          ? String(r.numero).trim() : r.numero,
-    complemento:     r.complemento     ? String(r.complemento).trim() : r.complemento,
-    bairro:          r.bairro          ? String(r.bairro).trim() : r.bairro,
-    cidade:          r.cidade          ? titleCase(r.cidade) : r.cidade,
-    estado:          r.estado          ? String(r.estado).trim().toUpperCase().slice(0, 2) : r.estado,
-    cep:             r.cep             ? String(r.cep).trim() : r.cep,
-    comprou_optin:   r.comprou_optin   ? String(r.comprou_optin).trim() : r.comprou_optin,
-    chave_pix:       r.chave_pix       ? String(r.chave_pix).trim() : r.chave_pix,
   };
 }
 
@@ -221,10 +219,16 @@ async function _resolverEscritorio(empresaId, dadosBrutos, porCnpj, contadores) 
 
   if (existente) {
     const temNovoDado = (
+      (d.nome          && d.nome          !== existente.nome)          ||
       (d.telefone      && d.telefone      !== existente.telefone)      ||
       (d.email         && d.email         !== existente.email)         ||
       (d.rua           && d.rua           !== existente.rua)           ||
+      (d.numero        && d.numero        !== existente.numero)        ||
+      (d.complemento   && d.complemento   !== existente.complemento)   ||
+      (d.bairro        && d.bairro        !== existente.bairro)        ||
       (d.cidade        && d.cidade        !== existente.cidade)        ||
+      (d.estado        && d.estado        !== existente.estado)        ||
+      (d.cep           && d.cep           !== existente.cep)           ||
       (d.comprou_optin && d.comprou_optin !== existente.comprou_optin) ||
       (d.chave_pix      && d.chave_pix    !== existente.chave_pix)
     );
@@ -336,10 +340,15 @@ async function importar(empresaId, registros) {
           (r.cpf_cnpj             && r.cpf_cnpj             !== existente.cpf_cnpj)             ||
           (r.data_nascimento       && r.data_nascimento       !== existente.data_nascimento)       ||
           (r.rua                    && r.rua                    !== existente.rua)                    ||
-          (r.cidade                  && r.cidade                  !== existente.cidade)                  ||
-          (r.comprou_optin             && r.comprou_optin             !== existente.comprou_optin)             ||
-          (r.chave_pix                   && r.chave_pix                   !== existente.chave_pix)                   ||
-          (escritorioId                    && escritorioId                    !== existente.escritorio_id)
+          (r.numero                  && r.numero                  !== existente.numero)                  ||
+          (r.complemento               && r.complemento               !== existente.complemento)               ||
+          (r.bairro                     && r.bairro                     !== existente.bairro)                     ||
+          (r.cidade                      && r.cidade                      !== existente.cidade)                      ||
+          (r.estado                       && r.estado                       !== existente.estado)                       ||
+          (r.cep                           && r.cep                           !== existente.cep)                           ||
+          (r.comprou_optin                  && r.comprou_optin                  !== existente.comprou_optin)                  ||
+          (r.chave_pix                       && r.chave_pix                       !== existente.chave_pix)                       ||
+          (escritorioId                        && escritorioId                        !== existente.escritorio_id)
         );
 
         if (temNovoDado) {
