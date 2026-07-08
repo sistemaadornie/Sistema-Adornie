@@ -331,7 +331,7 @@ export default function Arquitetos() {
         </div>
         <div className="ek-head-actions">
           <button className="btn-secondary" onClick={() => setModalImportar(true)}>
-            <FaFileImport /> Importar CSV
+            <FaFileImport /> Importar Excel (Hoop)
           </button>
           <button className="btn-primary" onClick={() => setModal("novo")}>
             <FaPlus /> Novo Arquiteto

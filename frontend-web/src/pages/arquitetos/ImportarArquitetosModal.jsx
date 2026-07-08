@@ -1,88 +1,93 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { FaUpload, FaFileAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
 import { api } from "../../services/api";
 
-/* ── Parser CSV com suporte a campos com quebra de linha ── */
-function parseCSV(text, delimiter = ";") {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
+function normalizarTipoPessoa(v) {
+  const s = String(v || "").trim().toUpperCase();
+  if (s.includes("PJ") || s.includes("CNPJ")) return "PJ";
+  if (s.includes("PF") || s.includes("CPF")) return "PF";
+  return "";
+}
 
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-
-    if (inQuotes) {
-      if (ch === '"' && next === '"') { field += '"'; i++; }
-      else if (ch === '"') { inQuotes = false; }
-      else { field += ch; }
-    } else {
-      if (ch === '"') { inQuotes = true; }
-      else if (ch === delimiter) { row.push(field.trim()); field = ""; }
-      else if (ch === "\n") {
-        row.push(field.trim()); field = "";
-        if (row.some(Boolean)) rows.push(row);
-        row = [];
-      } else if (ch !== "\r") { field += ch; }
-    }
+function formatarDataNascimento(v) {
+  if (!v) return "";
+  if (v instanceof Date && !isNaN(v)) {
+    const ano = v.getUTCFullYear();
+    const mes = String(v.getUTCMonth() + 1).padStart(2, "0");
+    const dia = String(v.getUTCDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
   }
-  row.push(field.trim());
-  if (row.some(Boolean)) rows.push(row);
-  return rows;
+  return "";
 }
 
-function extrairCAU(obs = "") {
-  const m = obs.match(/CAU[:\s.]*([A-Z]\d{5,8}[-–]\d)/i);
-  return m ? m[1].replace("–", "-") : "";
-}
-
-function mapearRegistros(linhas) {
+function mapearLinhasHoop(linhas) {
   if (!linhas.length) return [];
-  const headers = linhas[0].map((h) => h.replace(/^"|"$/g, "").trim());
-
+  const headers = linhas[0].map((h) => String(h || "").trim());
   const idx = {};
   headers.forEach((h, i) => { idx[h] = i; });
-
-  const get = (row, col) => (row[idx[col]] ?? "").replace(/^"|"$/g, "").trim();
+  const get = (row, col) => {
+    const v = row[idx[col]];
+    return v === undefined || v === null ? "" : v;
+  };
+  const getStr = (row, col) => String(get(row, col)).trim();
 
   return linhas
     .slice(1)
-    .filter((row) => get(row, "Ativo") === "1")
-    .map((row) => {
-      const nomeRazao    = get(row, "NomeRazaoSocial");
-      const apelido      = get(row, "ApelidoNomeFantasia");
-      const obs          = get(row, "Observacao");
-      const telPrinc     = get(row, "TelefonePrincipal");
-      const telOutro     = get(row, "OutroTelefone");
-      const tipoPessoa   = get(row, "TipoPessoa");
-      const cpf          = get(row, "CPF");
-      const cnpj         = get(row, "CNPJ");
-
-      return {
-        nome:           nomeRazao || apelido,
-        escritorio:     apelido   || "",
-        email:          get(row, "Email").replace(/\s/g, ""),
-        telefone:       telPrinc  || "",
-        outro_telefone: telOutro  || "",
-        cau:            extrairCAU(obs),
-        tipo_pessoa:    tipoPessoa === "F" ? "PF" : tipoPessoa === "J" ? "PJ" : "",
-        cpf_cnpj:       cpf || cnpj || "",
-        observacoes:    obs,
-      };
-    })
+    .filter((row) => getStr(row, "Nome"))
+    .map((row) => ({
+      tipo_pessoa:          normalizarTipoPessoa(getStr(row, "TIPO (PF/PJ)")),
+      nome:                 getStr(row, "Nome"),
+      email:                getStr(row, "Email").replace(/\s/g, ""),
+      cpf_cnpj:             getStr(row, "CPF/CNPJ"),
+      data_nascimento:      formatarDataNascimento(get(row, "Data de nascimento")),
+      telefone:             getStr(row, "Telefone"),
+      rua:                  getStr(row, "Endereço"),
+      numero:               getStr(row, "Número"),
+      complemento:          getStr(row, "Complemento"),
+      bairro:               getStr(row, "Bairro"),
+      cidade:               getStr(row, "Cidade"),
+      estado:               getStr(row, "Estado (Sigla)"),
+      cep:                  getStr(row, "Cep"),
+      cau:                  getStr(row, "CAU/CREA"),
+      comprou_optin:        getStr(row, "Comprou | OPTIN"),
+      chave_pix:            getStr(row, "CHAVE PIX"),
+      responsavel_nome:     getStr(row, "Responsável"),
+      escritorio_cpf_cnpj:  getStr(row, "CPF / CNPJ ESCRITORIO"),
+      escritorio_nome:      getStr(row, "NOME DO ESCRITORIO"),
+      escritorio_telefone:  getStr(row, "TELEFONE ESCRITORIO"),
+      escritorio_email:     getStr(row, "EMAIL ESCRITORIO"),
+    }))
     .filter((r) => r.nome);
 }
 
 /* ── Componente ── */
 export default function ImportarArquitetosModal({ onClose, onImportado }) {
-  const [etapa, setEtapa]             = useState("selecionar"); // selecionar | verificando | preview | importando | resultado
-  const [registros, setRegistros]     = useState([]);
+  const [etapa, setEtapa] = useState("selecionar"); // selecionar | mapear-responsaveis | verificando | preview | importando | resultado
+  const [linhasBrutas, setLinhasBrutas] = useState([]); // saída de mapearLinhasHoop, sem consultor_id ainda
   const [nomeArquivo, setNomeArquivo] = useState("");
-  const [verificacao, setVerificacao] = useState(null); // { duplicatas, novos, total }
-  const [resultado, setResultado]     = useState(null);
+  const [consultores, setConsultores] = useState([]);
+  const [mapaResponsaveis, setMapaResponsaveis] = useState({}); // { "Dag": "7" }
+  const [verificacao, setVerificacao] = useState(null);
+  const [resultado, setResultado] = useState(null);
   const [erroLeitura, setErroLeitura] = useState(null);
   const inputRef = useRef();
+
+  const responsaveisUnicos = useMemo(() => {
+    const set = new Set(linhasBrutas.map((r) => r.responsavel_nome).filter(Boolean));
+    return [...set];
+  }, [linhasBrutas]);
+
+  const registros = useMemo(
+    () => linhasBrutas.map((r) => ({
+      ...r,
+      consultor_id: r.responsavel_nome ? (mapaResponsaveis[r.responsavel_nome] || null) : null,
+    })),
+    [linhasBrutas, mapaResponsaveis]
+  );
+
+  const registrosPF = useMemo(() => registros.filter((r) => r.tipo_pessoa !== "PJ"), [registros]);
+  const registrosPJ = useMemo(() => registros.filter((r) => r.tipo_pessoa === "PJ"), [registros]);
 
   function handleArquivo(e) {
     const file = e.target.files?.[0];
@@ -93,30 +98,41 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
-        const linhas = parseCSV(ev.target.result);
-        const regs   = mapearRegistros(linhas);
+        const wb = XLSX.read(ev.target.result, { type: "array", cellDates: true });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const linhas = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        const regs = mapearLinhasHoop(linhas);
         if (!regs.length) {
           setErroLeitura("Nenhum registro válido encontrado no arquivo.");
           return;
         }
-        setRegistros(regs);
-        setEtapa("verificando");
+        setLinhasBrutas(regs);
 
-        try {
-          const check = await api.post("/arquitetos/verificar-duplicatas", { registros: regs });
-          setVerificacao(check);
-        } catch {
-          // Se falhar a verificação, segue sem dados de duplicata
-          setVerificacao({ duplicatas: [], novos: regs.length, total: regs.length });
+        if (!consultores.length) {
+          try {
+            const r = await api.get("/auth/admin/usuarios");
+            setConsultores((r.usuarios || []).filter((u) => u.status === "aprovado"));
+          } catch { /* segue sem consultores — mapeamento fica vazio */ }
         }
 
-        setEtapa("preview");
+        setEtapa("mapear-responsaveis");
       } catch {
-        setErroLeitura("Falha ao interpretar o arquivo CSV.");
+        setErroLeitura("Falha ao interpretar o arquivo. Confira se é um .xlsx válido no padrão Hoop.");
       }
     };
     reader.onerror = () => setErroLeitura("Erro ao ler o arquivo.");
-    reader.readAsText(file, "windows-1252");
+    reader.readAsArrayBuffer(file);
+  }
+
+  async function confirmarMapeamento() {
+    setEtapa("verificando");
+    try {
+      const check = await api.post("/arquitetos/verificar-duplicatas", { registros });
+      setVerificacao(check);
+    } catch {
+      setVerificacao({ duplicatas: [], novos: registrosPF.length, total: registrosPF.length });
+    }
+    setEtapa("preview");
   }
 
   async function handleImportar() {
@@ -127,7 +143,7 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
       setEtapa("resultado");
       onImportado();
     } catch (err) {
-      setResultado({ importados: 0, atualizados: 0, ignorados: 0, erros: [{ nome: "—", erro: err.message }] });
+      setResultado({ importados: 0, atualizados: 0, ignorados: 0, escritorios_criados: 0, escritorios_atualizados: 0, erros: [{ nome: "—", erro: err.message }] });
       setEtapa("resultado");
     }
   }
@@ -149,12 +165,12 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
           {etapa === "selecionar" && (
             <div className="imp-drop-area" onClick={() => inputRef.current.click()}>
               <FaUpload className="imp-drop-icon" />
-              <p className="imp-drop-title">Clique para selecionar o arquivo CSV</p>
-              <p className="imp-drop-hint">Formato esperado: separado por ponto-e-vírgula (;)</p>
+              <p className="imp-drop-title">Clique para selecionar a planilha (padrão Hoop)</p>
+              <p className="imp-drop-hint">Formato esperado: Excel (.xlsx) exportado do Hoop</p>
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.txt"
+                accept=".xlsx"
                 style={{ display: "none" }}
                 onChange={handleArquivo}
               />
@@ -162,6 +178,32 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                 <p className="imp-erro-texto"><FaExclamationTriangle /> {erroLeitura}</p>
               )}
             </div>
+          )}
+
+          {/* ── ETAPA: MAPEAR RESPONSÁVEIS ── */}
+          {etapa === "mapear-responsaveis" && (
+            <>
+              <p className="imp-preview-label">
+                Vincule cada "Responsável" da planilha a um usuário do sistema (fica como consultor responsável). Pode deixar sem vínculo.
+              </p>
+              {responsaveisUnicos.length === 0 && (
+                <p className="imp-preview-label">Nenhuma coluna "Responsável" preenchida nesse arquivo — pode seguir sem vincular ninguém.</p>
+              )}
+              {responsaveisUnicos.map((nome) => (
+                <div className="ag-form-field" key={nome} style={{ marginBottom: 12 }}>
+                  <label>{nome}</label>
+                  <select
+                    value={mapaResponsaveis[nome] || ""}
+                    onChange={(e) => setMapaResponsaveis((m) => ({ ...m, [nome]: e.target.value }))}
+                  >
+                    <option value="">— Sem consultor —</option>
+                    {consultores.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nome_completo}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </>
           )}
 
           {/* ── ETAPA: VERIFICANDO ── */}
@@ -180,7 +222,7 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                   <FaFileAlt /> {nomeArquivo}
                 </span>
                 <span className="imp-info-count">
-                  <strong>{registros.length}</strong> arquiteto{registros.length !== 1 ? "s" : ""} no arquivo
+                  <strong>{registrosPF.length}</strong> arquiteto{registrosPF.length !== 1 ? "s" : ""} no arquivo
                 </span>
               </div>
 
@@ -188,7 +230,7 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
               <div className="imp-resumo-checks">
                 <div className="imp-resumo-item imp-resumo-novo">
                   <FaCheckCircle />
-                  <span><strong>{verificacao?.novos ?? registros.length}</strong> novo{(verificacao?.novos ?? registros.length) !== 1 ? "s" : ""} (serão importados)</span>
+                  <span><strong>{verificacao?.novos ?? registrosPF.length}</strong> novo{(verificacao?.novos ?? registrosPF.length) !== 1 ? "s" : ""} (serão importados)</span>
                 </div>
                 {temDuplicatas && (
                   <div className="imp-resumo-item imp-resumo-dup">
@@ -196,6 +238,12 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                     <span>
                       <strong>{verificacao.duplicatas.length}</strong> duplicado{verificacao.duplicatas.length !== 1 ? "s" : ""} encontrado{verificacao.duplicatas.length !== 1 ? "s" : ""} — não serão reimportados, apenas atualizados se houver informações novas
                     </span>
+                  </div>
+                )}
+                {registrosPJ.length > 0 && (
+                  <div className="imp-resumo-item imp-resumo-novo">
+                    <FaInfoCircle />
+                    <span><strong>{registrosPJ.length}</strong> escritório{registrosPJ.length !== 1 ? "s" : ""} serão criados/atualizados junto</span>
                   </div>
                 )}
               </div>
@@ -225,20 +273,20 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {registros.slice(0, 5).map((r, i) => (
+                    {registrosPF.slice(0, 5).map((r, i) => (
                       <tr key={i}>
                         <td>{r.tipo_pessoa || <span className="imp-vazio">—</span>}</td>
                         <td>{r.nome || <span className="imp-vazio">—</span>}</td>
                         <td>{r.cpf_cnpj || <span className="imp-vazio">—</span>}</td>
-                        <td>{r.telefone || r.outro_telefone || <span className="imp-vazio">—</span>}</td>
+                        <td>{r.telefone || <span className="imp-vazio">—</span>}</td>
                         <td className="imp-email">{r.email || <span className="imp-vazio">—</span>}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {registros.length > 5 && (
-                <p className="imp-mais">… e mais {registros.length - 5} registros</p>
+              {registrosPF.length > 5 && (
+                <p className="imp-mais">… e mais {registrosPF.length - 5} registros</p>
               )}
             </>
           )}
@@ -278,7 +326,24 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                   </div>
                 </div>
               )}
-              {resultado.importados === 0 && resultado.atualizados === 0 && resultado.ignorados === 0 && !resultado.erros?.length && (
+              {resultado.escritorios_criados > 0 && (
+                <div className="imp-resultado-ok">
+                  <FaCheckCircle className="imp-resultado-icon" />
+                  <div>
+                    <strong>{resultado.escritorios_criados}</strong> escritório{resultado.escritorios_criados !== 1 ? "s" : ""} novo{resultado.escritorios_criados !== 1 ? "s" : ""} criado{resultado.escritorios_criados !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              )}
+              {resultado.escritorios_atualizados > 0 && (
+                <div className="imp-resultado-info">
+                  <FaInfoCircle className="imp-resultado-icon imp-resultado-icon-info" />
+                  <div>
+                    <strong>{resultado.escritorios_atualizados}</strong> escritório{resultado.escritorios_atualizados !== 1 ? "s" : ""} atualizado{resultado.escritorios_atualizados !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              )}
+              {resultado.importados === 0 && resultado.atualizados === 0 && resultado.ignorados === 0 &&
+                !resultado.escritorios_criados && !resultado.escritorios_atualizados && !resultado.erros?.length && (
                 <div className="imp-resultado-ok">
                   <FaCheckCircle className="imp-resultado-icon" />
                   <div>Importação concluída sem registros novos.</div>
@@ -305,9 +370,19 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
           {etapa === "selecionar" && (
             <button className="btn-secondary" onClick={onClose}>Cancelar</button>
           )}
+          {etapa === "mapear-responsaveis" && (
+            <>
+              <button className="btn-secondary" onClick={() => { setEtapa("selecionar"); setLinhasBrutas([]); }}>
+                Trocar arquivo
+              </button>
+              <button className="btn-primary" onClick={confirmarMapeamento}>
+                Continuar
+              </button>
+            </>
+          )}
           {etapa === "preview" && (
             <>
-              <button className="btn-secondary" onClick={() => { setEtapa("selecionar"); setRegistros([]); setVerificacao(null); }}>
+              <button className="btn-secondary" onClick={() => { setEtapa("selecionar"); setLinhasBrutas([]); setVerificacao(null); }}>
                 Trocar arquivo
               </button>
               <button className="btn-primary" onClick={handleImportar}
@@ -316,7 +391,7 @@ export default function ImportarArquitetosModal({ onClose, onImportado }) {
                   ? `Atualizar ${verificacao.duplicatas.length} duplicados`
                   : temDuplicatas
                     ? `Importar ${verificacao?.novos} novos e verificar ${verificacao.duplicatas.length} duplicados`
-                    : `Importar ${registros.length} arquitetos`}
+                    : `Importar ${registrosPF.length} arquitetos`}
               </button>
             </>
           )}
