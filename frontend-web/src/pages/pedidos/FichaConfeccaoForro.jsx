@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FaUser, FaTag, FaUserTie, FaHome, FaGift, FaRulerCombined } from "react-icons/fa";
 import { api } from "../../services/api";
 import { calcularQuantForro } from "../../utils/calculoCortina";
 import "./OrdemServicoModal.css";
@@ -70,24 +71,17 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
 
   return (
     <div className="ek-page os-page">
-      <div className="os-page-header">
+      <div className="os-page-header os-page-header-flat">
         <div className="os-page-header-left">
           <button className="os-back-btn" onClick={onVoltar}>← Voltar</button>
-          <div>
-            <h1 className="os-page-title">
-              {tituloPagina}
-              {readOnly && (
-                <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.08)", color: "var(--color-text-muted, #999)" }}>
-                  🔒 Somente leitura
-                </span>
-              )}
-            </h1>
-            <p className="os-page-subtitle">
-              {osData.cliente_nome && <span>{osData.cliente_nome}</span>}
-              {pedidoNumero && <span className="os-v-value tag-pedido" style={{ marginLeft: 8 }}>{pedidoNumero}</span>}
-              {osData.item_ambiente && <span style={{ marginLeft: 8, color: "var(--color-text-muted)" }}>· {osData.item_ambiente}</span>}
-            </p>
-          </div>
+          <h1 className="os-page-title">
+            {tituloPagina}
+            {readOnly && (
+              <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.08)", color: "var(--color-text-muted, #999)" }}>
+                🔒 Somente leitura
+              </span>
+            )}
+          </h1>
         </div>
         <div className="os-page-header-right">
           {readOnly ? (
@@ -107,23 +101,35 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
       {sucesso && <div className="os-alert os-alert-success" style={{ margin: "0 0 16px" }}>{sucesso}</div>}
 
       <div className="os-page-body" style={readOnly ? { pointerEvents: "none", opacity: 0.85 } : undefined}>
-        <div className="os-layout-cols">
-          <div className="os-col-left">
-            <div className="os-section-title">Dados do Pedido</div>
-            <div className="os-card-visual">
-              <div className="os-visual-field"><span className="os-v-label">Cliente</span><span className="os-v-value">{osData.cliente_nome || "—"}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Pedido</span><span className="os-v-value tag-pedido">{pedidoNumero}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Ambiente</span><span className="os-v-value highlight-text">{osData.item_ambiente || "—"}</span></div>
-              <div className="os-visual-field"><span className="os-v-label">Item</span><span className="os-v-value">{osData.item_descricao || "—"}</span></div>
+        <div className="os-info-bar">
+          <div className="os-info-row">
+            <div className="os-info-item os-info-item-grow">
+              <span className="os-info-label"><FaUser /> Cliente</span>
+              <span className="os-info-value">{osData.cliente_nome || "—"}</span>
             </div>
-
-            <div className="os-form-section">
-              <div className="os-section-title">Cálculo (atualiza ao digitar)</div>
-              <div className="os-field"><label>Quant. forro</label><div className="os-v-value spec-box">{quantForro || "—"}</div></div>
+            <div className="os-info-item">
+              <span className="os-info-label"><FaTag /> Pedido</span>
+              <span className="os-info-value tag-pedido">{pedidoNumero}</span>
+            </div>
+            <div className="os-info-item">
+              <span className="os-info-label"><FaUserTie /> Vendedor</span>
+              <span className="os-info-value">{osData.consultor_nome || "—"}</span>
             </div>
           </div>
+          <div className="os-info-row">
+            <div className="os-info-item">
+              <span className="os-info-label"><FaHome /> Ambiente</span>
+              <span className="os-info-value highlight-text">{osData.item_ambiente || "—"}</span>
+            </div>
+            <div className="os-info-item os-info-item-grow">
+              <span className="os-info-label"><FaGift /> Produto</span>
+              <span className="os-info-value">{osData.item_descricao || "—"}</span>
+            </div>
+          </div>
+        </div>
 
-          <div className="os-col-right-form">
+        <div className="os-layout-img">
+          <div className="os-col-left-form">
             <div className="os-form-section">
               <div className="os-section-title mandatory-title">Especificação do Forro (Obrigatório)</div>
               <div className="os-grid-2">
@@ -208,6 +214,22 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
                   <input type="text" placeholder="Ex: 2,84" value={dados.alturaCortina} onChange={(e) => setCampo("alturaCortina", e.target.value)} />
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="os-img-col">
+            <div className="os-form-section" style={{ width: "100%" }}>
+              <div className="os-section-title">Cálculo (atualiza ao digitar)</div>
+              <div className="os-field"><label>Quant. forro</label><div className="os-v-value spec-box">{quantForro || "—"}</div></div>
+            </div>
+            <div className="os-info-item">
+              <span className="os-info-label"><FaRulerCombined /> Largura do trilho (referência)</span>
+              <span className="os-info-value spec-box">{dados.larguraTrilho ? `${dados.larguraTrilho} m` : "—"}</span>
+            </div>
+            <img src="/cortina.png" alt="Esboço da cortina (referência)" className="os-img-cortina" />
+            <div className="os-info-item">
+              <span className="os-info-label"><FaRulerCombined /> Altura da cortina (referência)</span>
+              <span className="os-info-value spec-box">{dados.alturaCortina ? `${dados.alturaCortina} m` : "—"}</span>
             </div>
           </div>
         </div>
