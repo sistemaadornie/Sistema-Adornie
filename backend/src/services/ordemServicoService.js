@@ -127,12 +127,15 @@ function validarDadosConfeccaoCortina(dados) {
 }
 
 function validarDadosConfeccaoForro(dados) {
-  const { tecidoForro, larguraForro, forroCosturado } = dados || {};
+  const { tecidoForro, larguraForro, forroCosturado, itemVinculadoId } = dados || {};
   if (!tecidoForro?.trim()) throw Object.assign(new Error('Tecido do forro é obrigatório.'), { status: 400 });
   if (!larguraForro || parseFloat(String(larguraForro).replace(',', '.')) <= 0) {
     throw Object.assign(new Error('Largura do forro é obrigatória e deve ser maior que zero.'), { status: 400 });
   }
   if (!forroCosturado) throw Object.assign(new Error('Campo "Forro costurado" é obrigatório.'), { status: 400 });
+  if (forroCosturado === 'JUNTO' && !itemVinculadoId) {
+    throw Object.assign(new Error('Selecione o item em que este forro será costurado.'), { status: 400 });
+  }
 }
 
 function validarDadosConferenciaConsultorasPersiana(dados) {
@@ -144,9 +147,39 @@ function validarDadosConferenciaConsultorasPersiana(dados) {
     throw Object.assign(new Error('Quantidade de motor é obrigatória para persiana motorizada.'), { status: 400 });
 }
 
+async function sincronizarVinculoForroCortina(pedidoItemId, dados) {
+  if (dados.forroCosturado === 'JUNTO' && dados.itemVinculadoId) {
+    const itemVinculadoId = Number(dados.itemVinculadoId);
+    const { rows } = await db.query(
+      `SELECT 1 FROM pedido_itens pi_forro
+       JOIN pedido_itens pi_alvo ON pi_alvo.pedido_id = pi_forro.pedido_id
+       WHERE pi_forro.id = $1 AND pi_alvo.id = $2`,
+      [pedidoItemId, itemVinculadoId]
+    );
+    if (!rows.length) {
+      throw Object.assign(new Error('Item vinculado inválido para este pedido.'), { status: 400 });
+    }
+    await db.query(
+      `DELETE FROM pedido_item_vinculos
+       WHERE item_id = $1 AND tipo_vinculo = 'forro_cortina' AND item_vinculado_id <> $2`,
+      [pedidoItemId, itemVinculadoId]
+    );
+    await db.query(
+      `INSERT INTO pedido_item_vinculos (item_id, item_vinculado_id, tipo_vinculo)
+       VALUES ($1, $2, 'forro_cortina') ON CONFLICT DO NOTHING`,
+      [pedidoItemId, itemVinculadoId]
+    );
+  } else {
+    await db.query(
+      `DELETE FROM pedido_item_vinculos WHERE item_id = $1 AND tipo_vinculo = 'forro_cortina'`,
+      [pedidoItemId]
+    );
+  }
+}
+
 async function salvarDadosConfeccao(id, userId, dadosConfeccao, empresaId) {
   const { rows: osRows } = await db.query(
-    `SELECT os.tipo
+    `SELECT os.tipo, os.pedido_item_id
      FROM ordem_servico os
      JOIN pedido_itens pi ON pi.id = os.pedido_item_id
      JOIN pedidos p ON p.id = pi.pedido_id
@@ -159,6 +192,10 @@ async function salvarDadosConfeccao(id, userId, dadosConfeccao, empresaId) {
     validarDadosConfeccaoCortina(dadosConfeccao);
   } else if (osRows[0].tipo === 'forro') {
     validarDadosConfeccaoForro(dadosConfeccao);
+  }
+
+  if (osRows[0].tipo === 'forro') {
+    await sincronizarVinculoForroCortina(osRows[0].pedido_item_id, dadosConfeccao);
   }
 
   const { rows } = await db.query(

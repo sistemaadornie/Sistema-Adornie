@@ -146,15 +146,64 @@ describe('salvarDadosConfeccao', () => {
     await expect(svc.salvarDadosConfeccao(1, 2, dados)).rejects.toThrow('trilho');
   });
 
-  test('salva dados de confecção de forro quando válidos', async () => {
+  test('salva dados de confecção de forro SEPARADO e limpa vínculo forro_cortina antigo', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ tipo: 'forro' }] })
-      .mockResolvedValueOnce({ rows: [{ id: 2, dados_confeccao: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] });
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [] }) // DELETE vinculo forro_cortina (limpeza)
+      .mockResolvedValueOnce({ rows: [{ id: 2, dados_confeccao: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] }); // UPDATE
 
     const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'SEPARADO' };
     const result = await svc.salvarDadosConfeccao(2, 3, dados);
 
+    expect(db.query).toHaveBeenNthCalledWith(2,
+      expect.stringContaining("DELETE FROM pedido_item_vinculos"),
+      [5]
+    );
     expect(result.status).toBe('em_andamento');
+  });
+
+  test('salva forro JUNTO com item vinculado válido e insere vínculo forro_cortina', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })                    // SELECT ownership (existe)
+      .mockResolvedValueOnce({ rows: [] })                                     // DELETE vinculo antigo diferente
+      .mockResolvedValueOnce({ rows: [] })                                     // INSERT vinculo novo
+      .mockResolvedValueOnce({ rows: [{ id: 2, dados_confeccao: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] }); // UPDATE
+
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'JUNTO', itemVinculadoId: '12' };
+    const result = await svc.salvarDadosConfeccao(2, 3, dados);
+
+    expect(db.query).toHaveBeenNthCalledWith(3,
+      expect.stringContaining('DELETE FROM pedido_item_vinculos'),
+      [5, 12]
+    );
+    expect(db.query).toHaveBeenNthCalledWith(4,
+      expect.stringContaining('INSERT INTO pedido_item_vinculos'),
+      [5, 12]
+    );
+    expect(result.status).toBe('em_andamento');
+  });
+
+  test('lança erro 400 quando forro é JUNTO mas item vinculado não foi selecionado', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] });
+
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'JUNTO' };
+    await expect(svc.salvarDadosConfeccao(2, 3, dados)).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining('Selecione o item'),
+    });
+  });
+
+  test('lança erro 400 quando item vinculado não pertence ao mesmo pedido do forro', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [] });                                    // SELECT ownership -> não encontrado
+
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'JUNTO', itemVinculadoId: '999' };
+    await expect(svc.salvarDadosConfeccao(2, 3, dados)).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining('Item vinculado inválido'),
+    });
   });
 
   test('lança erro 400 se tecido do forro não for informado', async () => {
