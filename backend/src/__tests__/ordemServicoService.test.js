@@ -393,3 +393,22 @@ describe('buscarLarguraTecidoConhecida', () => {
   });
 });
 
+describe('listarItensMesmoAmbiente', () => {
+  test('retorna itens do mesmo pedido e ambiente, excluindo o próprio item', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: 8, descricao: 'Cortina Blackout', cor: 'Branca', categoria_nome: 'Cortina' }],
+    });
+
+    const rows = await svc.listarItensMesmoAmbiente(2, 1);
+
+    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('pi2.id <> pi.id'), [2, 1]);
+    expect(rows).toEqual([{ id: 8, descricao: 'Cortina Blackout', cor: 'Branca', categoria_nome: 'Cortina' }]);
+  });
+
+  test('retorna lista vazia quando não há outros itens no ambiente', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    const rows = await svc.listarItensMesmoAmbiente(2, 1);
+    expect(rows).toEqual([]);
+  });
+});
+

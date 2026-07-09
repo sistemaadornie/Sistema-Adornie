@@ -350,4 +350,21 @@ async function buscarLarguraTecidoConhecida(nomeTecido, empresaId) {
   return rows[0]?.largura || null;
 }
 
-module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosConferenciaConsultoras, salvarDadosTecnicos, buscarLarguraTecidoConhecida };
+async function listarItensMesmoAmbiente(osId, empresaId) {
+  const { rows } = await db.query(
+    `SELECT pi2.id, pi2.descricao, pi2.cor, cat.nome AS categoria_nome
+     FROM ordem_servico os
+     JOIN pedido_itens pi ON pi.id = os.pedido_item_id
+     JOIN pedidos p ON p.id = pi.pedido_id
+     JOIN pedido_itens pi2 ON pi2.pedido_id = pi.pedido_id
+       AND pi2.ambiente = pi.ambiente
+       AND pi2.id <> pi.id
+     LEFT JOIN categorias cat ON cat.id = pi2.categoria_id
+     WHERE os.id = $1 AND p.empresa_id = $2
+     ORDER BY pi2.id`,
+    [osId, empresaId]
+  );
+  return rows;
+}
+
+module.exports = { criar, listarPorPedido, atualizarStatus, buscar, salvarDadosConfeccao, salvarDadosConferenciaConsultoras, salvarDadosTecnicos, buscarLarguraTecidoConhecida, listarItensMesmoAmbiente };
