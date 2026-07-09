@@ -95,3 +95,20 @@ describe('GET /api/os/tecidos/largura', () => {
     expect(res.body).toEqual({ largura: null });
   });
 });
+
+describe('GET /api/os/:id/itens-ambiente', () => {
+  test('200 com lista de itens do mesmo ambiente', async () => {
+    svc.listarItensMesmoAmbiente.mockResolvedValueOnce([
+      { id: 8, descricao: 'Cortina Blackout', cor: 'Branca', categoria_nome: 'Cortina' },
+    ]);
+    const res = await request(app).get('/api/os/2/itens-ambiente');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(svc.listarItensMesmoAmbiente).toHaveBeenCalledWith(2, 1);
+  });
+
+  test('400 para id inválido', async () => {
+    const res = await request(app).get('/api/os/abc/itens-ambiente');
+    expect(res.status).toBe(400);
+  });
+});

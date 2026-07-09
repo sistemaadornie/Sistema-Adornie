@@ -53,6 +53,17 @@ router.put('/:id/conferencia-consultoras', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/:id/itens-ambiente', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'id inválido' });
+    const itens = await svc.listarItensMesmoAmbiente(id, req.user.empresa_id);
+    res.json(itens);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+});
+
 router.get('/pedidos/:pedidoId/os', authMiddleware, async (req, res) => {
   try {
     const pedidoId = Number(req.params.pedidoId);
