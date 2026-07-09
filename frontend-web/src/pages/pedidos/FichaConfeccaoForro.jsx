@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaUser, FaTag, FaUserTie, FaHome, FaGift, FaRulerCombined } from "react-icons/fa";
 import { api } from "../../services/api";
 import { calcularQuantForro } from "../../utils/calculoCortina";
 import "./OrdemServicoModal.css";
 
 const VAZIO = {
-  tecidoForro: "", tecidoTipo: "", franzimento: "", forroCosturado: "",
+  tecidoForro: "", tecidoTipo: "", franzimento: "", forroCosturado: "", itemVinculadoId: "",
   larguraForro: "", alturaBarraForro: "",
   espacador: "", larguraTrilho: "", tipoWave: "", abertura: "", alturaCortina: "",
 };
@@ -22,6 +22,13 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
   const labelSalvar = modo === "conferencia_consultoras" ? "Salvar Ficha de Conferência Consultoras" : "Salvar Ficha de Confecção";
 
   const [dados, setDados] = useState({ ...VAZIO, ...(osData[campoDados] || {}) });
+  const [itensAmbiente, setItensAmbiente] = useState([]);
+
+  useEffect(() => {
+    api.get(`/os/${osData.id}/itens-ambiente`)
+      .then((res) => setItensAmbiente(res || []))
+      .catch(() => setItensAmbiente([]));
+  }, [osData.id]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -54,6 +61,9 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
       return setErro("Largura do forro é obrigatória e deve ser maior que zero.");
     }
     if (!dados.forroCosturado) return setErro('Campo "Forro costurado" é obrigatório.');
+    if (dados.forroCosturado === "JUNTO" && !dados.itemVinculadoId) {
+      return setErro("Selecione o item em que este forro será costurado.");
+    }
 
     setSalvando(true);
     try {
@@ -150,7 +160,14 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
               <div className="os-grid-2">
                 <div className="os-field">
                   <label>Forro costurado</label>
-                  <select value={dados.forroCosturado} onChange={(e) => setCampo("forroCosturado", e.target.value)} className="input-highlight">
+                  <select
+                    value={dados.forroCosturado}
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      setDados((prev) => ({ ...prev, forroCosturado: valor, itemVinculadoId: valor === "JUNTO" ? prev.itemVinculadoId : "" }));
+                    }}
+                    className="input-highlight"
+                  >
                     <option value="">— Selecione —</option>
                     <option value="JUNTO">Junto</option>
                     <option value="SEPARADO">Separado</option>
@@ -161,6 +178,24 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
                   <input type="text" placeholder="Só se SEPARADO" value={dados.franzimento} onChange={(e) => setCampo("franzimento", e.target.value)} disabled={dados.forroCosturado !== "SEPARADO"} />
                 </div>
               </div>
+
+              {dados.forroCosturado === "JUNTO" && (
+                <div className="os-field">
+                  <label>Vincular a qual item deste ambiente?</label>
+                  <select
+                    value={dados.itemVinculadoId}
+                    onChange={(e) => setCampo("itemVinculadoId", e.target.value)}
+                    className="input-highlight"
+                  >
+                    <option value="">— Selecione —</option>
+                    {itensAmbiente.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {[it.categoria_nome, it.descricao, it.cor].filter(Boolean).join(" — ")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="os-grid-2">
                 <div className="os-field">
