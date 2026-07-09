@@ -233,6 +233,10 @@ async function salvarDadosConferenciaConsultoras(id, userId, dados, empresaId) {
     validarDadosConferenciaConsultorasPersiana(dados);
   }
 
+  if (tipo === 'forro') {
+    await sincronizarVinculoForroCortina(osRows[0].pedido_item_id, dados);
+  }
+
   if (tipo === 'persiana') {
     if (!osRows[0].pedido_item_id) {
       throw Object.assign(

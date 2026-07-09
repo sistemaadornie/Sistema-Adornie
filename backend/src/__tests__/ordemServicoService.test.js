@@ -240,14 +240,37 @@ describe('salvarDadosConferenciaConsultoras', () => {
     await expect(svc.salvarDadosConferenciaConsultoras(1, 2, dados)).rejects.toThrow('trilho');
   });
 
-  test('salva dados de conferência consultoras de forro quando válidos', async () => {
+  test('salva dados de conferência consultoras de forro SEPARADO e limpa vínculo forro_cortina antigo', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ tipo: 'forro' }] })
-      .mockResolvedValueOnce({ rows: [{ id: 2, dados_conferencia_consultoras: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] });
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 6 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [] }) // DELETE vinculo forro_cortina (limpeza)
+      .mockResolvedValueOnce({ rows: [{ id: 2, dados_conferencia_consultoras: { tecidoForro: 'Microfibra branca' }, status: 'em_andamento' }] }); // UPDATE
 
     const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'SEPARADO' };
     const result = await svc.salvarDadosConferenciaConsultoras(2, 3, dados);
 
+    expect(db.query).toHaveBeenNthCalledWith(2,
+      expect.stringContaining('DELETE FROM pedido_item_vinculos'),
+      [6]
+    );
+    expect(result.status).toBe('em_andamento');
+  });
+
+  test('salva forro JUNTO (conferência consultoras) e insere vínculo forro_cortina', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 6 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })                    // SELECT ownership
+      .mockResolvedValueOnce({ rows: [] })                                     // DELETE vinculo antigo diferente
+      .mockResolvedValueOnce({ rows: [] })                                     // INSERT vinculo novo
+      .mockResolvedValueOnce({ rows: [{ id: 3, dados_conferencia_consultoras: { tecidoForro: 'Blackout' }, status: 'em_andamento' }] }); // UPDATE
+
+    const dados = { tecidoForro: 'Blackout', larguraForro: '3,00', forroCosturado: 'JUNTO', itemVinculadoId: '20' };
+    const result = await svc.salvarDadosConferenciaConsultoras(3, 1, dados);
+
+    expect(db.query).toHaveBeenNthCalledWith(4,
+      expect.stringContaining('INSERT INTO pedido_item_vinculos'),
+      [6, 20]
+    );
     expect(result.status).toBe('em_andamento');
   });
 
