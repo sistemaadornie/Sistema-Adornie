@@ -112,7 +112,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       OR p.numero_sequencial::text ILIKE $${params.length}
       OR EXISTS (
         SELECT 1 FROM arquitetos arq
-        WHERE arq.id = p.arquiteto_id AND arq.nome ILIKE $${params.length}
+        WHERE arq.id = p.arquiteto_id AND arq.nome ILIKE $${params.length} AND arq.deleted_at IS NULL
       )
     )`);
   }

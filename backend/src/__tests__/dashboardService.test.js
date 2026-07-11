@@ -393,4 +393,15 @@ describe("listarPedidosDashboard", () => {
     expect(sql).not.toContain("arquitetos");
     expect(params).toEqual([1]);
   });
+
+  test("combina busca com status: parametros e SQL ficam na ordem correta", async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], { status: "concluido", busca: "Maria" });
+
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).toContain("p.status = $2");
+    expect(sql).toContain("$3");
+    expect(params).toEqual([1, "concluido", "%Maria%"]);
+  });
 });
