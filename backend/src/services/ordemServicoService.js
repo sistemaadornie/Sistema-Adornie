@@ -116,18 +116,21 @@ async function buscar(id, empresaId) {
 }
 
 function validarDadosConfeccaoCortina(dados) {
-  const { larguraTrilho, tipoWave, espacador, abertura, feitaPor } = dados || {};
+  const { larguraTrilho, tipoWave, tipoWaveOutros, espacador, abertura, feitaPor } = dados || {};
   if (!larguraTrilho || parseFloat(String(larguraTrilho).replace(',', '.')) <= 0) {
     throw Object.assign(new Error('Largura do trilho é obrigatória e deve ser maior que zero.'), { status: 400 });
   }
   if (!tipoWave) throw Object.assign(new Error('Tipo wave é obrigatório.'), { status: 400 });
+  if (tipoWave === 'Outros' && !tipoWaveOutros?.trim()) {
+    throw Object.assign(new Error('Descreva o tipo wave selecionado em "Outros".'), { status: 400 });
+  }
   if (!espacador) throw Object.assign(new Error('Espaçador é obrigatório.'), { status: 400 });
   if (!abertura) throw Object.assign(new Error('Abertura é obrigatória.'), { status: 400 });
   if (!feitaPor) throw Object.assign(new Error('Campo "Cortina feita por" é obrigatório.'), { status: 400 });
 }
 
 function validarDadosConfeccaoForro(dados) {
-  const { tecidoForro, larguraForro, forroCosturado, itemVinculadoId } = dados || {};
+  const { tecidoForro, larguraForro, forroCosturado, itemVinculadoId, tipoWave, tipoWaveOutros } = dados || {};
   if (!tecidoForro?.trim()) throw Object.assign(new Error('Tecido do forro é obrigatório.'), { status: 400 });
   if (!larguraForro || parseFloat(String(larguraForro).replace(',', '.')) <= 0) {
     throw Object.assign(new Error('Largura do forro é obrigatória e deve ser maior que zero.'), { status: 400 });
@@ -135,6 +138,9 @@ function validarDadosConfeccaoForro(dados) {
   if (!forroCosturado) throw Object.assign(new Error('Campo "Forro costurado" é obrigatório.'), { status: 400 });
   if (forroCosturado === 'JUNTO' && !itemVinculadoId) {
     throw Object.assign(new Error('Selecione o item em que este forro será costurado.'), { status: 400 });
+  }
+  if (tipoWave === 'Outros' && !tipoWaveOutros?.trim()) {
+    throw Object.assign(new Error('Descreva o tipo wave selecionado em "Outros".'), { status: 400 });
   }
 }
 

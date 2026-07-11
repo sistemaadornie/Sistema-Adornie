@@ -140,6 +140,26 @@ describe('salvarDadosConfeccao', () => {
     expect(result.status).toBe('em_andamento');
   });
 
+  test('lança erro 400 quando tipo wave é Outros sem descrição (cortina)', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] });
+    const dados = { larguraTrilho: '4,92', tipoWave: 'Outros', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
+    await expect(svc.salvarDadosConfeccao(1, 2, dados)).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining('Descreva o tipo wave'),
+    });
+  });
+
+  test('salva dados de confecção de cortina com tipo wave Outros e descrição preenchida', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, dados_confeccao: { tipoWave: 'Outros' }, status: 'em_andamento' }] });
+
+    const dados = { larguraTrilho: '4,92', tipoWave: 'Outros', tipoWaveOutros: 'Prega americana dupla', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
+    const result = await svc.salvarDadosConfeccao(1, 2, dados);
+
+    expect(result.status).toBe('em_andamento');
+  });
+
   test('lança erro 400 se largura do trilho for inválida para cortina', async () => {
     db.query.mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] });
     const dados = { larguraTrilho: '0', tipoWave: 'G', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
@@ -181,6 +201,27 @@ describe('salvarDadosConfeccao', () => {
       expect.stringContaining('INSERT INTO pedido_item_vinculos'),
       [5, 12]
     );
+    expect(result.status).toBe('em_andamento');
+  });
+
+  test('lança erro 400 quando tipo wave é Outros sem descrição (forro)', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] });
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'SEPARADO', tipoWave: 'Outros' };
+    await expect(svc.salvarDadosConfeccao(2, 3, dados)).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining('Descreva o tipo wave'),
+    });
+  });
+
+  test('salva forro com tipo wave Franzida 1,3 sem exigir descrição', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ tipo: 'forro', pedido_item_id: 5 }] }) // SELECT tipo
+      .mockResolvedValueOnce({ rows: [] }) // DELETE vinculo forro_cortina (limpeza, SEPARADO)
+      .mockResolvedValueOnce({ rows: [{ id: 2, dados_confeccao: { tipoWave: 'Franzida 1,3' }, status: 'em_andamento' }] }); // UPDATE
+
+    const dados = { tecidoForro: 'Microfibra branca', larguraForro: '3,00', forroCosturado: 'SEPARADO', tipoWave: 'Franzida 1,3' };
+    const result = await svc.salvarDadosConfeccao(2, 3, dados);
+
     expect(result.status).toBe('em_andamento');
   });
 
@@ -232,6 +273,15 @@ describe('salvarDadosConferenciaConsultoras', () => {
       [JSON.stringify(dados), 2, 1]
     );
     expect(result.status).toBe('em_andamento');
+  });
+
+  test('lança erro 400 quando tipo wave é Outros sem descrição (cortina, conferência consultoras)', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ tipo: 'cortina' }] });
+    const dados = { larguraTrilho: '4,92', tipoWave: 'Outros', espacador: '7,00', abertura: 'SEM ABERTURA', feitaPor: 'POR ALTURA' };
+    await expect(svc.salvarDadosConferenciaConsultoras(1, 2, dados)).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining('Descreva o tipo wave'),
+    });
   });
 
   test('lança erro 400 se largura do trilho for inválida para cortina', async () => {
