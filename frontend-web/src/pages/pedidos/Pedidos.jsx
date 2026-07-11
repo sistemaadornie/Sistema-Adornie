@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import usePedidos from "./hooks/usePedidos";
 import useAuth from "../../hooks/useAuth";
@@ -144,6 +144,7 @@ export default function Pedidos() {
   const { pedidos, loading, erro, carregar } = usePedidos();
   const [filtroAtivo,    setFiltroAtivo]    = useState("todos");
   const [consultoraFiltro, setConsultoraFiltro] = useState("");
+  const [busca, setBusca] = useState("");
   const [importarAberto, setImportarAberto] = useState(false);
   const [salvando,       setSalvando]       = useState(false);
   const [etapaFiltro, setEtapaFiltro] = useState(null); // null = todas as etapas
@@ -151,6 +152,22 @@ export default function Pedidos() {
   const temPermGeral = (user?.permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
 
   const [consultoras, setConsultoras] = useState([]);
+
+  const filtroAtivoRef = useRef(filtroAtivo);
+  useEffect(() => { filtroAtivoRef.current = filtroAtivo; }, [filtroAtivo]);
+
+  const consultoraFiltroRef = useRef(consultoraFiltro);
+  useEffect(() => { consultoraFiltroRef.current = consultoraFiltro; }, [consultoraFiltro]);
+
+  function buildFiltros({ filtro = filtroAtivoRef.current, consultora = consultoraFiltroRef.current } = {}) {
+    const f = {};
+    if (consultora) f.consultora_id = consultora;
+    if (filtro === "atrasados") f.alerta = "atrasado";
+    else if (filtro !== "todos") f.status = filtro;
+    const termo = busca.trim();
+    if (termo) f.busca = termo;
+    return f;
+  }
 
   useEffect(() => {
     if (consultoraFiltro || filtroAtivo !== "todos") return;
@@ -177,10 +194,7 @@ export default function Pedidos() {
   function handleFiltro(key) {
     setFiltroAtivo(key);
     setEtapaFiltro(null);
-    const f = consultoraFiltro ? { consultora_id: consultoraFiltro } : {};
-    if (key === "atrasados") carregar({ ...f, alerta: "atrasado" });
-    else if (key === "todos") carregar(f);
-    else carregar({ ...f, status: key });
+    carregar(buildFiltros({ filtro: key }));
   }
 
   function handleEtapaFiltro(numero) {
@@ -188,10 +202,22 @@ export default function Pedidos() {
     setEtapaFiltro(proximo);
     if (filtroAtivo !== "todos") {
       setFiltroAtivo("todos");
-      const f = consultoraFiltro ? { consultora_id: consultoraFiltro } : {};
-      carregar(f);
+      carregar(buildFiltros({ filtro: "todos" }));
     }
   }
+
+  const buscaMontada = useRef(false);
+  useEffect(() => {
+    if (!buscaMontada.current) {
+      buscaMontada.current = true;
+      return;
+    }
+    const timer = setTimeout(() => {
+      carregar(buildFiltros());
+    }, 350);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busca]);
 
   async function handleImportarSalvar(dados, pdfFile) {
     setSalvando(true);
@@ -235,10 +261,7 @@ export default function Pedidos() {
               onChange={(e) => {
                 const novaConsultora = e.target.value;
                 setConsultoraFiltro(novaConsultora);
-                const f = novaConsultora ? { consultora_id: novaConsultora } : {};
-                if (filtroAtivo === "atrasados") f.alerta = "atrasado";
-                else if (filtroAtivo !== "todos") f.status = filtroAtivo;
-                carregar(f);
+                carregar(buildFiltros({ consultora: novaConsultora }));
               }}
             >
               <option value="">Todas as consultoras</option>
@@ -248,6 +271,26 @@ export default function Pedidos() {
             </select>
           )}
         </div>
+      </div>
+
+      <div className="dp-busca-wrap">
+        <input
+          type="text"
+          className="dp-busca-input"
+          placeholder="Buscar por cliente, número do pedido ou arquiteto..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+        {busca && (
+          <button
+            type="button"
+            className="dp-busca-limpar"
+            onClick={() => setBusca("")}
+            aria-label="Limpar busca"
+          >
+            ×
+          </button>
+        )}
       </div>
 
       <div className="dp-chips">

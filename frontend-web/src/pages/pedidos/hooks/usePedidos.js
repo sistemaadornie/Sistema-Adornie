@@ -14,6 +14,7 @@ export default function usePedidos() {
       if (filtros.consultora_id) params.set("consultora_id", filtros.consultora_id);
       if (filtros.status)        params.set("status",        filtros.status);
       if (filtros.alerta)        params.set("alerta",        filtros.alerta);
+      if (filtros.busca)         params.set("busca",         filtros.busca);
       const qs = params.toString();
       const res = await api.get(`/dashboard/pedidos${qs ? "?" + qs : ""}`);
       setPedidos(res.pedidos || []);

@@ -255,3 +255,44 @@
 }
 
 .dp-data { color: var(--color-text-muted, #64748b); font-size: 12px; }
+
+/* ── Busca ── */
+.dp-busca-wrap {
+  position: relative;
+  margin-bottom: 16px;
+  max-width: 420px;
+}
+
+.dp-busca-input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #334155);
+  background: var(--color-surface, #1e293b);
+  color: var(--color-text, #f1f5f9);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.dp-busca-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.dp-busca-limpar {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.dp-busca-limpar:hover {
+  color: var(--color-text, #f1f5f9);
+}
