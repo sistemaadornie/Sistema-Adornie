@@ -24,8 +24,7 @@ Cada um dos 8 cards (`.dash-funil-card` em `Dashboard.jsx`) passa a ter:
 - **Faixa colorida no topo** (header), com círculo numerado (ou "✓"/número) + nome curto da etapa em maiúsculas (nomes atuais do backend continuam: Verificação, Conferência, Confecção, Produto, Agendamento, Separação, Instalação, Concluído — não mudam, só o card muda de visual).
 - **Ícone grande centralizado** no corpo do card, abaixo da faixa. Reaproveita o mesmo conjunto de emojis do `EtapaCard.jsx` (`ETAPA_CONFIG`), que alinham 1:1 pelo número da etapa:
   - 1 📋, 2 📐, 3 ⚙️, 4 🔍, 5 📅, 6 📦, 7 🚚, 8 ⭐
-- **Contagem** (número grande) abaixo do ícone — já existe hoje, mantém.
-- **Nome da etapa** abaixo da contagem — já existe hoje (`rel-kpi-sub`), mantém o texto mas ajusta estilo pra combinar com o novo card.
+- **Contagem** (número grande) abaixo do ícone — já existe hoje, mantém. O nome da etapa deixa de se repetir embaixo da contagem (hoje duplicava via `rel-kpi-sub`) — passa a aparecer só uma vez, no header, igual à referência visual do fluxo.
 - **Barra de progresso** proporcional ao maior `count` entre as 8 etapas — já existe hoje (mesma lógica), preenchimento passa a usar a cor teal fixa `#0d9488` (igual ao `.pf-progresso-fill` do fluxo) em vez de `var(--color-primary)`.
 - **Conector com seta** (▶) entre os cards, no lugar do `gap` simples atual em `.dash-funil-row` — reaproveita o padrão visual de `.pf-conector`/`.pf-conector::after` do `PedidoFluxo.css` (linha reta + seta `▶` na ponta).
 
