@@ -154,3 +154,23 @@ describe("buscarFunilDetalhe", () => {
     await expect(svc.buscarFunilDetalhe(7, 99, {})).rejects.toMatchObject({ status: 400 });
   });
 });
+
+describe("buscarAlertas", () => {
+  test("filtra pedidos ativos com nivel_alerta, ordena por dias_para_prazo e ignora período", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", numero_sequencial: 10, cliente_nome: "A", cidade: "Curitiba", consultor_nome: "Marina", estagio: { etapa_atual: 3, nivel_alerta: "urgente", dias_para_prazo: 2 } },
+      { id: 2, status: "pendente", numero_sequencial: 11, cliente_nome: "B", cidade: "Curitiba", consultor_nome: "Marina", estagio: { etapa_atual: 6, nivel_alerta: "atrasado", dias_para_prazo: -3 } },
+      { id: 3, status: "pendente", numero_sequencial: 12, cliente_nome: "C", cidade: "Curitiba", consultor_nome: "Marina", estagio: { etapa_atual: 1, nivel_alerta: null, dias_para_prazo: null } },
+      { id: 4, status: "concluido", numero_sequencial: 13, cliente_nome: "D", cidade: "Curitiba", consultor_nome: "Marina", estagio: { etapa_atual: 8, nivel_alerta: "atrasado", dias_para_prazo: -10 } },
+    ]);
+
+    const r = await svc.buscarAlertas(7, { consultoraId: null, cidade: null });
+
+    expect(r.total).toBe(2);
+    expect(r.alertas.map((a) => a.numeroPedido)).toEqual(["#11", "#10"]); // atrasado (-3) antes de urgente (2)
+    expect(r.alertas[0]).toEqual({
+      numeroPedido: "#11", cliente: "B", cidade: "Curitiba", etapa: "Separação",
+      consultora: "Marina", diasParaPrazo: -3, nivel: "atrasado",
+    });
+  });
+});
