@@ -234,3 +234,34 @@ describe("buscarMapa", () => {
     expect(outrosRegioes[0].faturamento).toBe(700);
   });
 });
+
+describe("buscarAgendaSemana", () => {
+  test("monta a query com filtros de consultora/cidade e mapeia o resultado", async () => {
+    db.query.mockResolvedValue({
+      rows: [{
+        id: 1, data: "2026-07-15", hora: "09:00:00", tipo: "Conferência",
+        cliente_texto: "Ap. Batel", endereco: "Batel, Curitiba",
+        cliente_nome: "Sra. Regina", veiculo_nome: "Fiorino I",
+        equipe_nomes: ["Marina Alencar"],
+      }],
+    });
+
+    const r = await svc.buscarAgendaSemana(7, { consultoraId: 5, cidade: "Curitiba" });
+
+    expect(r.compromissos).toEqual([{
+      data: "2026-07-15", hora: "09:00:00", tipo: "Conferência",
+      cliente: "Sra. Regina", local: "Batel, Curitiba", equipe: "Marina Alencar", veiculo: "Fiorino I",
+    }]);
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).toMatch(/agendamentos/);
+    expect(params).toEqual([7, 5, "Curitiba"]);
+  });
+
+  test("usa cliente_texto quando não há pedido/cliente vinculado", async () => {
+    db.query.mockResolvedValue({
+      rows: [{ id: 2, data: "2026-07-16", hora: "10:00:00", tipo: "Instalação", cliente_texto: "Obra X", endereco: "Rua Y", cliente_nome: null, veiculo_nome: null, equipe_nomes: [] }],
+    });
+    const r = await svc.buscarAgendaSemana(7, {});
+    expect(r.compromissos[0]).toMatchObject({ cliente: "Obra X", equipe: null, veiculo: null });
+  });
+});

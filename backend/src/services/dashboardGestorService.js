@@ -338,6 +338,54 @@ async function buscarMapa(empresaId, filtros = {}, hoje = new Date()) {
   return { regioes };
 }
 
+async function buscarAgendaSemana(empresaId, filtros = {}) {
+  const { consultoraId, cidade } = filtros;
+  const params = [empresaId];
+  const cond = [
+    "a.empresa_id = $1",
+    "a.status NOT IN ('cancelado','rejeitado')",
+    "a.data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'",
+  ];
+  if (consultoraId) {
+    params.push(Number(consultoraId));
+    cond.push(`p.consultor_id = $${params.length}`);
+  }
+  if (cidade) {
+    params.push(cidade);
+    cond.push(`LOWER(p.cidade) = LOWER($${params.length})`);
+  }
+
+  const { rows } = await db.query(
+    `SELECT a.id, a.data, a.hora, a.tipo, a.cliente AS cliente_texto, a.endereco,
+            c.nome AS cliente_nome, v.nome AS veiculo_nome,
+            ARRAY_REMOVE(ARRAY_AGG(DISTINCT COALESCE(ae.nome_snapshot, u2.nome_completo)), NULL) AS equipe_nomes
+     FROM agendamentos a
+     LEFT JOIN pedidos p ON p.id = a.pedido_id
+     LEFT JOIN clientes c ON c.id = p.cliente_id
+     LEFT JOIN agendamento_equipe ae ON ae.agendamento_id = a.id
+     LEFT JOIN usuarios u2 ON u2.id = ae.usuario_id
+     LEFT JOIN crew_agendamentos ca ON ca.agendamento_id = a.id
+     LEFT JOIN crews cr ON cr.id = ca.crew_id
+     LEFT JOIN veiculos v ON v.id = cr.veiculo_id
+     WHERE ${cond.join(" AND ")}
+     GROUP BY a.id, a.data, a.hora, a.tipo, a.cliente, a.endereco, c.nome, v.nome
+     ORDER BY a.data, a.hora`,
+    params
+  );
+
+  const compromissos = rows.map((r) => ({
+    data: r.data,
+    hora: r.hora,
+    tipo: r.tipo,
+    cliente: r.cliente_nome || r.cliente_texto,
+    local: r.endereco,
+    equipe: (r.equipe_nomes || []).length ? r.equipe_nomes.join(", ") : null,
+    veiculo: r.veiculo_nome || null,
+  }));
+
+  return { compromissos };
+}
+
 module.exports = {
   buscarFiltros,
   buscarPedidosEnriquecidos,
@@ -347,4 +395,5 @@ module.exports = {
   buscarAlertas,
   buscarConsultoras,
   buscarMapa,
+  buscarAgendaSemana,
 };
