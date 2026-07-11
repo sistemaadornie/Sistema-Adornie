@@ -113,7 +113,7 @@ function painelConfeccao(dc, tipo) {
       ["Forro costurado", dc.forroCosturado],
       ["Largura do forro", dc.larguraForro],
       ["Largura do trilho", dc.larguraTrilho],
-      ["Tipo wave", dc.tipoWave],
+      ["Tipo wave", dc.tipoWave === "Outros" ? (dc.tipoWaveOutros || "Outros") : dc.tipoWave],
       ["Espaçador", dc.espacador],
     ];
   }
@@ -131,7 +131,7 @@ function painelConfeccao(dc, tipo) {
     ];
   }
   return [
-    ["Tipo wave", dc.tipoWave],
+    ["Tipo wave", dc.tipoWave === "Outros" ? (dc.tipoWaveOutros || "Outros") : dc.tipoWave],
     ["Abertura", dc.abertura],
     ["Componente", dc.componente],
     ["Motorizado", dc.componente ? (/motorizad/i.test(dc.componente) ? "Sim" : "Não") : null],
