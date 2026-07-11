@@ -174,3 +174,24 @@ describe("buscarAlertas", () => {
     });
   });
 });
+
+describe("buscarConsultoras", () => {
+  test("soma faturamento por consultor no período, inclui quem não vendeu (valor 0), ordena desc", async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1, nome: "Marina Alencar" }, { id: 2, nome: "Letícia Prado" }] }) // buscarFiltros: consultoras
+      .mockResolvedValueOnce({ rows: [] }); // buscarFiltros: cidades
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "1000", data_pedido: "2026-07-05", cidade: "Curitiba", consultor_id: 1 },
+      { id: 2, status: "cancelado", total: "9999", data_pedido: "2026-07-05", cidade: "Curitiba", consultor_id: 1 },
+      { id: 3, status: "pendente", total: "300", data_pedido: "2026-05-01", cidade: "Curitiba", consultor_id: 1 }, // fora do período (nem atual nem anterior, que é jun/2026 completo)
+    ]);
+
+    const r = await svc.buscarConsultoras(7, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.consultoras).toEqual([
+      { id: 1, nome: "Marina Alencar", valor: 1000, deltaPct: 100 },
+      { id: 2, nome: "Letícia Prado", valor: 0, deltaPct: 0 },
+    ]);
+    expect(r.totalMes).toBe(1000);
+  });
+});

@@ -196,6 +196,44 @@ async function buscarAlertas(empresaId, filtros = {}) {
   return { total: alertas.length, alertas };
 }
 
+async function buscarConsultoras(empresaId, filtros = {}, hoje = new Date()) {
+  const { periodo = "mes", cidade } = filtros;
+  const periodoAtual = getPeriodoAtual(periodo, hoje);
+  const periodoAnterior = getPeriodoAnterior(periodo, hoje);
+
+  const [{ consultoras: comerciais }, pedidosTodos] = await Promise.all([
+    buscarFiltros(empresaId),
+    buscarPedidosEnriquecidos(empresaId, {}),
+  ]);
+
+  const naoCancelados = filtrarNaoCancelados(filtrarPorCidade(pedidosTodos, cidade));
+
+  const somaPorConsultor = (lista) => {
+    const mapa = new Map();
+    for (const p of lista) {
+      if (!p.consultor_id) continue;
+      mapa.set(p.consultor_id, (mapa.get(p.consultor_id) || 0) + Number(p.total || 0));
+    }
+    return mapa;
+  };
+
+  const somaAtual = somaPorConsultor(filtrarPorPeriodo(naoCancelados, periodoAtual));
+  const somaAnterior = somaPorConsultor(filtrarPorPeriodo(naoCancelados, periodoAnterior));
+
+  const consultoras = comerciais
+    .map((c) => {
+      const atual = somaAtual.get(c.id) || 0;
+      const anterior = somaAnterior.get(c.id) || 0;
+      const deltaPct = anterior > 0
+        ? Number((((atual - anterior) / anterior) * 100).toFixed(1))
+        : (atual > 0 ? 100 : 0);
+      return { id: c.id, nome: c.nome, valor: atual, deltaPct };
+    })
+    .sort((a, b) => b.valor - a.valor);
+
+  return { totalMes: consultoras.reduce((s, c) => s + c.valor, 0), consultoras };
+}
+
 module.exports = {
   buscarFiltros,
   buscarPedidosEnriquecidos,
@@ -203,4 +241,5 @@ module.exports = {
   buscarFunil,
   buscarFunilDetalhe,
   buscarAlertas,
+  buscarConsultoras,
 };
