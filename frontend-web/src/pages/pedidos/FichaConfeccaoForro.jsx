@@ -7,7 +7,7 @@ import "./OrdemServicoModal.css";
 const VAZIO = {
   tecidoForro: "", tecidoTipo: "", franzimento: "", forroCosturado: "", itemVinculadoId: "",
   larguraForro: "", alturaBarraForro: "",
-  espacador: "", larguraTrilho: "", tipoWave: "", abertura: "", alturaCortina: "",
+  espacador: "", larguraTrilho: "", tipoWave: "", tipoWaveOutros: "", abertura: "", alturaCortina: "",
 };
 
 function paraNumero(valor) {
@@ -63,6 +63,9 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
     if (!dados.forroCosturado) return setErro('Campo "Forro costurado" é obrigatório.');
     if (dados.forroCosturado === "JUNTO" && !dados.itemVinculadoId) {
       return setErro("Selecione o item em que este forro será costurado.");
+    }
+    if (dados.tipoWave === "Outros" && !dados.tipoWaveOutros?.trim()) {
+      return setErro('Descreva o tipo wave selecionado em "Outros".');
     }
 
     setSalvando(true);
@@ -223,11 +226,20 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
                 </div>
                 <div className="os-field">
                   <label>Tipo wave</label>
-                  <select value={dados.tipoWave} onChange={(e) => setCampo("tipoWave", e.target.value)}>
+                  <select
+                    value={dados.tipoWave}
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      setDados((prev) => ({ ...prev, tipoWave: valor, tipoWaveOutros: valor === "Outros" ? prev.tipoWaveOutros : "" }));
+                    }}
+                  >
                     <option value="">— Selecione —</option>
                     <option value="P">P</option>
                     <option value="M">M</option>
                     <option value="G">G</option>
+                    <option value="Franzida 1,3">Franzida 1,3</option>
+                    <option value="Franzida 1,8">Franzida 1,8</option>
+                    <option value="Outros">Outros</option>
                   </select>
                 </div>
                 <div className="os-field">
@@ -239,6 +251,18 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
                   </select>
                 </div>
               </div>
+              {dados.tipoWave === "Outros" && (
+                <div className="os-field">
+                  <label>Descreva o tipo wave</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Prega americana dupla"
+                    value={dados.tipoWaveOutros}
+                    onChange={(e) => setCampo("tipoWaveOutros", e.target.value)}
+                    className="input-highlight"
+                  />
+                </div>
+              )}
               <div className="os-grid-2">
                 <div className="os-field">
                   <label>Largura do trilho (m)</label>
