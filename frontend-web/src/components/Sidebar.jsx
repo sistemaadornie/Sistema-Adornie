@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   FaHome,
+  FaChartLine,
   FaCalendarAlt,
   FaUsers,
   FaUserFriends,
@@ -38,6 +39,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
 
   const instaladorPuro       = isInstaladorPuro(user);
   const podeVerHome          = true;
+  const podeVerDashboard    = temPerm(user, "ADMIN_MASTER","OPERADOR_AGENDA");
   const podeVerClientes      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerPedidos       = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerOrcamentos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER");
@@ -93,6 +95,13 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
           <NavLink to="/home" className={navItemClass} title="Início">
             <FaHome className="sidebar-icon" />
             {!collapsed && <span className="sidebar-label">Início</span>}
+          </NavLink>
+        )}
+
+        {podeVerDashboard && (
+          <NavLink to="/dashboard" className={navItemClass} title="Dashboard">
+            <FaChartLine className="sidebar-icon" />
+            {!collapsed && <span className="sidebar-label">Dashboard</span>}
           </NavLink>
         )}
 

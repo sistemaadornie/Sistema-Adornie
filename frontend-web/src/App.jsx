@@ -15,6 +15,7 @@ const DevSetup         = lazy(() => import("./pages/DevSetup"));
 
 // ── Rotas privadas ──────────────────────────────────────
 const Home                   = lazy(() => import("./pages/Home"));
+const Dashboard              = lazy(() => import("./pages/Dashboard"));
 const Usuarios               = lazy(() => import("./pages/Usuarios"));
 const Clientes               = lazy(() => import("./pages/clientes/Clientes"));
 const Agendamentos           = lazy(() => import("./pages/agendamentos/Agendamentos"));
@@ -84,6 +85,10 @@ export default function App() {
               <Route element={<AppLayout />}>
 
                 <Route path="/home" element={<Home />} />
+
+                <Route element={<PermissionRoute perms={["ADMIN_MASTER","OPERADOR_AGENDA"]} />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                </Route>
 
                 <Route element={<PermissionRoute perms={["INSTALADOR","COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
                   <Route path="/agendamentos"           element={<Agendamentos />} />

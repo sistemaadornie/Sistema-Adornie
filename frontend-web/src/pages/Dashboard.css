@@ -1,0 +1,29 @@
+/* ============================================================
+   DASHBOARD DO GESTOR
+   ============================================================ */
+
+.dash-filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dash-select {
+  min-width: 180px;
+}
+
+.dash-kpi-delta {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.dash-kpi-delta.up   { background: var(--color-success-soft); color: var(--color-success); }
+.dash-kpi-delta.down { background: var(--color-danger-soft);  color: var(--color-danger); }
+.dash-kpi-delta.neutral { background: rgba(148,163,184,0.12); color: var(--color-text-muted); }
+
+@media (max-width: 900px) {
+  .dash-filtros { flex-direction: column; align-items: stretch; }
+  .dash-select  { min-width: 0; width: 100%; }
+}
