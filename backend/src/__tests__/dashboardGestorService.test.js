@@ -173,6 +173,25 @@ describe("buscarAlertas", () => {
       consultora: "Marina", diasParaPrazo: -3, nivel: "atrasado",
     });
   });
+
+  test("total reflete a contagem real de pedidos em risco, sem ser truncado pelo limite de 20 da lista", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue(
+      Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
+        status: "pendente",
+        numero_sequencial: 100 + i,
+        cliente_nome: `Cliente ${i}`,
+        cidade: "Curitiba",
+        consultor_nome: "Marina",
+        estagio: { etapa_atual: 3, nivel_alerta: "urgente", dias_para_prazo: i },
+      }))
+    );
+
+    const r = await svc.buscarAlertas(7, { consultoraId: null, cidade: null });
+
+    expect(r.total).toBe(25);
+    expect(r.alertas).toHaveLength(20);
+  });
 });
 
 describe("buscarConsultoras", () => {

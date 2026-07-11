@@ -180,10 +180,11 @@ async function buscarAlertas(empresaId, filtros = {}) {
   const pedidos = filtrarAtivos(filtrarPorCidade(await buscarPedidosEnriquecidos(empresaId, { consultoraId }), cidade));
   const comRisco = pedidos
     .filter((p) => p.estagio.nivel_alerta)
-    .sort((a, b) => (a.estagio.dias_para_prazo ?? 0) - (b.estagio.dias_para_prazo ?? 0))
-    .slice(0, 20);
+    .sort((a, b) => (a.estagio.dias_para_prazo ?? 0) - (b.estagio.dias_para_prazo ?? 0));
 
-  const alertas = comRisco.map((p) => ({
+  const total = comRisco.length;
+
+  const alertas = comRisco.slice(0, 20).map((p) => ({
     numeroPedido: `#${p.numero_sequencial}`,
     cliente: p.cliente_nome,
     cidade: p.cidade,
@@ -193,7 +194,7 @@ async function buscarAlertas(empresaId, filtros = {}) {
     nivel: p.estagio.nivel_alerta,
   }));
 
-  return { total: alertas.length, alertas };
+  return { total, alertas };
 }
 
 async function buscarConsultoras(empresaId, filtros = {}, hoje = new Date()) {
