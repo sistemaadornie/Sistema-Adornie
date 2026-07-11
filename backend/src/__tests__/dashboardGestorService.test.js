@@ -112,6 +112,28 @@ describe("buscarFunil", () => {
     expect(etapa1).toEqual({ numero: 1, nome: "Verificação", count: 1, gargalo: false });
     expect(r.etapas).toHaveLength(8);
   });
+
+  test("empate entre duas etapas não-zero: a de menor número vence", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "100", data_pedido: "2026-07-05", cidade: "Curitiba", numero_sequencial: 1, estagio: { etapa_atual: 5 } },
+      { id: 2, status: "pendente", total: "100", data_pedido: "2026-07-05", cidade: "Curitiba", numero_sequencial: 2, estagio: { etapa_atual: 2 } },
+    ]);
+
+    const r = await svc.buscarFunil(7, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    const gargalos = r.etapas.filter((e) => e.gargalo);
+    expect(gargalos).toHaveLength(1);
+    expect(gargalos[0].numero).toBe(2); // menor número entre os empatados (2 e 5), ambos com count 1
+  });
+
+  test("todas as etapas com count 0: nenhuma é gargalo", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([]);
+
+    const r = await svc.buscarFunil(7, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.etapas.every((e) => e.count === 0)).toBe(true);
+    expect(r.etapas.some((e) => e.gargalo)).toBe(false);
+  });
 });
 
 describe("buscarFunilDetalhe", () => {
