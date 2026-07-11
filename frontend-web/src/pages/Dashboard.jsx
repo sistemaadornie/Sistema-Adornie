@@ -45,6 +45,11 @@ export default function Dashboard() {
   const [alertas, setAlertas] = useState(null);
   const [alertasLoading, setAlertasLoading] = useState(true);
 
+  const [funil, setFunil] = useState(null);
+  const [funilLoading, setFunilLoading] = useState(true);
+  const [etapaSelecionada, setEtapaSelecionada] = useState(3);
+  const [detalheEtapa, setDetalheEtapa] = useState(null);
+
   useEffect(() => {
     api.get("/dashboard-gestor/filtros").then(setOpcoes).catch(() => setOpcoes({ consultoras: [], cidades: [] }));
   }, []);
@@ -84,6 +89,26 @@ export default function Dashboard() {
       .catch(() => setAlertas(null))
       .finally(() => setAlertasLoading(false));
   }, [consultoraId, cidade]);
+
+  useEffect(() => {
+    setFunilLoading(true);
+    const params = new URLSearchParams({ periodo });
+    if (consultoraId) params.set("consultora_id", consultoraId);
+    if (cidade) params.set("cidade", cidade);
+    api.get(`/dashboard-gestor/funil?${params}`)
+      .then(setFunil)
+      .catch(() => setFunil(null))
+      .finally(() => setFunilLoading(false));
+  }, [periodo, consultoraId, cidade]);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ periodo });
+    if (consultoraId) params.set("consultora_id", consultoraId);
+    if (cidade) params.set("cidade", cidade);
+    api.get(`/dashboard-gestor/funil/${etapaSelecionada}?${params}`)
+      .then(setDetalheEtapa)
+      .catch(() => setDetalheEtapa(null));
+  }, [etapaSelecionada, periodo, consultoraId, cidade]);
 
   const hasFilters = !!(consultoraId || cidade);
   const limparFiltros = () => { setConsultoraId(""); setCidade(""); };
@@ -250,7 +275,68 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="ek-empty"><p>Funil, agenda e consultoras — em breve.</p></div>
+      <div className="ek-section">
+        <div className="ek-section-head">
+          <div>
+            <h3>Funil de produção · 8 etapas</h3>
+            {funil && <p>{funil.totalAtivos} pedidos ativos · clique numa etapa</p>}
+          </div>
+        </div>
+        <div style={{ padding: 18 }}>
+          {funilLoading ? <Skeleton /> : !funil ? <Empty>Não foi possível carregar o funil.</Empty> : (
+            <>
+              <div className="dash-funil-row">
+                {funil.etapas.map((e) => {
+                  const maxCount = Math.max(...funil.etapas.map((x) => x.count), 1);
+                  return (
+                    <div
+                      key={e.numero}
+                      className={`dash-funil-card${etapaSelecionada === e.numero ? " ativa" : ""}${e.gargalo ? " gargalo" : ""}`}
+                      onClick={() => setEtapaSelecionada(e.numero)}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span className="dash-funil-num">{e.numero}</span>
+                        {e.gargalo && <span className="dash-funil-gargalo-badge">gargalo</span>}
+                      </div>
+                      <div className="dash-funil-count">{e.count}</div>
+                      <div className="rel-kpi-sub">{e.nome}</div>
+                      <div className="dash-funil-track">
+                        <div className="dash-funil-fill" style={{ width: `${Math.max(10, Math.round((e.count / maxCount) * 100))}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {detalheEtapa && (
+                <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--color-border)", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 24 }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span className="dash-funil-num" style={{ background: "var(--color-primary)", color: "var(--color-primary-btn-text)" }}>{detalheEtapa.numero}</span>
+                      <div style={{ fontFamily: "var(--font-title)", fontSize: 19, fontWeight: 700 }}>{detalheEtapa.nome}</div>
+                    </div>
+                    <p style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 10 }}>{detalheEtapa.descricao}</p>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div><div className="rel-section-label">Pedidos nesta etapa</div><div style={{ fontSize: 20, fontWeight: 700 }}>{detalheEtapa.count}</div></div>
+                    <div><div className="rel-section-label">Responsável</div><div style={{ fontSize: 14 }}>{detalheEtapa.responsavel}</div></div>
+                  </div>
+                  <div>
+                    <div className="rel-section-label">Exemplos</div>
+                    {detalheEtapa.exemplos.length === 0 ? <Empty>Nenhum pedido nessa etapa.</Empty> : detalheEtapa.exemplos.map((x, i) => (
+                      <div key={i} style={{ display: "flex", gap: 9, fontSize: 12, marginTop: 6 }}>
+                        <strong>{x.numero}</strong><span style={{ color: "var(--color-text-muted)" }}>{x.cliente}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="ek-empty"><p>Agenda da semana e faturamento por consultora — em breve.</p></div>
     </div>
   );
 }
