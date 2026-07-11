@@ -179,6 +179,11 @@ function calcularSobraBarrado({
   return `${quantBarrado} x ${fmt(sobra)} mts`;
 }
 
+const FATORES_FRANZIDA = {
+  'Franzida 1,3': 1.3,
+  'Franzida 1,8': 1.8,
+};
+
 function calcularQuantForro({
   abertura, espacador, larguraTrilho, tipoWave, tecidoForro, larguraForro,
   alturaCortina, alturaBarraForro = 0, forroCosturado, franzimento = 0,
@@ -186,16 +191,23 @@ function calcularQuantForro({
   if (!tecidoForro) return '';
   if (!larguraForro) return 'Informar largura do tecido do forro';
 
-  const wave = fatorWave(tipoWave);
-  const clipesCentral = clipesAberturaCentral({ abertura, espacador, larguraTrilho });
-  const clipesSemAb = clipesSemAbertura({ abertura, espacador, larguraTrilho });
-
   let x50 = 0;
   if (forroCosturado === 'JUNTO') {
-    x50 =
-      abertura === 'COM ABERTURA'
-        ? (clipesCentral || 0) * wave + 0.1 + ((clipesCentral || 0) * wave + 0.1)
-        : (clipesSemAb || 0) * wave + 0.1;
+    if (tipoWave === 'Outros') {
+      return 'Cálculo manual necessário (tipo wave = Outros)';
+    }
+    const fatorFranzida = FATORES_FRANZIDA[tipoWave];
+    if (fatorFranzida) {
+      x50 = larguraTrilho * fatorFranzida + (abertura === 'COM ABERTURA' ? 0.2 : 0.1);
+    } else {
+      const wave = fatorWave(tipoWave);
+      const clipesCentral = clipesAberturaCentral({ abertura, espacador, larguraTrilho });
+      const clipesSemAb = clipesSemAbertura({ abertura, espacador, larguraTrilho });
+      x50 =
+        abertura === 'COM ABERTURA'
+          ? (clipesCentral || 0) * wave + 0.1 + ((clipesCentral || 0) * wave + 0.1)
+          : (clipesSemAb || 0) * wave + 0.1;
+    }
   } else if (forroCosturado === 'SEPARADO') {
     x50 = larguraTrilho * franzimento + (abertura === 'COM ABERTURA' ? 0.2 : 0.1);
   }
