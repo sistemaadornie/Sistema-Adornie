@@ -85,7 +85,7 @@ function calcularEtapaAtual({
 }
 
 async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {}) {
-  const { consultora_id, status, alerta } = filtros;
+  const { consultora_id, status, alerta, busca } = filtros;
   const temPermGeral = (permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
 
   const params = [empresaId];
@@ -102,6 +102,19 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
   if (status) {
     params.push(status);
     conditions.push(`p.status = $${params.length}`);
+  }
+
+  if (busca) {
+    params.push(`%${busca}%`);
+    conditions.push(`(
+      c.nome ILIKE $${params.length}
+      OR p.numero_origem ILIKE $${params.length}
+      OR p.numero_sequencial::text ILIKE $${params.length}
+      OR EXISTS (
+        SELECT 1 FROM arquitetos arq
+        WHERE arq.id = p.arquiteto_id AND arq.nome ILIKE $${params.length}
+      )
+    )`);
   }
 
   const where = conditions.join(" AND ");

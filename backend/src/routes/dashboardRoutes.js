@@ -10,6 +10,7 @@ router.get("/pedidos", auth, async (req, res) => {
       consultora_id: req.query.consultora_id || null,
       status:        req.query.status        || null,
       alerta:        req.query.alerta        || null,
+      busca:         req.query.busca         || null,
     };
     const result = await svc.listarPedidosDashboard(
       req.user.empresa_id, req.user.id, req.user.permissoes, filtros

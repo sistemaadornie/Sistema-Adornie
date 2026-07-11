@@ -369,4 +369,28 @@ describe("listarPedidosDashboard", () => {
     expect(ultimaQuery).toContain("dados_conferencia_consultoras IS NOT NULL");
     expect(resultado[0].id).toBe(4);
   });
+
+  test("filtra por busca via ILIKE em cliente, numero e arquiteto (EXISTS)", async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    const resultado = await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], { busca: "Maria" });
+
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).toContain("c.nome ILIKE");
+    expect(sql).toContain("p.numero_origem ILIKE");
+    expect(sql).toContain("p.numero_sequencial::text ILIKE");
+    expect(sql).toContain("FROM arquitetos arq");
+    expect(params).toContain("%Maria%");
+    expect(resultado).toEqual([]);
+  });
+
+  test("sem busca, nao adiciona condicao nem parametro extra", async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await listarPedidosDashboard(1, 99, ["DASHBOARD_PEDIDOS_GERAL"], {});
+
+    const [sql, params] = db.query.mock.calls[0];
+    expect(sql).not.toContain("arquitetos");
+    expect(params).toEqual([1]);
+  });
 });
