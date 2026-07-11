@@ -11,6 +11,18 @@ function calcNivelAlerta(diasParaPrazo) {
   return null;
 }
 
+function calcularPrazoEAlerta(preAgendamentos, hoje = new Date()) {
+  const futuros = (preAgendamentos || []).filter(
+    (a) => a.status === "pre_agendado" || a.status === "agendado"
+  );
+  futuros.sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
+  const proximoPrazo = futuros[0]?.data_inicio || null;
+  const diasParaPrazo = proximoPrazo
+    ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
+    : null;
+  return { proximoPrazo, diasParaPrazo, nivelAlerta: calcNivelAlerta(diasParaPrazo) };
+}
+
 function calcularEtapaAtual({
   verificacaoOk,
   itensSemCategoria,
@@ -103,6 +115,10 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        p.verificacao_ok,
        p.categorizacao_ok,
        p.total,
+       p.cliente_id,
+       p.cidade,
+       p.bairro,
+       p.data_pedido,
        p.created_at AS criado_em,
        c.nome                                                   AS cliente_nome,
        u.nome_completo                                          AS consultor_nome,
@@ -373,14 +389,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
 
   const resultado = pedidos.map((p) => {
     const preAgendamentos = preAgsPorPedido[p.id] || [];
-    const futuros = preAgendamentos.filter(
-      (a) => a.status === "pre_agendado" || a.status === "agendado"
-    );
-    futuros.sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
-    const proximoPrazo = futuros[0]?.data_inicio || null;
-    const diasParaPrazo = proximoPrazo
-      ? Math.floor((new Date(proximoPrazo) - hoje) / (1000 * 60 * 60 * 24))
-      : null;
+    const { proximoPrazo, diasParaPrazo, nivelAlerta } = calcularPrazoEAlerta(preAgendamentos, hoje);
 
     const conf = confPorPedido[p.id] || { total: 0, conferidos: 0 };
     const prod = prodPorPedido[p.id] || { em_confeccao: 0, confeccao_ok: 0 };
@@ -414,10 +423,14 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       numero_sequencial: p.numero_sequencial,
       numero_origem: p.numero_origem,
       status: p.status,
+      cliente_id: p.cliente_id,
       cliente_nome: p.cliente_nome,
       consultor_id: p.consultor_id,
       consultor_nome: p.consultor_nome,
       total: p.total,
+      cidade: p.cidade,
+      bairro: p.bairro,
+      data_pedido: p.data_pedido,
       itens_count: Number(p.itens_count),
       criado_em: p.criado_em,
       estagio: {
@@ -429,7 +442,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
         pre_agendamentos: preAgendamentos,
         proximo_prazo: proximoPrazo,
         dias_para_prazo: diasParaPrazo,
-        nivel_alerta: calcNivelAlerta(diasParaPrazo),
+        nivel_alerta: nivelAlerta,
       },
     };
   });
@@ -916,4 +929,4 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   };
 }
 
-module.exports = { listarPedidosDashboard, buscarFluxoPedido, calcularEtapaAtual };
+module.exports = { listarPedidosDashboard, buscarFluxoPedido, calcularEtapaAtual, calcularPrazoEAlerta };
