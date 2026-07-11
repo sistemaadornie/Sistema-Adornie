@@ -65,4 +65,5 @@ async function buscarFiltros(empresaId) {
 
 module.exports = {
   buscarFiltros,
+  buscarPedidosEnriquecidos,
 };
