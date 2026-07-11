@@ -47,3 +47,49 @@ describe("buscarPedidosEnriquecidos", () => {
     );
   });
 });
+
+describe("buscarKpis", () => {
+  const pedidosMock = [
+    { id: 1, status: "em_andamento", total: "1000.00", data_pedido: "2026-07-05", cidade: "Curitiba", estagio: { nivel_alerta: "urgente" } },
+    { id: 2, status: "concluido",    total: "2000.00", data_pedido: "2026-07-02", cidade: "Curitiba", estagio: { nivel_alerta: null } },
+    { id: 3, status: "cancelado",    total: "9999.00", data_pedido: "2026-07-01", cidade: "Curitiba", estagio: { nivel_alerta: null } },
+    { id: 4, status: "pendente",     total: "500.00",  data_pedido: "2026-06-15", cidade: "Curitiba", estagio: { nivel_alerta: null } },
+  ];
+
+  beforeEach(() => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue(pedidosMock);
+    db.query.mockResolvedValue({ rows: [{ valor: 0 }] });
+  });
+
+  test("faturamento soma pedidos não cancelados dentro do período (mes = 2026-07-01..hoje)", async () => {
+    const hoje = new Date(2026, 6, 11);
+    const r = await svc.buscarKpis(7, { periodo: "mes", consultoraId: null, cidade: null }, hoje);
+    // pedidos 1 (1000) e 2 (2000) estão em julho; pedido 3 é cancelado (excluído); pedido 4 é de junho.
+    expect(r.faturamento.valor).toBe(3000);
+  });
+
+  test("pedidosAtivos conta status não concluído/cancelado, sem filtro de período", async () => {
+    const r = await svc.buscarKpis(7, { periodo: "mes", consultoraId: null, cidade: null }, new Date(2026, 6, 11));
+    // ativos: pedido 1 (em_andamento) e pedido 4 (pendente) = 2. pedido 2 concluido e 3 cancelado ficam de fora.
+    expect(r.pedidosAtivos.valor).toBe(2);
+  });
+
+  test("prazosEmRisco conta ativos com nivel_alerta setado", async () => {
+    const r = await svc.buscarKpis(7, { periodo: "mes", consultoraId: null, cidade: null }, new Date(2026, 6, 11));
+    expect(r.prazosEmRisco.valor).toBe(1); // só o pedido 1
+  });
+
+  test("deltaPct é 0 quando não há faturamento em nenhum dos dois períodos", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([]);
+    const r = await svc.buscarKpis(7, { periodo: "mes" }, new Date(2026, 6, 11));
+    expect(r.faturamento).toEqual({ valor: 0, deltaPct: 0 });
+  });
+
+  test("deltaPct é 100 quando período anterior é zero mas o atual tem faturamento", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "500", data_pedido: "2026-07-05", cidade: "Curitiba", estagio: {} },
+    ]);
+    const r = await svc.buscarKpis(7, { periodo: "mes" }, new Date(2026, 6, 11));
+    expect(r.faturamento).toEqual({ valor: 500, deltaPct: 100 });
+  });
+});
