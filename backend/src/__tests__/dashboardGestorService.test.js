@@ -195,3 +195,24 @@ describe("buscarConsultoras", () => {
     expect(r.totalMes).toBe(1000);
   });
 });
+
+describe("buscarMapa", () => {
+  test("modo bairros: agrupa por bairro (só Curitiba), usa coordenada curada e soma 'Outros'", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "1000", data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Batel", cliente_id: 1, numero_sequencial: 1, estagio: { etapa_atual: 3 } },
+      { id: 2, status: "pendente", total: "500",  data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Bairro Desconhecido", cliente_id: 2, numero_sequencial: 2, estagio: { etapa_atual: 1 } },
+      { id: 3, status: "pendente", total: "700",  data_pedido: "2026-07-05", cidade: "Joinville", bairro: "Centro", cliente_id: 3, numero_sequencial: 3, estagio: { etapa_atual: 1 } }, // fora de Curitiba, ignorado no modo bairros
+    ]);
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // categorias por pedido
+      .mockResolvedValueOnce({ rows: [] }); // atendimentos por pedido
+
+    const r = await svc.buscarMapa(7, { modo: "bairros", periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.regioes).toHaveLength(2);
+    const batel = r.regioes.find((x) => x.id === "batel");
+    const outros = r.regioes.find((x) => x.id === "outros");
+    expect(batel).toMatchObject({ nome: "Batel", x: 44, y: 54, clientes: 1, pedidosAtivos: 1, faturamento: 1000 });
+    expect(outros).toMatchObject({ nome: "Outros", clientes: 1, pedidosAtivos: 1, faturamento: 500 });
+  });
+});

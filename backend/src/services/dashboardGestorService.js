@@ -234,6 +234,110 @@ async function buscarConsultoras(empresaId, filtros = {}, hoje = new Date()) {
   return { totalMes: consultoras.reduce((s, c) => s + c.valor, 0), consultoras };
 }
 
+async function buscarCategoriasPorPedido(pedidoIds) {
+  const mapa = new Map();
+  if (!pedidoIds.length) return mapa;
+  const { rows } = await db.query(
+    `SELECT pi.pedido_id, cat.nome AS categoria, COUNT(*)::int AS qtd
+     FROM pedido_itens pi
+     JOIN categorias cat ON cat.id = pi.categoria_id
+     WHERE pi.pedido_id = ANY($1)
+     GROUP BY pi.pedido_id, cat.nome`,
+    [pedidoIds]
+  );
+  for (const r of rows) {
+    if (!mapa.has(r.pedido_id)) mapa.set(r.pedido_id, []);
+    mapa.get(r.pedido_id).push({ categoria: r.categoria, qtd: r.qtd });
+  }
+  return mapa;
+}
+
+async function buscarAtendimentosPorPedido(empresaId, pedidoIds) {
+  const mapa = new Map();
+  if (!pedidoIds.length) return mapa;
+  const { rows } = await db.query(
+    `SELECT a.pedido_id, COUNT(*)::int AS atendimentos
+     FROM agendamentos a
+     WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2 AND a.status = 'concluido'
+     GROUP BY a.pedido_id`,
+    [pedidoIds, empresaId]
+  );
+  for (const r of rows) mapa.set(r.pedido_id, r.atendimentos);
+  return mapa;
+}
+
+async function buscarMapa(empresaId, filtros = {}, hoje = new Date()) {
+  const { modo = "bairros", periodo = "mes", consultoraId, cidade } = filtros;
+  const periodoAtual = getPeriodoAtual(periodo, hoje);
+
+  const todos = await buscarPedidosEnriquecidos(empresaId, { consultoraId });
+  const noPeriodo = filtrarPorPeriodo(filtrarNaoCancelados(todos), periodoAtual);
+  const escopoGeografico = modo === "cidades"
+    ? noPeriodo
+    : noPeriodo.filter((p) => (p.cidade || "").toLowerCase() === "curitiba");
+  const filtrados = filtrarPorCidade(escopoGeografico, cidade);
+
+  const chaveDe = (p) => ((modo === "cidades" ? p.cidade : p.bairro) || "").trim();
+  const grupos = new Map();
+  for (const p of filtrados) {
+    const chave = chaveDe(p);
+    if (!chave) continue;
+    if (!grupos.has(chave)) grupos.set(chave, []);
+    grupos.get(chave).push(p);
+  }
+
+  const listaCoordenadas = modo === "cidades" ? MAPA_CIDADES : MAPA_BAIRROS;
+  const outrosCoord = modo === "cidades" ? MAPA_CIDADES_OUTROS : MAPA_BAIRROS_OUTROS;
+
+  const porRegiao = new Map();
+  for (const [chave, lista] of grupos) {
+    const coord = buscarCoordenada(chave, listaCoordenadas) || outrosCoord;
+    if (!porRegiao.has(coord.id)) porRegiao.set(coord.id, { ...coord, pedidos: [] });
+    porRegiao.get(coord.id).pedidos.push(...lista);
+  }
+
+  const pedidoIds = filtrados.map((p) => p.id);
+  const [categoriasPorPedido, atendimentosPorPedido] = await Promise.all([
+    buscarCategoriasPorPedido(pedidoIds),
+    buscarAtendimentosPorPedido(empresaId, pedidoIds),
+  ]);
+
+  const regioes = [...porRegiao.values()].map((r) => {
+    const clientesUnicos = new Set(r.pedidos.map((p) => p.cliente_id).filter(Boolean));
+    const ativos = filtrarAtivos(r.pedidos);
+    const faturamento = r.pedidos.reduce((s, p) => s + Number(p.total || 0), 0);
+    const atendimentos = r.pedidos.reduce((s, p) => s + (atendimentosPorPedido.get(p.id) || 0), 0);
+
+    const contagemCategorias = new Map();
+    for (const p of r.pedidos) {
+      for (const c of categoriasPorPedido.get(p.id) || []) {
+        contagemCategorias.set(c.categoria, (contagemCategorias.get(c.categoria) || 0) + c.qtd);
+      }
+    }
+    const totalItens = [...contagemCategorias.values()].reduce((s, v) => s + v, 0);
+    const mix = [...contagemCategorias.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([categoria, qtd]) => ({ categoria, pct: totalItens > 0 ? Math.round((qtd / totalItens) * 100) : 0 }));
+
+    return {
+      id: r.id, nome: r.nome, x: r.x, y: r.y,
+      clientes: clientesUnicos.size,
+      pedidosAtivos: ativos.length,
+      atendimentos,
+      categoriaPredominante: mix[0]?.categoria || null,
+      mix,
+      faturamento,
+      pedidosLista: ativos.slice(0, 4).map((p) => ({
+        numero: `#${p.numero_sequencial}`,
+        etapa: ETAPAS_FUNIL.find((e) => e.numero === p.estagio.etapa_atual)?.nome || "",
+      })),
+    };
+  });
+
+  return { regioes };
+}
+
 module.exports = {
   buscarFiltros,
   buscarPedidosEnriquecidos,
@@ -242,4 +346,5 @@ module.exports = {
   buscarFunilDetalhe,
   buscarAlertas,
   buscarConsultoras,
+  buscarMapa,
 };
