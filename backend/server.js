@@ -48,6 +48,7 @@ const orcamentosRoutes   = require("./src/routes/orcamentosRoutes");
 const uploadRoutes       = require("./src/routes/uploadRoutes");
 const prazosRoutes       = require("./src/routes/prazosRoutes");
 const dashboardRoutes    = require("./src/routes/dashboardRoutes");
+const dashboardGestorRoutes = require("./src/routes/dashboardGestorRoutes");
 
 const app = express();
 
@@ -149,6 +150,7 @@ app.use("/api/relatorios",    relatoriosRoutes);
 app.use("/api/crews",         crewRoutes);
 app.use("/api/pedidos",       pedidosRoutes);
 app.use("/api/dashboard",     dashboardRoutes);
+app.use("/api/dashboard-gestor", dashboardGestorRoutes);
 app.use("/api/crm",           crmRoutes);
 app.use("/api/produtos",      produtosRoutes);
 app.use("/api/fornecedores",   fornecedoresRoutes);
