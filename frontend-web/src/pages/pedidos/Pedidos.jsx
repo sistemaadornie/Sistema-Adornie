@@ -153,7 +153,13 @@ export default function Pedidos() {
 
   const [consultoras, setConsultoras] = useState([]);
 
-  function buildFiltros({ filtro = filtroAtivo, consultora = consultoraFiltro } = {}) {
+  const filtroAtivoRef = useRef(filtroAtivo);
+  useEffect(() => { filtroAtivoRef.current = filtroAtivo; }, [filtroAtivo]);
+
+  const consultoraFiltroRef = useRef(consultoraFiltro);
+  useEffect(() => { consultoraFiltroRef.current = consultoraFiltro; }, [consultoraFiltro]);
+
+  function buildFiltros({ filtro = filtroAtivoRef.current, consultora = consultoraFiltroRef.current } = {}) {
     const f = {};
     if (consultora) f.consultora_id = consultora;
     if (filtro === "atrasados") f.alerta = "atrasado";
