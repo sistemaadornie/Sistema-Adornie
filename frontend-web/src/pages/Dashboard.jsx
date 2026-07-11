@@ -1,5 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { api } from "../services/api";
+import { CREW_PALETTE } from "../constants/crewPalette";
 import "./Relatorios.css";
 import "./Dashboard.css";
 
@@ -11,6 +15,50 @@ const PERIODOS = [
 
 const NIVEL_COR = { atrasado: "var(--color-danger)", urgente: "var(--color-warning)", atencao: "var(--color-info)" };
 const NIVEL_LABEL = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
+
+// ── Tema do mapa (mesmo esquema da tela de Agendamentos) ──
+function getTheme() { return document.documentElement.dataset.theme || "dark"; }
+const themeListeners = new Set();
+if (typeof window !== "undefined") {
+  new MutationObserver(() => themeListeners.forEach((fn) => fn())).observe(
+    document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }
+  );
+}
+function useMapTheme() {
+  return useSyncExternalStore(
+    (cb) => { themeListeners.add(cb); return () => themeListeners.delete(cb); },
+    getTheme
+  );
+}
+const TILE_DARK  = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
+function regiaoIcon(color, selected) {
+  const size = selected ? 24 : 18;
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${color};
+      border:2px solid rgba(255,255,255,0.35);
+      box-shadow:0 0 ${selected ? 16 : 10}px ${color}aa, 0 0 ${selected ? 28 : 18}px ${color}55, 0 2px 6px rgba(0,0,0,0.5);
+      transition:width .15s,height .15s;
+    "></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
+function FitRegioes({ regioes }) {
+  const map = useMap();
+  useEffect(() => {
+    const pontos = (regioes || []).filter((r) => r.lat && r.lng).map((r) => [r.lat, r.lng]);
+    if (pontos.length === 0) return;
+    if (pontos.length === 1) { map.setView(pontos[0], 13); return; }
+    map.fitBounds(L.latLngBounds(pontos), { padding: [36, 36], maxZoom: 13 });
+  }, [regioes, map]);
+  return null;
+}
 
 const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR");
@@ -140,6 +188,10 @@ export default function Dashboard() {
   const hasFilters = !!(consultoraId || cidade);
   const limparFiltros = () => { setConsultoraId(""); setCidade(""); };
 
+  const mapTheme = useMapTheme();
+  const tileUrl = mapTheme === "light" ? TILE_LIGHT : TILE_DARK;
+  const mapCenter = useMemo(() => [-25.4284, -49.2733], []);
+
   return (
     <div className="ek-page">
       <div className="ek-head">
@@ -229,12 +281,39 @@ export default function Dashboard() {
           <div style={{ padding: 16 }}>
             {mapaLoading ? <Skeleton /> : !mapa?.regioes?.length ? <Empty>Nenhum dado com esses filtros.</Empty> : (
               <div className="dash-mapa-canvas">
-                {mapa.regioes.map((r) => (
-                  <button key={r.id} className="dash-mapa-no" style={{ left: `${r.x}%`, top: `${r.y}%` }} onClick={() => setRegiaoSelecionada(r)}>
-                    <span className="dash-mapa-dot" />
-                    <span className="dash-mapa-label">{r.nome}</span>
-                  </button>
-                ))}
+                <MapContainer
+                  center={mapCenter}
+                  zoom={12}
+                  className="dash-mapa-leaflet"
+                  zoomControl={false}
+                  style={{ width: "100%", height: "100%" }}
+                >
+                  <FitRegioes regioes={mapa.regioes} />
+                  <TileLayer
+                    key={tileUrl}
+                    url={tileUrl}
+                    attribution='&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    subdomains="abcd"
+                    maxZoom={19}
+                  />
+                  {mapa.regioes.map((r) => {
+                    if (!r.lat || !r.lng) return null;
+                    const cor = CREW_PALETTE[r.corIndex % CREW_PALETTE.length];
+                    const selecionada = regiaoSelecionada?.id === r.id;
+                    return (
+                      <Marker
+                        key={r.id}
+                        position={[r.lat, r.lng]}
+                        icon={regiaoIcon(cor, selecionada)}
+                        eventHandlers={{ click: () => setRegiaoSelecionada(r) }}
+                      >
+                        <Tooltip permanent direction="bottom" offset={[0, 4]} className="dash-mapa-label">
+                          {r.nome}
+                        </Tooltip>
+                      </Marker>
+                    );
+                  })}
+                </MapContainer>
                 {regiaoSelecionada && (
                   <div className="dash-mapa-detalhe" onClick={() => setRegiaoSelecionada(null)}>
                     <div className="dash-mapa-detalhe-card" onClick={(e) => e.stopPropagation()}>
