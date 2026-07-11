@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -15,6 +15,7 @@ const PERIODOS = [
 
 const NIVEL_COR = { atrasado: "var(--color-danger)", urgente: "var(--color-warning)", atencao: "var(--color-info)" };
 const NIVEL_LABEL = { atrasado: "Atrasado", urgente: "Urgente", atencao: "Atenção" };
+const FUNIL_ICONES = { 1: "📋", 2: "📐", 3: "⚙️", 4: "🔍", 5: "📅", 6: "📦", 7: "🚚", 8: "⭐" };
 
 // ── Tema do mapa (mesmo esquema da tela de Agendamentos) ──
 function getTheme() { return document.documentElement.dataset.theme || "dark"; }
@@ -384,7 +385,7 @@ export default function Dashboard() {
       <div className="ek-section">
         <div className="ek-section-head">
           <div>
-            <h3>Funil de produção · 8 etapas</h3>
+            <h3>Funil de Pedidos</h3>
             {funil && <p>{funil.totalAtivos} pedidos ativos · clique numa etapa</p>}
           </div>
         </div>
@@ -392,24 +393,29 @@ export default function Dashboard() {
           {funilLoading ? <Skeleton /> : !funil ? <Empty>Não foi possível carregar o funil.</Empty> : (
             <>
               <div className="dash-funil-row">
-                {funil.etapas.map((e) => {
+                {funil.etapas.map((e, i) => {
                   const maxCount = Math.max(...funil.etapas.map((x) => x.count), 1);
                   return (
-                    <div
-                      key={e.numero}
-                      className={`dash-funil-card${etapaSelecionada === e.numero ? " ativa" : ""}${e.gargalo ? " gargalo" : ""}`}
-                      onClick={() => setEtapaSelecionada(e.numero)}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span className="dash-funil-num">{e.numero}</span>
-                        {e.gargalo && <span className="dash-funil-gargalo-badge">gargalo</span>}
+                    <React.Fragment key={e.numero}>
+                      <div
+                        className={`dash-funil-card${etapaSelecionada === e.numero ? " selecionada" : ""}`}
+                        onClick={() => setEtapaSelecionada(e.numero)}
+                      >
+                        <div className="dash-funil-header">
+                          <span className="dash-funil-num">{e.numero}</span>
+                          <span className="dash-funil-titulo">{e.nome}</span>
+                          {e.gargalo && <span className="dash-funil-gargalo-badge">gargalo</span>}
+                        </div>
+                        <div className="dash-funil-body">
+                          <div className="dash-funil-icone">{FUNIL_ICONES[e.numero]}</div>
+                          <div className="dash-funil-count">{e.count}</div>
+                          <div className="dash-funil-track">
+                            <div className="dash-funil-fill" style={{ width: `${Math.max(10, Math.round((e.count / maxCount) * 100))}%` }} />
+                          </div>
+                        </div>
                       </div>
-                      <div className="dash-funil-count">{e.count}</div>
-                      <div className="rel-kpi-sub">{e.nome}</div>
-                      <div className="dash-funil-track">
-                        <div className="dash-funil-fill" style={{ width: `${Math.max(10, Math.round((e.count / maxCount) * 100))}%` }} />
-                      </div>
-                    </div>
+                      {i < funil.etapas.length - 1 && <div className="dash-funil-conector" />}
+                    </React.Fragment>
                   );
                 })}
               </div>
@@ -418,7 +424,7 @@ export default function Dashboard() {
                 <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--color-border)", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 24 }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span className="dash-funil-num" style={{ background: "var(--color-primary)", color: "var(--color-primary-btn-text)" }}>{detalheEtapa.numero}</span>
+                      <span className="dash-funil-num" style={{ background: "#f59e0b", color: "#fff" }}>{detalheEtapa.numero}</span>
                       <div style={{ fontFamily: "var(--font-title)", fontSize: 19, fontWeight: 700 }}>{detalheEtapa.nome}</div>
                     </div>
                     <p style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 10 }}>{detalheEtapa.descricao}</p>
