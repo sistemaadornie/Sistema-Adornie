@@ -39,6 +39,10 @@
   .dash-row-2 { grid-template-columns: 1fr; }
 }
 
+@media (min-width: 1101px) {
+  .dash-row-2-agenda { grid-template-columns: 1fr 1fr; }
+}
+
 .dash-mapa-canvas {
   position: relative;
   height: 420px;
@@ -180,3 +184,46 @@
   .dash-funil-row { flex-wrap: wrap; }
   .dash-funil-card { flex: 1 1 45%; }
 }
+
+/* ── AGENDA ── */
+
+.dash-agenda-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--color-border);
+}
+.dash-agenda-row:last-child { border-bottom: none; }
+
+.dash-agenda-hora { text-align: center; flex: none; width: 60px; }
+.dash-agenda-tipo {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+  flex: none;
+}
+.dash-agenda-tipo.instalacao { color: var(--color-primary); background: var(--color-primary-soft); }
+.dash-agenda-tipo.outro      { color: var(--color-info); background: var(--color-info-soft); }
+
+/* ── CONSULTORAS ── */
+
+.dash-consultora-row { padding: 8px 0; }
+
+.dash-consultora-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-btn-text);
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+
+.dash-consultora-track {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--color-border);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.dash-consultora-fill { height: 100%; border-radius: 6px; background: var(--color-primary); }

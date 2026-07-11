@@ -50,6 +50,12 @@ export default function Dashboard() {
   const [etapaSelecionada, setEtapaSelecionada] = useState(3);
   const [detalheEtapa, setDetalheEtapa] = useState(null);
 
+  const [agenda, setAgenda] = useState(null);
+  const [agendaLoading, setAgendaLoading] = useState(true);
+
+  const [consultoras, setConsultoras] = useState(null);
+  const [consultorasLoading, setConsultorasLoading] = useState(true);
+
   useEffect(() => {
     api.get("/dashboard-gestor/filtros").then(setOpcoes).catch(() => setOpcoes({ consultoras: [], cidades: [] }));
   }, []);
@@ -109,6 +115,27 @@ export default function Dashboard() {
       .then(setDetalheEtapa)
       .catch(() => setDetalheEtapa(null));
   }, [etapaSelecionada, periodo, consultoraId, cidade]);
+
+  useEffect(() => {
+    setAgendaLoading(true);
+    const params = new URLSearchParams();
+    if (consultoraId) params.set("consultora_id", consultoraId);
+    if (cidade) params.set("cidade", cidade);
+    api.get(`/dashboard-gestor/agenda-semana?${params}`)
+      .then(setAgenda)
+      .catch(() => setAgenda(null))
+      .finally(() => setAgendaLoading(false));
+  }, [consultoraId, cidade]);
+
+  useEffect(() => {
+    setConsultorasLoading(true);
+    const params = new URLSearchParams({ periodo });
+    if (cidade) params.set("cidade", cidade);
+    api.get(`/dashboard-gestor/consultoras?${params}`)
+      .then(setConsultoras)
+      .catch(() => setConsultoras(null))
+      .finally(() => setConsultorasLoading(false));
+  }, [periodo, cidade]);
 
   const hasFilters = !!(consultoraId || cidade);
   const limparFiltros = () => { setConsultoraId(""); setCidade(""); };
@@ -336,7 +363,67 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="ek-empty"><p>Agenda da semana e faturamento por consultora — em breve.</p></div>
+      <div className="dash-row-2 dash-row-2-agenda">
+        <div className="ek-section">
+          <div className="ek-section-head">
+            <h3>Agenda da semana</h3>
+            <p>Equipes &amp; veículos</p>
+          </div>
+          <div style={{ padding: "4px 16px 12px" }}>
+            {agendaLoading ? <Skeleton /> : !agenda?.compromissos?.length ? <Empty>Nenhum compromisso com esses filtros.</Empty> : (
+              agenda.compromissos.map((c, i) => (
+                <div key={i} className="dash-agenda-row">
+                  <div className="dash-agenda-hora">
+                    <div style={{ fontWeight: 700 }}>{c.hora?.slice(0, 5)}</div>
+                    <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{new Date(c.data).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
+                  </div>
+                  <span className={`dash-agenda-tipo ${c.tipo === "Instalação" ? "instalacao" : "outro"}`}>{c.tipo}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.cliente}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>{c.local}</div>
+                  </div>
+                  <div style={{ textAlign: "right", flex: "none" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600 }}>{c.equipe || "—"}</div>
+                    <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{c.veiculo || "—"}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="ek-section">
+          <div className="ek-section-head">
+            <h3>Faturamento por consultora</h3>
+            {consultoras && <p>{fmtR(consultoras.totalMes)} no período</p>}
+          </div>
+          <div style={{ padding: "16px" }}>
+            {consultorasLoading ? <Skeleton /> : !consultoras?.consultoras?.length ? <Empty>Nenhuma consultora cadastrada.</Empty> : (
+              consultoras.consultoras.map((c) => {
+                const max = Math.max(...consultoras.consultoras.map((x) => x.valor), 1);
+                const iniciais = c.nome.split(" ").slice(0, 2).map((p) => p[0]).join("");
+                return (
+                  <div key={c.id} className="dash-consultora-row">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                        <span className="dash-consultora-avatar">{iniciais}</span>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>{c.nome}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                        <strong style={{ fontSize: 13 }}>{fmtR(c.valor)}</strong>
+                        <KpiDelta tipo={c.deltaPct >= 0 ? "up" : "down"} texto={`${c.deltaPct >= 0 ? "+" : ""}${c.deltaPct}%`} />
+                      </div>
+                    </div>
+                    <div className="dash-consultora-track">
+                      <div className="dash-consultora-fill" style={{ width: `${Math.round((c.valor / max) * 100)}%` }} />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
