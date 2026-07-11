@@ -215,4 +215,22 @@ describe("buscarMapa", () => {
     expect(batel).toMatchObject({ nome: "Batel", x: 44, y: 54, clientes: 1, pedidosAtivos: 1, faturamento: 1000 });
     expect(outros).toMatchObject({ nome: "Outros", clientes: 1, pedidosAtivos: 1, faturamento: 500 });
   });
+
+  test("modo bairros: múltiplos bairros nao mapeados se fundem em um único 'Outros'", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 10, status: "pendente", total: "300", data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Bairro Fantasma", cliente_id: 10, numero_sequencial: 10, estagio: { etapa_atual: 1 } },
+      { id: 11, status: "pendente", total: "400", data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Outro Bairro Inexistente", cliente_id: 11, numero_sequencial: 11, estagio: { etapa_atual: 1 } },
+    ]);
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // categorias por pedido
+      .mockResolvedValueOnce({ rows: [] }); // atendimentos por pedido
+
+    const r = await svc.buscarMapa(7, { modo: "bairros", periodo: "mes" }, new Date(2026, 6, 11));
+
+    const outrosRegioes = r.regioes.filter((x) => x.id === "outros");
+    expect(outrosRegioes).toHaveLength(1);
+    expect(outrosRegioes[0].clientes).toBe(2);
+    expect(outrosRegioes[0].pedidosAtivos).toBe(2);
+    expect(outrosRegioes[0].faturamento).toBe(700);
+  });
 });
