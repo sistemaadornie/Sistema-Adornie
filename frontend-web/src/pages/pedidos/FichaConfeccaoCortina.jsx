@@ -4,7 +4,7 @@ import { api } from "../../services/api";
 import "./OrdemServicoModal.css";
 
 const VAZIO = {
-  feitaPor: "", espacador: "", tipoWave: "", abertura: "", componente: "",
+  feitaPor: "", espacador: "", tipoWave: "", tipoWaveOutros: "", abertura: "", componente: "",
   larguraTrilho: "", larguraTecido: "", nomeTecido: "", vendeuBarraAplicada: "",
   alturaCortina: "", alturaBarra: "", quantTomas: "", tamanhoTomas: "",
   cortinaLadoALado: "", detalheBarra: "", observacoes: "",
@@ -78,6 +78,9 @@ export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSa
     if (!dados.feitaPor) return setErro('Campo "Cortina feita por" é obrigatório.');
     if (!dados.espacador) return setErro("Espaçador é obrigatório.");
     if (!dados.tipoWave) return setErro("Tipo wave é obrigatório.");
+    if (dados.tipoWave === "Outros" && !dados.tipoWaveOutros?.trim()) {
+      return setErro('Descreva o tipo wave selecionado em "Outros".');
+    }
     if (!dados.abertura) return setErro("Abertura é obrigatória.");
     if (!dados.larguraTrilho || paraNumero(dados.larguraTrilho) <= 0) {
       return setErro("Largura vendida inválida ou ausente — verifique a largura cadastrada no item do pedido.");
@@ -180,14 +183,37 @@ export default function FichaConfeccaoCortina({ osData, modo = "confeccao", onSa
                 </div>
                 <div className="os-field">
                   <label>Tipo wave</label>
-                  <select value={dados.tipoWave} onChange={(e) => setCampo("tipoWave", e.target.value)} className="input-highlight">
+                  <select
+                    value={dados.tipoWave}
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      setDados((prev) => ({ ...prev, tipoWave: valor, tipoWaveOutros: valor === "Outros" ? prev.tipoWaveOutros : "" }));
+                    }}
+                    className="input-highlight"
+                  >
                     <option value="">— Selecione —</option>
                     <option value="P">P</option>
                     <option value="M">M</option>
                     <option value="G">G</option>
+                    <option value="Franzida 1,3">Franzida 1,3</option>
+                    <option value="Franzida 1,8">Franzida 1,8</option>
+                    <option value="Outros">Outros</option>
                   </select>
                 </div>
               </div>
+
+              {dados.tipoWave === "Outros" && (
+                <div className="os-field">
+                  <label>Descreva o tipo wave</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Prega americana dupla"
+                    value={dados.tipoWaveOutros}
+                    onChange={(e) => setCampo("tipoWaveOutros", e.target.value)}
+                    className="input-highlight"
+                  />
+                </div>
+              )}
 
               <div className="os-grid-2">
                 <div className="os-field">
