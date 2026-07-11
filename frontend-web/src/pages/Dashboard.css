@@ -52,29 +52,12 @@
   overflow: hidden;
 }
 
-.dash-mapa-no {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
+.dash-mapa-leaflet {
+  background: var(--color-surface-soft);
 }
 
-.dash-mapa-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  border: 2px solid var(--color-surface);
-  box-shadow: 0 3px 8px rgba(0,0,0,.35);
-}
-
-.dash-mapa-label {
+/* Rótulo das regiões — tooltip do Leaflet estilizado como pílula neon */
+.leaflet-tooltip.dash-mapa-label {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-text);
@@ -83,11 +66,16 @@
   border-radius: 999px;
   white-space: nowrap;
   border: 1px solid var(--color-border);
+  box-shadow: 0 3px 8px rgba(0,0,0,.35);
+}
+.leaflet-tooltip.dash-mapa-label::before {
+  display: none;
 }
 
 .dash-mapa-detalhe {
   position: absolute;
   inset: 0;
+  z-index: 1000;
   background: rgba(0,0,0,.45);
   display: flex;
   align-items: center;
