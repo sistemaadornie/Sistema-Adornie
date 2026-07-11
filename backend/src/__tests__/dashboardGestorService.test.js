@@ -93,3 +93,42 @@ describe("buscarKpis", () => {
     expect(r.faturamento).toEqual({ valor: 500, deltaPct: 100 });
   });
 });
+
+describe("buscarFunil", () => {
+  test("agrupa pedidos ativos por etapa_atual e marca a de maior contagem como gargalo", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "100", data_pedido: "2026-07-05", cidade: "Curitiba", numero_sequencial: 1, estagio: { etapa_atual: 3 } },
+      { id: 2, status: "pendente", total: "100", data_pedido: "2026-07-06", cidade: "Curitiba", numero_sequencial: 2, estagio: { etapa_atual: 3 } },
+      { id: 3, status: "pendente", total: "100", data_pedido: "2026-07-06", cidade: "Curitiba", numero_sequencial: 3, estagio: { etapa_atual: 1 } },
+      { id: 4, status: "concluido", total: "100", data_pedido: "2026-07-06", cidade: "Curitiba", numero_sequencial: 4, estagio: { etapa_atual: 8 } },
+    ]);
+
+    const r = await svc.buscarFunil(7, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.totalAtivos).toBe(3); // pedido 4 (concluido) não conta como ativo
+    const etapa3 = r.etapas.find((e) => e.numero === 3);
+    const etapa1 = r.etapas.find((e) => e.numero === 1);
+    expect(etapa3).toEqual({ numero: 3, nome: "Confecção", count: 2, gargalo: true });
+    expect(etapa1).toEqual({ numero: 1, nome: "Verificação", count: 1, gargalo: false });
+    expect(r.etapas).toHaveLength(8);
+  });
+});
+
+describe("buscarFunilDetalhe", () => {
+  test("retorna exemplos e metadados da etapa pedida", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "100", data_pedido: "2026-07-05", cidade: "Curitiba", numero_sequencial: 42, cliente_nome: "Regina", estagio: { etapa_atual: 3 } },
+    ]);
+
+    const r = await svc.buscarFunilDetalhe(7, 3, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r).toEqual({
+      numero: 3, nome: "Confecção", descricao: expect.any(String), responsavel: "Ateliê / fornecedores",
+      count: 1, exemplos: [{ numero: "#42", cliente: "Regina" }],
+    });
+  });
+
+  test("lança erro 400 para etapa inválida", async () => {
+    await expect(svc.buscarFunilDetalhe(7, 99, {})).rejects.toMatchObject({ status: 400 });
+  });
+});

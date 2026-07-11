@@ -123,8 +123,62 @@ async function buscarKpis(empresaId, filtros = {}, hoje = new Date()) {
   };
 }
 
+async function buscarFunil(empresaId, filtros = {}, hoje = new Date()) {
+  const { periodo = "mes", consultoraId, cidade } = filtros;
+  const periodoAtual = getPeriodoAtual(periodo, hoje);
+  const pedidos = filtrarPorPeriodo(
+    filtrarAtivos(filtrarPorCidade(await buscarPedidosEnriquecidos(empresaId, { consultoraId }), cidade)),
+    periodoAtual
+  );
+
+  const contagem = new Map(ETAPAS_FUNIL.map((e) => [e.numero, 0]));
+  for (const p of pedidos) {
+    contagem.set(p.estagio.etapa_atual, (contagem.get(p.estagio.etapa_atual) || 0) + 1);
+  }
+
+  let etapaGargalo = null;
+  for (const [numero, count] of contagem) {
+    if (count > 0 && (etapaGargalo === null || count > contagem.get(etapaGargalo))) etapaGargalo = numero;
+  }
+
+  const etapas = ETAPAS_FUNIL.map((e) => ({
+    numero: e.numero,
+    nome: e.nome,
+    count: contagem.get(e.numero) || 0,
+    gargalo: e.numero === etapaGargalo,
+  }));
+
+  return { totalAtivos: pedidos.length, etapas };
+}
+
+async function buscarFunilDetalhe(empresaId, numero, filtros = {}, hoje = new Date()) {
+  const etapa = ETAPAS_FUNIL.find((e) => e.numero === Number(numero));
+  if (!etapa) {
+    const err = new Error("Etapa inválida");
+    err.status = 400;
+    throw err;
+  }
+  const { periodo = "mes", consultoraId, cidade } = filtros;
+  const periodoAtual = getPeriodoAtual(periodo, hoje);
+  const pedidos = filtrarPorPeriodo(
+    filtrarAtivos(filtrarPorCidade(await buscarPedidosEnriquecidos(empresaId, { consultoraId }), cidade)),
+    periodoAtual
+  ).filter((p) => p.estagio.etapa_atual === etapa.numero);
+
+  return {
+    numero: etapa.numero,
+    nome: etapa.nome,
+    descricao: etapa.descricao,
+    responsavel: etapa.responsavel,
+    count: pedidos.length,
+    exemplos: pedidos.slice(0, 5).map((p) => ({ numero: `#${p.numero_sequencial}`, cliente: p.cliente_nome })),
+  };
+}
+
 module.exports = {
   buscarFiltros,
   buscarPedidosEnriquecidos,
   buscarKpis,
+  buscarFunil,
+  buscarFunilDetalhe,
 };
