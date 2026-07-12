@@ -120,6 +120,7 @@ export default function PedidoFluxo() {
       </div>
 
       <FluxogramaCanvas
+        key={id}
         etapas={etapas}
         etapaAtual={etapa_atual}
         onEtapaClick={handleEtapaClick}

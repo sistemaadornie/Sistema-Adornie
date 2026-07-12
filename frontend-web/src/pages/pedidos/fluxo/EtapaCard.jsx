@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 
 const ETAPA_CONFIG = {
   1: { icone: "📋", titulo: "Pedidos" },
@@ -11,7 +11,7 @@ const ETAPA_CONFIG = {
   8: { icone: "⭐", titulo: "Pós-venda" },
 };
 
-export default function EtapaCard({ etapa, etapaAtual, onClick }) {
+const EtapaCard = forwardRef(function EtapaCard({ etapa, etapaAtual, onClick }, ref) {
   const { numero, concluida, progresso } = etapa;
   const config = ETAPA_CONFIG[numero];
   const ativa = !concluida && numero === etapaAtual;
@@ -101,6 +101,7 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
 
   return (
     <div
+      ref={ref}
       className={cls}
       onClick={onClick}
       role="button"
@@ -127,4 +128,6 @@ export default function EtapaCard({ etapa, etapaAtual, onClick }) {
       )}
     </div>
   );
-}
+});
+
+export default EtapaCard;

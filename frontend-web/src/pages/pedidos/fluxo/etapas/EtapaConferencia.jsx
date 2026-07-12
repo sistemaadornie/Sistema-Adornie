@@ -207,12 +207,8 @@ export default function EtapaConferencia({ pedidoId, pedido, etapas, preAgendame
                                 onClick={() => navigate(`/pedidos/os/${item.ordem_servico_id}`)}>
                                 👁 Ver Ficha
                               </button>
-                            ) : item.conferencia_consultoras_preenchida ? (
-                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Pendente de preenchimento dos técnicos</span>
-                            ) : item.tipo_confeccao ? (
-                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Aguardando Conferência Consultoras (Etapa 1)</span>
                             ) : (
-                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Sem ficha de confecção</span>
+                              <span style={{ fontSize: 12, color: "var(--pf-card-sub)" }}>Ficha ainda não preenchida</span>
                             )}
                           </span>
                         </div>

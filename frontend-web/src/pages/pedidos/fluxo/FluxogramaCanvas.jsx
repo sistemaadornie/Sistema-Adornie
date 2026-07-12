@@ -1,9 +1,10 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import EtapaCard from "./EtapaCard";
 
 export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
   const wrapperRef = useRef(null);
   const flowRef = useRef(null);
+  const cardRefs = useRef({});
   const offsetRef = useRef({ x: 0, y: 0 });
   const dragging = useRef(false);
   const startRef = useRef({ x: 0, y: 0 });
@@ -12,6 +13,16 @@ export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
     if (!flowRef.current) return;
     flowRef.current.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
   }
+
+  /* Centraliza na etapa atual ao entrar na tela */
+  useLayoutEffect(() => {
+    const cardEl = cardRefs.current[etapaAtual];
+    if (!cardEl || !flowRef.current) return;
+    const x = flowRef.current.offsetWidth / 2 - (cardEl.offsetLeft + cardEl.offsetWidth / 2);
+    offsetRef.current = { x, y: 0 };
+    applyTransform(x, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onMouseDown = useCallback((e) => {
     if (e.target.closest("[role='button']") && e.target.closest(".etapa-card")) return;
@@ -58,6 +69,7 @@ export default function FluxogramaCanvas({ etapas, etapaAtual, onEtapaClick }) {
         {etapas.map((etapa, idx) => (
           <React.Fragment key={etapa.numero}>
             <EtapaCard
+              ref={(el) => { cardRefs.current[etapa.numero] = el; }}
               etapa={etapa}
               etapaAtual={etapaAtual}
               onClick={() => onEtapaClick(etapa.numero)}
