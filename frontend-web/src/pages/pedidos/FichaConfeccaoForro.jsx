@@ -15,13 +15,32 @@ function paraNumero(valor) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function formatNumeroBR(valor) {
+  if (valor === null || valor === undefined || valor === "") return "";
+  const n = typeof valor === "number" ? valor : parseFloat(String(valor).replace(",", "."));
+  return Number.isFinite(n) ? n.toFixed(2).replace(".", ",") : "";
+}
+
+function partesMedidas(itemMedidas) {
+  return String(itemMedidas || "").split(/[x×]/i).map((p) => p.trim()).filter(Boolean);
+}
+
 export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalvar, onVoltar, readOnly = false }) {
   const campoDados = modo === "conferencia_consultoras" ? "dados_conferencia_consultoras" : "dados_confeccao";
   const endpointSalvar = modo === "conferencia_consultoras" ? "conferencia-consultoras" : "confeccao";
   const tituloPagina = modo === "conferencia_consultoras" ? "Ficha de Conferência Consultoras — Forro" : "Ficha de Confecção — Forro";
   const labelSalvar = modo === "conferencia_consultoras" ? "Salvar Ficha de Conferência Consultoras" : "Salvar Ficha de Confecção";
 
-  const [dados, setDados] = useState({ ...VAZIO, ...(osData[campoDados] || {}) });
+  const [dados, setDados] = useState(() => {
+    const salvos = osData[campoDados] || {};
+    const alturaPadrao = osData.item_altura != null && osData.item_altura !== ""
+      ? formatNumeroBR(osData.item_altura)
+      : (partesMedidas(osData.item_medidas)[1] || "");
+    const larguraPadrao = osData.item_largura != null && osData.item_largura !== ""
+      ? formatNumeroBR(osData.item_largura)
+      : (partesMedidas(osData.item_medidas)[0] || "");
+    return { ...VAZIO, alturaCortina: alturaPadrao, larguraTrilho: larguraPadrao, ...salvos };
+  });
   const [itensAmbiente, setItensAmbiente] = useState([]);
 
   useEffect(() => {
@@ -265,12 +284,12 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
               )}
               <div className="os-grid-2">
                 <div className="os-field">
-                  <label>Largura do trilho (m)</label>
-                  <input type="text" placeholder="Ex: 4,92" value={dados.larguraTrilho} onChange={(e) => setCampo("larguraTrilho", e.target.value)} />
+                  <label>Largura do trilho — medida de venda (m)</label>
+                  <input type="text" placeholder="—" value={dados.larguraTrilho} disabled />
                 </div>
                 <div className="os-field">
-                  <label>Altura da cortina (m)</label>
-                  <input type="text" placeholder="Ex: 2,84" value={dados.alturaCortina} onChange={(e) => setCampo("alturaCortina", e.target.value)} />
+                  <label>Altura da cortina — medida de venda (m)</label>
+                  <input type="text" placeholder="—" value={dados.alturaCortina} disabled />
                 </div>
               </div>
             </div>
@@ -282,12 +301,12 @@ export default function FichaConfeccaoForro({ osData, modo = "confeccao", onSalv
               <div className="os-field"><label>Quant. forro</label><div className="os-v-value spec-box">{quantForro || "—"}</div></div>
             </div>
             <div className="os-info-item">
-              <span className="os-info-label"><FaRulerCombined /> Largura do trilho (referência)</span>
+              <span className="os-info-label"><FaRulerCombined /> Largura (medida de venda)</span>
               <span className="os-info-value spec-box">{dados.larguraTrilho ? `${dados.larguraTrilho} m` : "—"}</span>
             </div>
             <img src="/cortina.png" alt="Esboço da cortina (referência)" className="os-img-cortina" />
             <div className="os-info-item">
-              <span className="os-info-label"><FaRulerCombined /> Altura da cortina (referência)</span>
+              <span className="os-info-label"><FaRulerCombined /> Altura (medida de venda)</span>
               <span className="os-info-value spec-box">{dados.alturaCortina ? `${dados.alturaCortina} m` : "—"}</span>
             </div>
           </div>

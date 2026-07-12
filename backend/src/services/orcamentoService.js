@@ -25,7 +25,7 @@ async function listar(empresaId, { status, q, consultora_id } = {}) {
     conds.push(`(c.nome ILIKE $${params.length} OR o.numero ILIKE $${params.length})`);
   }
   if (consultora_id) {
-    params.push(Number(consultora_id));
+    params.push(consultora_id);
     conds.push(`o.consultora_id = $${params.length}`);
   }
 

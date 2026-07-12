@@ -82,7 +82,7 @@ async function contarInstalacoesSemana(empresaId, { consultoraId, cidade }, desl
       : "a.data BETWEEN CURRENT_DATE - INTERVAL '7 days' AND CURRENT_DATE - INTERVAL '1 day'"
   );
   if (consultoraId) {
-    params.push(Number(consultoraId));
+    params.push(consultoraId);
     cond.push(`p.consultor_id = $${params.length}`);
   }
   if (cidade) {
@@ -364,7 +364,7 @@ async function buscarAgendaSemana(empresaId, filtros = {}) {
     "a.data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'",
   ];
   if (consultoraId) {
-    params.push(Number(consultoraId));
+    params.push(consultoraId);
     cond.push(`p.consultor_id = $${params.length}`);
   }
   if (cidade) {

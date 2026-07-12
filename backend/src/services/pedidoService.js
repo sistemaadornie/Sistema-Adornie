@@ -698,7 +698,7 @@ async function atualizarEtapa(pedidoId, empresaId, userId, permissoes, campo, va
   }
 
   const temPermGeral = (permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
-  if (!temPermGeral && Number(rows[0].consultor_id) !== Number(userId)) {
+  if (!temPermGeral && String(rows[0].consultor_id) !== String(userId)) {
     const err = new Error("Acesso negado");
     err.status = 403;
     throw err;

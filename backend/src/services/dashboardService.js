@@ -95,7 +95,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     params.push(userId);
     conditions.push(`p.consultor_id = $${params.length}`);
   } else if (consultora_id) {
-    params.push(Number(consultora_id));
+    params.push(consultora_id);
     conditions.push(`p.consultor_id = $${params.length}`);
   }
 
@@ -488,7 +488,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
 
   const pedido = pedidos[0];
   const temPermGeral = (permissoes || []).includes("DASHBOARD_PEDIDOS_GERAL");
-  if (!temPermGeral && Number(pedido.consultor_id) !== Number(userId)) {
+  if (!temPermGeral && String(pedido.consultor_id) !== String(userId)) {
     const err = new Error("Acesso negado");
     err.status = 403;
     throw err;
