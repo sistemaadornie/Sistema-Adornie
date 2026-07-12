@@ -8,7 +8,7 @@ router.use(bloquearAppPWA);
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const arquitetos = await svc.listar(req.user.empresa_id, req.query.q);
+    const arquitetos = await svc.listar(req.user.empresa_id, req.query.q, req.user.permissoes, req.user.id);
     return res.json({ arquitetos });
   } catch (err) {
     return res.status(500).json({ message: "Erro ao listar arquitetos." });
@@ -17,7 +17,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
-    const arq = await svc.buscar(req.params.id, req.user.empresa_id);
+    const arq = await svc.buscar(req.params.id, req.user.empresa_id, req.user.permissoes, req.user.id);
     if (!arq) return res.status(404).json({ message: "Arquiteto não encontrado." });
     return res.json({ arquiteto: arq });
   } catch (err) {

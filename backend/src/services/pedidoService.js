@@ -631,7 +631,7 @@ async function importar(empresaId, userId, dados) {
       if (porEscritorio.rows.length > 0) {
         arquitetoId = porEscritorio.rows[0].id;
       } else {
-        const novoArq = await arqSvc.criar(empresaId, { nome: dados.arquiteto_nome.trim() });
+        const novoArq = await arqSvc.criar(empresaId, { nome: dados.arquiteto_nome.trim(), consultor_id: userId });
         arquitetoId = novoArq.id;
       }
     }

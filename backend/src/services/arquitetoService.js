@@ -1,4 +1,5 @@
 const db = require("../database/db");
+const { isComercialPuro } = require("./permissionService");
 
 /* ── Formatadores ─────────────────────────────────────────── */
 
@@ -87,12 +88,16 @@ const FROM_JOIN = `
 
 /* ── CRUD ─────────────────────────────────────────────────── */
 
-async function listar(empresaId, q) {
+async function listar(empresaId, q, permissoes, userId) {
   const params = [empresaId];
   let where = "";
   if (q) {
     params.push(`%${q}%`);
-    where = ` AND (a.nome ILIKE $2 OR a.escritorio ILIKE $2 OR e.nome ILIKE $2 OR a.email ILIKE $2 OR a.telefone ILIKE $2 OR a.cpf_cnpj ILIKE $2 OR u.nome_completo ILIKE $2)`;
+    where += ` AND (a.nome ILIKE $${params.length} OR a.escritorio ILIKE $${params.length} OR e.nome ILIKE $${params.length} OR a.email ILIKE $${params.length} OR a.telefone ILIKE $${params.length} OR a.cpf_cnpj ILIKE $${params.length} OR u.nome_completo ILIKE $${params.length})`;
+  }
+  if (isComercialPuro(permissoes)) {
+    params.push(userId);
+    where += ` AND a.consultor_id = $${params.length}`;
   }
   const res = await db.query(
     `SELECT ${SELECT_COLS} ${FROM_JOIN}
@@ -103,13 +108,17 @@ async function listar(empresaId, q) {
   return res.rows;
 }
 
-async function buscar(id, empresaId) {
+async function buscar(id, empresaId, permissoes, userId) {
   const res = await db.query(
     `SELECT ${SELECT_COLS} ${FROM_JOIN}
      WHERE a.id = $1 AND a.empresa_id = $2 AND a.deleted_at IS NULL`,
     [id, empresaId]
   );
-  return res.rows[0] || null;
+  const arq = res.rows[0] || null;
+  if (arq && isComercialPuro(permissoes) && String(arq.consultor_id) !== String(userId)) {
+    return null;
+  }
+  return arq;
 }
 
 async function criar(empresaId, dados) {
