@@ -24,7 +24,7 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     const { data } = req.body;
     if (!data) return res.status(400).json({ message: "Campo 'data' obrigatório." });
-    const crew = await svc.criarCrew(req.user.empresa_id, req.body);
+    const crew = await svc.criarCrew(req.user.empresa_id, req.body, req.user.id, req.user.nome_completo);
     return res.status(201).json({ crew });
   } catch (err) {
     console.error(err);
@@ -34,7 +34,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const crew = await svc.atualizarCrew(req.params.id, req.user.empresa_id, req.body);
+    const crew = await svc.atualizarCrew(req.params.id, req.user.empresa_id, req.body, req.user.id, req.user.nome_completo);
     return res.json({ crew });
   } catch (err) {
     console.error(err);
@@ -44,11 +44,21 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
-    await svc.deletarCrew(req.params.id, req.user.empresa_id);
+    await svc.deletarCrew(req.params.id, req.user.empresa_id, req.user.id, req.user.nome_completo);
     return res.json({ ok: true });
   } catch (err) {
     console.error(err);
     return res.status(err.status || 500).json({ message: err.message || "Erro ao deletar crew." });
+  }
+});
+
+router.get("/:id/logs", authMiddleware, async (req, res) => {
+  try {
+    const logs = await svc.getCrewLogs(req.params.id, req.user.empresa_id);
+    return res.json({ logs });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ message: err.message || "Erro ao buscar histórico." });
   }
 });
 

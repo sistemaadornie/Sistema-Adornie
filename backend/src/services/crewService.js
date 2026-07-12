@@ -1,6 +1,23 @@
 const db = require("../database/db");
 const { criarNotificacao } = require("./notificacaoService");
 
+async function gravarLogCrew(crewId, empresaId, usuarioId, usuarioNome, acao, detalhes) {
+  await db.query(
+    `INSERT INTO crew_logs (crew_id, empresa_id, usuario_id, usuario_nome, acao, detalhes)
+     VALUES ($1,$2,$3,$4,$5,$6)`,
+    [crewId, empresaId, usuarioId || null, usuarioNome || "—", acao, detalhes ? JSON.stringify(detalhes) : null]
+  ).catch((e) => console.warn("Erro ao gravar log de crew:", e.message));
+}
+
+async function getCrewLogs(crewId, empresaId) {
+  const { rows } = await db.query(
+    `SELECT id, acao, detalhes, criado_em, usuario_nome
+     FROM crew_logs WHERE crew_id=$1 AND empresa_id=$2 ORDER BY criado_em DESC LIMIT 200`,
+    [crewId, empresaId]
+  );
+  return rows;
+}
+
 // ── Notificação de equipe formada ─────────────────────────
 async function notificarMembrosCrew(crew, empresaId) {
   if (!crew || !crew.membros?.length) return;
@@ -85,7 +102,7 @@ async function listarCrew(empresaId, data) {
   }));
 }
 
-async function criarCrew(empresaId, { data, nome, veiculo_id, membros = [], agendamento_ids = [] }) {
+async function criarCrew(empresaId, { data, nome, veiculo_id, membros = [], agendamento_ids = [] }, userId, nomeCompleto) {
   const { rows } = await db.query(
     `INSERT INTO crews (empresa_id, data, nome, veiculo_id)
      VALUES ($1,$2,$3,$4) RETURNING id`,
@@ -108,15 +125,17 @@ async function criarCrew(empresaId, { data, nome, veiculo_id, membros = [], agen
     ),
   ]);
 
+  await gravarLogCrew(crewId, empresaId, userId, nomeCompleto, "criado", { nome: nome || null, membros: membros.length, agendamentos: agendamento_ids.length });
+
   const lista = await listarCrew(empresaId, data);
   const crew = lista.find((c) => c.id === crewId);
   await notificarMembrosCrew(crew, empresaId);
   return crew;
 }
 
-async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendamento_ids }) {
+async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendamento_ids }, userId, nomeCompleto) {
   const existing = await db.query(
-    `SELECT data FROM crews WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
+    `SELECT data, nome AS nome_ant, veiculo_id AS veiculo_ant FROM crews WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
     [id, empresaId]
   );
   if (!existing.rows.length) {
@@ -124,7 +143,10 @@ async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendam
     err.status = 404;
     throw err;
   }
-  const { data } = existing.rows[0];
+  const { data, nome_ant, veiculo_ant } = existing.rows[0];
+
+  const membrosAntRes = await db.query(`SELECT usuario_id FROM crew_membros WHERE crew_id=$1`, [id]);
+  const membrosAntIds = membrosAntRes.rows.map((r) => String(r.usuario_id));
 
   await db.query(
     `UPDATE crews SET nome=$1, veiculo_id=$2 WHERE id=$3`,
@@ -155,13 +177,27 @@ async function atualizarCrew(id, empresaId, { nome, veiculo_id, membros, agendam
     );
   }
 
+  const campos = [];
+  if ((nome || null) !== (nome_ant || null)) campos.push({ campo: "Nome", de: nome_ant, para: nome });
+  if ((veiculo_id || null) !== (veiculo_ant || null)) campos.push({ campo: "Veículo", de: veiculo_ant, para: veiculo_id });
+  if (membros !== undefined) {
+    const novosIds = membros.map(String);
+    const removidos = membrosAntIds.filter((m) => !novosIds.includes(m));
+    const adicionados = novosIds.filter((m) => !membrosAntIds.includes(m));
+    if (removidos.length) campos.push({ campo: "Membros removidos", de: removidos.join(", "), para: null });
+    if (adicionados.length) campos.push({ campo: "Membros adicionados", de: null, para: adicionados.join(", ") });
+  }
+  if (campos.length > 0) {
+    await gravarLogCrew(id, empresaId, userId, nomeCompleto, "editado", { campos });
+  }
+
   const lista = await listarCrew(empresaId, data);
   const crew = lista.find((c) => c.id === id);
   await notificarMembrosCrew(crew, empresaId);
   return crew;
 }
 
-async function deletarCrew(id, empresaId) {
+async function deletarCrew(id, empresaId, userId, nomeCompleto) {
   const { rowCount } = await db.query(
     `DELETE FROM crews WHERE id=$1 AND empresa_id=$2`,
     [id, empresaId]
@@ -171,6 +207,7 @@ async function deletarCrew(id, empresaId) {
     err.status = 404;
     throw err;
   }
+  await gravarLogCrew(id, empresaId, userId, nomeCompleto, "excluido", null);
 }
 
 // ── Work Schedules ────────────────────────────────────────
@@ -282,7 +319,7 @@ async function deletarWorkSchedule(id, empresaId) {
 }
 
 module.exports = {
-  listarCrew, criarCrew, atualizarCrew, deletarCrew,
+  listarCrew, criarCrew, atualizarCrew, deletarCrew, getCrewLogs,
   listarWorkSchedules, criarWorkSchedule, atualizarWorkSchedule, deletarWorkSchedule,
   getPontoPartidaDia, upsertPontoPartidaDia,
   listarEnderecosPadrao, criarEnderecoPadrao, deletarEnderecoPadrao,
