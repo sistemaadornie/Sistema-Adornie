@@ -273,3 +273,13 @@ CREATE INDEX IF NOT EXISTS idx_regioes_geo_busca ON regioes_geo (empresa_id, tip
 
 ALTER TABLE usuarios
   ADD COLUMN IF NOT EXISTS cadastro_origem TEXT NOT NULL DEFAULT 'web';
+
+
+-- ============================================================================
+-- FASE 20 — CLIENTES: CONSULTORA DE ESCOPO (clientes_consultor_id.sql)
+-- ============================================================================
+
+ALTER TABLE clientes
+  ADD COLUMN IF NOT EXISTS consultor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_clientes_consultor ON clientes (consultor_id);
