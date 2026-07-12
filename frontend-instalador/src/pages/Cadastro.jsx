@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { API_BASE } from "../services/api";
 
 function formatarCPF(valor) {
@@ -10,7 +10,6 @@ function formatarCPF(valor) {
 }
 
 export default function Cadastro() {
-  const navigate = useNavigate();
   const [form, setForm] = useState({
     nome_completo: "", email: "", senha: "", cpf: "", empresa_id: "", setor_id: "",
   });
