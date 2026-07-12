@@ -4,6 +4,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
 import Agenda from "./pages/Agenda";
 import AgendamentoDetalhe from "./pages/AgendamentoDetalhe";
 import FichaTecnicaInstalador from "./pages/FichaTecnicaInstalador";
@@ -18,6 +19,7 @@ export default function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Cadastro />} />
 
             <Route
               element={
