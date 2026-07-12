@@ -8,7 +8,7 @@ router.use(bloquearAppPWA);
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const clientes = await svc.listar(req.user.empresa_id, req.query.q);
+    const clientes = await svc.listar(req.user.empresa_id, req.query.q, req.user.permissoes, req.user.id);
     return res.json({ clientes });
   } catch (err) {
     console.error(err);
@@ -28,7 +28,7 @@ router.get("/busca", authMiddleware, async (req, res) => {
 
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
-    const cli = await svc.buscar(req.params.id, req.user.empresa_id);
+    const cli = await svc.buscar(req.params.id, req.user.empresa_id, req.user.permissoes, req.user.id);
     if (!cli) return res.status(404).json({ message: "Cliente não encontrado." });
     return res.json({ cliente: cli });
   } catch (err) {
@@ -39,7 +39,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const cli = await svc.criar(req.user.empresa_id, req.body);
+    const cli = await svc.criar(req.user.empresa_id, req.body, req.user.id);
     return res.status(201).json({ message: "Cliente criado!", cliente: cli });
   } catch (err) {
     console.error(err);
@@ -49,7 +49,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const cli = await svc.atualizar(req.params.id, req.user.empresa_id, req.body);
+    const cli = await svc.atualizar(req.params.id, req.user.empresa_id, req.body, req.user.permissoes, req.user.id);
     return res.json({ message: "Cliente atualizado!", cliente: cli });
   } catch (err) {
     console.error(err);

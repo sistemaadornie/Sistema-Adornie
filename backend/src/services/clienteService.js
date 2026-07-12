@@ -1,4 +1,5 @@
 const db = require("../database/db");
+const { isComercialPuro } = require("./permissionService");
 
 async function montarCliente(id, empresaId) {
   const cli = await db.query(
@@ -14,12 +15,16 @@ async function montarCliente(id, empresaId) {
   return { ...cli.rows[0], enderecos: enderecos.rows };
 }
 
-async function listar(empresaId, q) {
+async function listar(empresaId, q, permissoes, userId) {
   const params = [empresaId];
   let whereExtra = "";
   if (q) {
     params.push(`%${q}%`);
-    whereExtra = ` AND (c.nome ILIKE $${params.length} OR c.telefone ILIKE $${params.length} OR c.email ILIKE $${params.length} OR c.cpf ILIKE $${params.length} OR c.cnpj ILIKE $${params.length})`;
+    whereExtra += ` AND (c.nome ILIKE $${params.length} OR c.telefone ILIKE $${params.length} OR c.email ILIKE $${params.length} OR c.cpf ILIKE $${params.length} OR c.cnpj ILIKE $${params.length})`;
+  }
+  if (isComercialPuro(permissoes)) {
+    params.push(userId);
+    whereExtra += ` AND c.consultor_id = $${params.length}`;
   }
 
   const result = await db.query(
@@ -47,29 +52,40 @@ async function listar(empresaId, q) {
   return result.rows.map((c) => ({ ...c, enderecos: endPorId[c.id] || [] }));
 }
 
-async function buscar(id, empresaId) {
-  return montarCliente(id, empresaId);
+async function buscar(id, empresaId, permissoes, userId) {
+  const cliente = await montarCliente(id, empresaId);
+  if (cliente && isComercialPuro(permissoes) && String(cliente.consultor_id) !== String(userId)) {
+    return null;
+  }
+  return cliente;
 }
 
-async function criar(empresaId, dados) {
+async function criar(empresaId, dados, criadoPorId = null) {
   const { nome, telefone, email, cpf, cnpj, arquiteto_id } = dados;
   if (!nome) { const e = new Error("Nome é obrigatório."); e.status = 400; throw e; }
 
   const result = await db.query(
-    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj, arquiteto_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-    [empresaId, nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null]
+    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj, arquiteto_id, consultor_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+    [empresaId, nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null, criadoPorId || null]
   );
   return montarCliente(result.rows[0].id, empresaId);
 }
 
-async function atualizar(id, empresaId, dados) {
+async function atualizar(id, empresaId, dados, permissoes, userId) {
   const { nome, telefone, email, cpf, cnpj, arquiteto_id } = dados;
   if (!nome) { const e = new Error("Nome é obrigatório."); e.status = 400; throw e; }
 
+  const params = [nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null, id, empresaId];
+  let whereExtra = "";
+  if (isComercialPuro(permissoes)) {
+    params.push(userId);
+    whereExtra = ` AND consultor_id = $${params.length}`;
+  }
+
   const result = await db.query(
     `UPDATE clientes SET nome=$1, telefone=$2, email=$3, cpf=$4, cnpj=$5, arquiteto_id=$6, updated_at=NOW()
-     WHERE id=$7 AND empresa_id=$8 AND deleted_at IS NULL RETURNING id`,
-    [nome.trim(), telefone?.trim()||null, email?.trim()||null, cpf?.trim()||null, cnpj?.trim()||null, arquiteto_id||null, id, empresaId]
+     WHERE id=$7 AND empresa_id=$8 AND deleted_at IS NULL${whereExtra} RETURNING id`,
+    params
   );
   if (result.rows.length === 0) { const e = new Error("Cliente não encontrado."); e.status = 404; throw e; }
   return montarCliente(id, empresaId);
@@ -236,8 +252,8 @@ async function resolverCliente(empresaId, nomeRaw, extras = {}) {
 
   // 4. Criar novo cliente
   const novo = await db.query(
-    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-    [empresaId, nome, extras.telefone?.trim()||null, extras.email?.trim()||null, cpf, cnpj]
+    `INSERT INTO clientes (empresa_id, nome, telefone, email, cpf, cnpj, consultor_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [empresaId, nome, extras.telefone?.trim()||null, extras.email?.trim()||null, cpf, cnpj, extras.criadoPorId || null]
   );
   return { id: novo.rows[0].id, criado: true };
 }

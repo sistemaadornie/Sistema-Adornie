@@ -407,7 +407,7 @@ async function criar(empresaId, userId, dados) {
   /* Resolve ou cria o cliente */
   const { id: clienteId, criado: clienteCriado } = await resolverCliente(
     empresaId, cliente,
-    { telefone: cliente_telefone, email: cliente_email }
+    { telefone: cliente_telefone, email: cliente_email, criadoPorId: userId }
   );
 
   /* Se o cliente foi criado agora e há endereço, salva como endereço padrão */
@@ -570,7 +570,7 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
     (cep    || null) !== (ant.cep    || null);
 
   /* Resolve ou cria o cliente antes da transação principal */
-  const { id: clienteId } = await resolverCliente(empresaId, cliente);
+  const { id: clienteId } = await resolverCliente(empresaId, cliente, { criadoPorId: userId });
 
   const client = await db.connect();
   try {

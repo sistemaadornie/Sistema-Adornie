@@ -561,6 +561,7 @@ async function importar(empresaId, userId, dados) {
       email:    dados.email_cliente,
       cpf:      dados.cpf,
       cnpj:     dados.cnpj,
+      criadoPorId: userId,
     });
     clienteId = id;
   }
