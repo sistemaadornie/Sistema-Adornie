@@ -7,7 +7,7 @@ const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 const router = express.Router();
 router.use(bloquearAppPWA);
 
-const PODE_GERENCIAR = ["COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER"];
+const PODE_GERENCIAR = ["OPERADOR_AGENDA", "ADMIN_MASTER"];
 const PODE_APROVAR   = ["OPERADOR_AGENDA", "ADMIN_MASTER"];
 
 router.get("/", authMiddleware, permissionMiddleware(PODE_GERENCIAR), async (req, res) => {

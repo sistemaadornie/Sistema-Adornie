@@ -2,6 +2,7 @@ const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const crmService = require("../services/crmService");
 const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
+const bloquearComercialPuro = require("../middlewares/bloquearComercialPuro");
 
 const router = express.Router();
 router.use(bloquearAppPWA);
@@ -30,7 +31,7 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
 
 // ── ORÇAMENTOS ──────────────────────────────────────────
 
-router.get("/orcamentos", authMiddleware, async (req, res) => {
+router.get("/orcamentos", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const orcamentos = await crmService.listarOrcamentos(req.user.empresa_id, req.query);
     return res.json({ orcamentos });
@@ -40,7 +41,7 @@ router.get("/orcamentos", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/orcamentos/:id", authMiddleware, async (req, res) => {
+router.get("/orcamentos/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const orcamento = await crmService.buscarOrcamento(req.params.id, req.user.empresa_id);
     if (!orcamento) return res.status(404).json({ message: "Orçamento não encontrado." });
@@ -51,7 +52,7 @@ router.get("/orcamentos/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/orcamentos", authMiddleware, async (req, res) => {
+router.post("/orcamentos", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const orcamento = await crmService.criarOrcamento(req.user.empresa_id, req.user.id, req.user.nome_completo, req.body);
     return res.status(201).json({ message: "Orçamento criado com sucesso!", orcamento });
@@ -61,7 +62,7 @@ router.post("/orcamentos", authMiddleware, async (req, res) => {
   }
 });
 
-router.put("/orcamentos/:id", authMiddleware, async (req, res) => {
+router.put("/orcamentos/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const orcamento = await crmService.atualizarOrcamento(req.params.id, req.user.empresa_id, req.body, req.user.id, req.user.nome_completo);
     return res.json({ message: "Orçamento atualizado!", orcamento });
@@ -71,7 +72,7 @@ router.put("/orcamentos/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/orcamentos/:id", authMiddleware, async (req, res) => {
+router.delete("/orcamentos/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     await crmService.excluirOrcamento(req.params.id, req.user.empresa_id);
     return res.json({ message: "Orçamento removido." });
@@ -83,7 +84,7 @@ router.delete("/orcamentos/:id", authMiddleware, async (req, res) => {
 
 // ── FINANCEIRO ──────────────────────────────────────────
 
-router.get("/financeiro", authMiddleware, async (req, res) => {
+router.get("/financeiro", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const lançamentos = await crmService.listarFinanceiro(req.user.empresa_id, req.query);
     return res.json({ lançamentos });
@@ -93,7 +94,7 @@ router.get("/financeiro", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/financeiro/:id", authMiddleware, async (req, res) => {
+router.get("/financeiro/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const lançamento = await crmService.buscarFinanceiro(req.params.id, req.user.empresa_id);
     if (!lançamento) return res.status(404).json({ message: "Lançamento não encontrado." });
@@ -104,7 +105,7 @@ router.get("/financeiro/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/financeiro", authMiddleware, async (req, res) => {
+router.post("/financeiro", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const lançamento = await crmService.criarFinanceiro(req.user.empresa_id, req.body);
     return res.status(201).json({ message: "Lançamento registrado!", lançamento });
@@ -114,7 +115,7 @@ router.post("/financeiro", authMiddleware, async (req, res) => {
   }
 });
 
-router.put("/financeiro/:id", authMiddleware, async (req, res) => {
+router.put("/financeiro/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const lançamento = await crmService.atualizarFinanceiro(req.params.id, req.user.empresa_id, req.body);
     return res.json({ message: "Lançamento financeiro atualizado!", lançamento });
@@ -124,7 +125,7 @@ router.put("/financeiro/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/financeiro/:id", authMiddleware, async (req, res) => {
+router.delete("/financeiro/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     await crmService.excluirFinanceiro(req.params.id, req.user.empresa_id);
     return res.json({ message: "Lançamento financeiro excluído." });
@@ -136,7 +137,7 @@ router.delete("/financeiro/:id", authMiddleware, async (req, res) => {
 
 // ── COMISSÕES ──────────────────────────────────────────
 
-router.get("/comissoes", authMiddleware, async (req, res) => {
+router.get("/comissoes", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const comissoes = await crmService.listarComissoes(req.user.empresa_id, req.query);
     return res.json({ comissoes });
@@ -146,7 +147,7 @@ router.get("/comissoes", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/comissoes", authMiddleware, async (req, res) => {
+router.post("/comissoes", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const comissao = await crmService.criarComissao(req.user.empresa_id, req.body);
     return res.status(201).json({ message: "Comissão criada!", comissao });
@@ -156,7 +157,7 @@ router.post("/comissoes", authMiddleware, async (req, res) => {
   }
 });
 
-router.put("/comissoes/:id", authMiddleware, async (req, res) => {
+router.put("/comissoes/:id", authMiddleware, bloquearComercialPuro, async (req, res) => {
   try {
     const comissao = await crmService.atualizarComissao(req.params.id, req.user.empresa_id, req.body);
     return res.json({ message: "Comissão atualizada!", comissao });
