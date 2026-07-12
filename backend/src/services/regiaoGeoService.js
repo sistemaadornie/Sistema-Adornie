@@ -63,4 +63,17 @@ async function registrarRegiaoSeNecessaria({ empresaId, bairro, cidade, estado }
   }
 }
 
-module.exports = { registrarRegiaoSeNecessaria };
+async function buscarCoordenadasCache(empresaId, tipo, chavesNormalizadas) {
+  if (!chavesNormalizadas.length) return new Map();
+  const { rows } = await db.query(
+    `SELECT chave AS id, nome, lat::float8 AS lat, lng::float8 AS lng
+     FROM regioes_geo
+     WHERE empresa_id = $1 AND tipo = $2 AND chave = ANY($3) AND geocod_falhou = false AND lat IS NOT NULL`,
+    [empresaId, tipo, chavesNormalizadas]
+  );
+  const mapa = new Map();
+  for (const r of rows) mapa.set(r.id, r);
+  return mapa;
+}
+
+module.exports = { registrarRegiaoSeNecessaria, buscarCoordenadasCache };

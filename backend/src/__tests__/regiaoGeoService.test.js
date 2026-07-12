@@ -3,7 +3,7 @@ jest.mock("../utils/geocoding", () => ({ photon: jest.fn(), nominatim: jest.fn()
 
 const db = require("../database/db");
 const { photon, nominatim } = require("../utils/geocoding");
-const { registrarRegiaoSeNecessaria } = require("../services/regiaoGeoService");
+const { registrarRegiaoSeNecessaria, buscarCoordenadasCache } = require("../services/regiaoGeoService");
 
 afterEach(() => jest.clearAllMocks());
 
@@ -80,5 +80,24 @@ describe("registrarRegiaoSeNecessaria", () => {
 
     const insertCall = db.query.mock.calls[1];
     expect(insertCall[1]).toEqual([7, "cidade", "cidade perdida", "Cidade Perdida", null, "XX", null, null, true]);
+  });
+});
+
+describe("buscarCoordenadasCache", () => {
+  test("lista de chaves vazia nao consulta o banco", async () => {
+    const r = await buscarCoordenadasCache(7, "bairro", []);
+    expect(r.size).toBe(0);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  test("retorna um Map indexado por chave", async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{ id: "bairro cache", nome: "Bairro Cache", lat: -25.1, lng: -49.1 }],
+    });
+
+    const r = await buscarCoordenadasCache(7, "bairro", ["bairro cache"]);
+
+    expect(r.get("bairro cache")).toEqual({ id: "bairro cache", nome: "Bairro Cache", lat: -25.1, lng: -49.1 });
+    expect(db.query.mock.calls[0][1]).toEqual([7, "bairro", ["bairro cache"]]);
   });
 });
