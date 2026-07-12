@@ -110,9 +110,15 @@ export default function App() {
                   <Route path="/pedidos/os/:osId/conferencia-consultoras" element={<FichaConferenciaConsultoras />} />
                   <Route path="/pedidos/:id/fluxo"    element={<PedidoFluxo />} />
                   <Route path="/pedidos/:id/editar"   element={<EditarPedido />} />
-                  <Route path="/catalogo/produtos" element={<Produtos />} />
                   <Route path="/fornecedores" element={<Fornecedores />} />
                   <Route path="/arquitetos"  element={<Arquitetos />} />
+                </Route>
+
+                <Route element={<PermissionRoute perms={["OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS"]} />}>
+                  <Route path="/catalogo/produtos" element={<Produtos />} />
+                </Route>
+
+                <Route element={<PermissionRoute perms={["OPERADOR_AGENDA","ADMIN_MASTER"]} />}>
                   <Route path="/orcamentos"              element={<Orcamentos />} />
                   <Route path="/orcamentos/novo"         element={<OrcamentoWizard />} />
                   <Route path="/orcamentos/:id/editar"   element={<OrcamentoWizard />} />

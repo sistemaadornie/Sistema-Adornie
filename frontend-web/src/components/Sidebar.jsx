@@ -42,8 +42,8 @@ export default function Sidebar({ collapsed, onToggle, theme, onToggleTheme }) {
   const podeVerDashboard    = temPerm(user, "ADMIN_MASTER","OPERADOR_AGENDA");
   const podeVerClientes      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerPedidos       = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
-  const podeVerOrcamentos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER");
-  const podeVerCatalogo      = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
+  const podeVerOrcamentos    = temPerm(user, "OPERADOR_AGENDA","ADMIN_MASTER");
+  const podeVerCatalogo      = temPerm(user, "OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerFornecedores  = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerArquitetos    = temPerm(user, "COMERCIAL","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
   const podeVerVeiculos      = temPerm(user, "INSTALADOR","OPERADOR_AGENDA","ADMIN_MASTER","GESTOR_USUARIOS");
