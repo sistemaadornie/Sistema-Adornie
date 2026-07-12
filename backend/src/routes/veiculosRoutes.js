@@ -2,12 +2,14 @@ const express = require("express");
 const multer  = require("multer");
 const authMiddleware       = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
+const bloquearComercialPuro = require("../middlewares/bloquearComercialPuro");
 const db  = require("../database/db");
 const svc = require("../services/veiculoService");
 
 const PERM_GESTAO_VEICULO = ["OPERADOR_AGENDA", "ADMIN_MASTER", "GESTOR_USUARIOS"];
 
 const router = express.Router();
+router.use(bloquearComercialPuro);
 
 /* ── Upload de foto: somente imagens, máx 5 MB ── */
 const FOTO_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"];

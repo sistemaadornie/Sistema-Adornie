@@ -2,9 +2,11 @@ const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const svc = require("../services/categoriaService");
 const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
+const bloquearComercialPuro = require("../middlewares/bloquearComercialPuro");
 
 const router = express.Router();
 router.use(bloquearAppPWA);
+router.use(bloquearComercialPuro);
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
