@@ -723,6 +723,36 @@ router.post("/login", async (req, res) => {
 });
 
 /* ==========================
+   LOGIN — PWA (instaladores + admin_master)
+========================== */
+router.post("/pwa/login", async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    const { usuario, permissoes } = await autenticarCredenciais(email, senha);
+
+    if (!podeAcessarPWA(permissoes)) {
+      return res.status(403).json({
+        message: "Este aplicativo é exclusivo para administradores e instaladores.",
+      });
+    }
+
+    const token = assinarToken(usuario, permissoes, "pwa");
+    const refreshToken = await emitirRefreshToken(res, usuario.id);
+
+    return res.status(200).json({
+      message: "Login realizado com sucesso!",
+      token,
+      refreshToken,
+      user: usuarioParaResposta(usuario, permissoes),
+    });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    console.log(error);
+    return res.status(500).json({ message: "Erro no servidor." });
+  }
+});
+
+/* ==========================
    SOLICITAR RESET DE SENHA (público)
 ========================== */
 router.post("/solicitar-reset", async (req, res) => {

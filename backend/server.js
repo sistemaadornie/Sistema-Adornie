@@ -112,6 +112,15 @@ app.use("/api/auth/login", rateLimit({
   message: { message: "Muitas tentativas de login. Aguarde 15 minutos." },
 }));
 
+// Limit mais restrito no login do PWA (previne brute-force)
+app.use("/api/auth/pwa/login", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Muitas tentativas de login. Aguarde 15 minutos." },
+}));
+
 // Limit de reset de senha por IP — previne spam de e-mail e enumeração
 app.use("/api/auth/solicitar-reset", rateLimit({
   windowMs: 15 * 60 * 1000,
