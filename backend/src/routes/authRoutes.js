@@ -13,6 +13,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
 const { enviarResetSenha } = require("../services/emailService");
 const { registrarLog }    = require("../utils/securityLog");
+const { isInstaladorPuro, podeAcessarPWA } = require("../services/permissionService");
 
 const router = express.Router();
 
@@ -611,94 +612,111 @@ router.post("/register-empresa", async (req, res) => {
 /* ==========================
    LOGIN
 ========================== */
+/* ── helpers compartilhados por /login e /pwa/login ── */
+async function autenticarCredenciais(email, senha) {
+  if (!email || !senha) {
+    const e = new Error("Preencha todos os campos."); e.status = 400; throw e;
+  }
+
+  const resultado = await db.query(
+    `
+    SELECT
+      u.*,
+      s.nome AS setor_nome,
+      e.nome_fantasia AS empresa_nome
+    FROM usuarios u
+    LEFT JOIN setores s ON s.id = u.setor_id
+    LEFT JOIN empresas e ON e.id = u.empresa_id
+    WHERE u.email = $1
+    `,
+    [email]
+  );
+
+  if (resultado.rows.length === 0) {
+    const e = new Error("Email ou senha inválidos."); e.status = 400; throw e;
+  }
+
+  const usuario = resultado.rows[0];
+
+  if (usuario.status !== "aprovado") {
+    const e = new Error("Conta ainda não aprovada. Aguarde um responsável liberar.");
+    e.status = 403; throw e;
+  }
+
+  const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+  if (!senhaCorreta) {
+    const e = new Error("Email ou senha inválidos."); e.status = 400; throw e;
+  }
+
+  const permissoesResult = await db.query(
+    `
+    SELECT COALESCE(p.codigo, p.nome) AS codigo
+    FROM usuario_permissoes up
+    JOIN permissoes p ON p.id = up.permissao_id
+    WHERE up.usuario_id = $1
+    `,
+    [usuario.id]
+  );
+
+  return { usuario, permissoes: permissoesResult.rows.map((p) => p.codigo) };
+}
+
+function assinarToken(usuario, permissoes, app) {
+  return jwt.sign(
+    {
+      id:            usuario.id,
+      email:         usuario.email,
+      nome_completo: usuario.nome_completo,
+      foto_url:      usuario.foto_url || null,
+      status:        usuario.status,
+      empresa_id:    usuario.empresa_id,
+      setor_id:      usuario.setor_id,
+      permissoes,
+      app,
+      type:          "access",
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_EXPIRY }
+  );
+}
+
+function usuarioParaResposta(usuario, permissoes) {
+  return {
+    id:          usuario.id,
+    email:       usuario.email,
+    nome_completo: usuario.nome_completo,
+    foto_url:    usuario.foto_url,
+    setor_id:    usuario.setor_id,
+    setor_nome:  usuario.setor_nome,
+    empresa_id:  usuario.empresa_id,
+    empresa_nome: usuario.empresa_nome,
+    status:      usuario.status,
+    permissoes,
+  };
+}
+
 router.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
+    const { usuario, permissoes } = await autenticarCredenciais(email, senha);
 
-    if (!email || !senha) {
-      return res.status(400).json({ message: "Preencha todos os campos." });
-    }
-
-    const resultado = await db.query(
-      `
-      SELECT 
-        u.*,
-        s.nome AS setor_nome,
-        e.nome_fantasia AS empresa_nome
-      FROM usuarios u
-      LEFT JOIN setores s ON s.id = u.setor_id
-      LEFT JOIN empresas e ON e.id = u.empresa_id
-      WHERE u.email = $1
-      `,
-      [email]
-    );
-
-    if (resultado.rows.length === 0) {
-      return res.status(400).json({ message: "Email ou senha inválidos." });
-    }
-
-    const usuario = resultado.rows[0];
-
-    if (usuario.status !== "aprovado") {
+    if (isInstaladorPuro(permissoes)) {
       return res.status(403).json({
-        message: "Conta ainda não aprovada. Aguarde um responsável liberar.",
+        message: "Instaladores acessam pelo aplicativo do time de campo, não pelo site. Baixe o app do instalador.",
       });
     }
 
-    const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
-
-    if (!senhaCorreta) {
-      return res.status(400).json({ message: "Email ou senha inválidos." });
-    }
-
-    const permissoesResult = await db.query(
-      `
-      SELECT COALESCE(p.codigo, p.nome) AS codigo
-      FROM usuario_permissoes up
-      JOIN permissoes p ON p.id = up.permissao_id
-      WHERE up.usuario_id = $1
-      `,
-      [usuario.id]
-    );
-
-    const permissoes = permissoesResult.rows.map((p) => p.codigo);
-
-    const token = jwt.sign(
-      {
-        id:            usuario.id,
-        email:         usuario.email,
-        nome_completo: usuario.nome_completo,
-        foto_url:      usuario.foto_url || null,
-        status:        usuario.status,
-        empresa_id:    usuario.empresa_id,
-        setor_id:      usuario.setor_id,
-        permissoes,
-        type:          "access",
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: ACCESS_EXPIRY }
-    );
-
+    const token = assinarToken(usuario, permissoes, "web");
     const refreshToken = await emitirRefreshToken(res, usuario.id);
 
     return res.status(200).json({
       message: "Login realizado com sucesso!",
       token,
       refreshToken,
-      user: {
-        id:          usuario.id,
-        email:       usuario.email,
-        nome_completo: usuario.nome_completo,
-        foto_url:    usuario.foto_url,
-        setor_id:    usuario.setor_id,
-        setor_nome:  usuario.setor_nome,
-        empresa_id:  usuario.empresa_id,
-        empresa_nome: usuario.empresa_nome,
-        status:      usuario.status,
-        permissoes,
-      },
+      user: usuarioParaResposta(usuario, permissoes),
     });
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
     console.log(error);
     return res.status(500).json({ message: "Erro no servidor." });
   }
