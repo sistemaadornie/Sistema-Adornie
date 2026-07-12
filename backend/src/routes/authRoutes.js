@@ -339,7 +339,8 @@ router.get("/setores", async (req, res) => {
 ========================== */
 router.post("/register", async (req, res) => {
   try {
-    let { email, senha, nome_completo, cpf, setor_id, empresa_id } = req.body;
+    let { email, senha, nome_completo, cpf, setor_id, empresa_id, origem } = req.body;
+    const cadastroOrigem = origem === "pwa" ? "pwa" : "web";
 
     cpf = limparCPF(cpf);
 
@@ -401,11 +402,11 @@ router.post("/register", async (req, res) => {
 
     const novoUsuario = await db.query(
       `
-      INSERT INTO usuarios (email, senha, nome_completo, cpf, setor_id, empresa_id, status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'pendente')
-      RETURNING id, email, nome_completo, status, empresa_id, setor_id
+      INSERT INTO usuarios (email, senha, nome_completo, cpf, setor_id, empresa_id, status, cadastro_origem)
+      VALUES ($1, $2, $3, $4, $5, $6, 'pendente', $7)
+      RETURNING id, email, nome_completo, status, empresa_id, setor_id, cadastro_origem
       `,
-      [email, senhaCriptografada, nome_completo, cpf, setor_id, empresa_id]
+      [email, senhaCriptografada, nome_completo, cpf, setor_id, empresa_id, cadastroOrigem]
     );
 
     const usuarioCriado = novoUsuario.rows[0];
@@ -971,7 +972,7 @@ router.get(
     try {
       const resultado = await db.query(
         `
-        SELECT u.id, u.email, u.nome_completo, u.cpf, u.status, u.setor_id, u.foto_url, s.nome as setor
+        SELECT u.id, u.email, u.nome_completo, u.cpf, u.status, u.setor_id, u.foto_url, u.cadastro_origem, s.nome as setor
         FROM usuarios u
         LEFT JOIN setores s ON s.id = u.setor_id
         WHERE u.status = 'pendente'
@@ -1138,13 +1139,24 @@ router.put(
         UPDATE usuarios
         SET status = 'aprovado'
         WHERE id = $1 AND empresa_id = $2
-        RETURNING id
+        RETURNING id, cadastro_origem
         `,
         [id, req.user.empresa_id]
       );
 
       if (resultado.rows.length === 0) {
         return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      if (resultado.rows[0].cadastro_origem === "pwa") {
+        await db.query(
+          `
+          INSERT INTO usuario_permissoes (usuario_id, permissao_id)
+          SELECT $1, id FROM permissoes WHERE codigo = 'INSTALADOR' OR nome = 'INSTALADOR'
+          ON CONFLICT DO NOTHING
+          `,
+          [id]
+        );
       }
 
       return res.status(200).json({ message: "Usuário aprovado com sucesso!" });
