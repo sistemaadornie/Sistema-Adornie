@@ -3,11 +3,12 @@ const express = require("express");
 const router  = express.Router();
 const authMiddleware       = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
+const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 const svc = require("../services/dashboardGestorService");
 
 const PERM_DASHBOARD_GESTOR = ["ADMIN_MASTER", "OPERADOR_AGENDA"];
 
-router.use(authMiddleware, permissionMiddleware(PERM_DASHBOARD_GESTOR));
+router.use(bloquearAppPWA, authMiddleware, permissionMiddleware(PERM_DASHBOARD_GESTOR));
 
 function filtrosDe(req) {
   return {
