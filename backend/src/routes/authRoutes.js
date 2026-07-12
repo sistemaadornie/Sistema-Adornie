@@ -45,14 +45,14 @@ function refreshCookieOpts() {
 }
 
 /* ── helper: gera e persiste refresh token ── */
-async function emitirRefreshToken(res, usuarioId) {
+async function emitirRefreshToken(res, usuarioId, app) {
   const raw  = crypto.randomBytes(32).toString("hex");
   const hash = crypto.createHash("sha256").update(raw).digest("hex");
 
   await db.query(
-    `INSERT INTO refresh_tokens (usuario_id, token_hash, expires_at)
-     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
-    [usuarioId, hash]
+    `INSERT INTO refresh_tokens (usuario_id, token_hash, expires_at, app)
+     VALUES ($1, $2, NOW() + INTERVAL '7 days', $3)`,
+    [usuarioId, hash, app]
   );
 
   res.cookie("refreshToken", raw, refreshCookieOpts());
@@ -70,6 +70,7 @@ db.query(`
   )
 `).catch(() => {});
 db.query(`CREATE INDEX IF NOT EXISTS idx_rt_usuario ON refresh_tokens(usuario_id)`).catch(() => {});
+db.query(`ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS app TEXT`).catch(() => {});
 
 /* ── migration: tabela de tokens de reset de senha ── */
 db.query(`
@@ -574,13 +575,14 @@ router.post("/register-empresa", async (req, res) => {
         empresa_id:    usuarioAdmin.empresa_id,
         setor_id:      usuarioAdmin.setor_id,
         permissoes:    permissoesCodigos,
+        app:           "web",
         type:          "access",
       },
       process.env.JWT_SECRET,
       { expiresIn: ACCESS_EXPIRY }
     );
 
-    const refreshToken = await emitirRefreshToken(res, usuarioAdmin.id);
+    const refreshToken = await emitirRefreshToken(res, usuarioAdmin.id, "web");
 
     return res.status(201).json({
       message: "Empresa cadastrada com sucesso!",
@@ -708,7 +710,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = assinarToken(usuario, permissoes, "web");
-    const refreshToken = await emitirRefreshToken(res, usuario.id);
+    const refreshToken = await emitirRefreshToken(res, usuario.id, "web");
 
     return res.status(200).json({
       message: "Login realizado com sucesso!",
@@ -738,7 +740,7 @@ router.post("/pwa/login", async (req, res) => {
     }
 
     const token = assinarToken(usuario, permissoes, "pwa");
-    const refreshToken = await emitirRefreshToken(res, usuario.id);
+    const refreshToken = await emitirRefreshToken(res, usuario.id, "pwa");
 
     return res.status(200).json({
       message: "Login realizado com sucesso!",
@@ -931,13 +933,14 @@ router.post("/resetar-senha", async (req, res) => {
         empresa_id:    registro.empresa_id,
         setor_id:      registro.setor_id,
         permissoes,
+        app:           "web",
         type:          "access",
       },
       process.env.JWT_SECRET,
       { expiresIn: ACCESS_EXPIRY }
     );
 
-    await emitirRefreshToken(res, registro.usuario_id);
+    await emitirRefreshToken(res, registro.usuario_id, "web");
 
     return res.status(200).json({
       message: "Senha alterada com sucesso!",
@@ -1585,7 +1588,7 @@ router.post("/refresh", async (req, res) => {
     const hash = crypto.createHash("sha256").update(raw).digest("hex");
 
     const result = await db.query(
-      `SELECT rt.usuario_id, rt.expires_at, rt.token_hash,
+      `SELECT rt.usuario_id, rt.expires_at, rt.token_hash, rt.app,
               u.email, u.nome_completo, u.foto_url, u.status, u.empresa_id, u.setor_id
        FROM refresh_tokens rt
        JOIN usuarios u ON u.id = rt.usuario_id
@@ -1638,6 +1641,7 @@ router.post("/refresh", async (req, res) => {
         empresa_id:    rt.empresa_id,
         setor_id:      rt.setor_id,
         permissoes,
+        app:           rt.app,
         type:          "access",
       },
       process.env.JWT_SECRET,
