@@ -13,6 +13,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
 const { enviarResetSenha } = require("../services/emailService");
 const { registrarLog }    = require("../utils/securityLog");
+const { isInstaladorPuro, podeAcessarPWA } = require("../services/permissionService");
 
 const router = express.Router();
 
@@ -44,14 +45,14 @@ function refreshCookieOpts() {
 }
 
 /* ── helper: gera e persiste refresh token ── */
-async function emitirRefreshToken(res, usuarioId) {
+async function emitirRefreshToken(res, usuarioId, app) {
   const raw  = crypto.randomBytes(32).toString("hex");
   const hash = crypto.createHash("sha256").update(raw).digest("hex");
 
   await db.query(
-    `INSERT INTO refresh_tokens (usuario_id, token_hash, expires_at)
-     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
-    [usuarioId, hash]
+    `INSERT INTO refresh_tokens (usuario_id, token_hash, expires_at, app)
+     VALUES ($1, $2, NOW() + INTERVAL '7 days', $3)`,
+    [usuarioId, hash, app]
   );
 
   res.cookie("refreshToken", raw, refreshCookieOpts());
@@ -69,6 +70,7 @@ db.query(`
   )
 `).catch(() => {});
 db.query(`CREATE INDEX IF NOT EXISTS idx_rt_usuario ON refresh_tokens(usuario_id)`).catch(() => {});
+db.query(`ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS app TEXT`).catch(() => {});
 
 /* ── migration: tabela de tokens de reset de senha ── */
 db.query(`
@@ -338,7 +340,8 @@ router.get("/setores", async (req, res) => {
 ========================== */
 router.post("/register", async (req, res) => {
   try {
-    let { email, senha, nome_completo, cpf, setor_id, empresa_id } = req.body;
+    let { email, senha, nome_completo, cpf, setor_id, empresa_id, origem } = req.body;
+    const cadastroOrigem = origem === "pwa" ? "pwa" : "web";
 
     cpf = limparCPF(cpf);
 
@@ -400,11 +403,11 @@ router.post("/register", async (req, res) => {
 
     const novoUsuario = await db.query(
       `
-      INSERT INTO usuarios (email, senha, nome_completo, cpf, setor_id, empresa_id, status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'pendente')
-      RETURNING id, email, nome_completo, status, empresa_id, setor_id
+      INSERT INTO usuarios (email, senha, nome_completo, cpf, setor_id, empresa_id, status, cadastro_origem)
+      VALUES ($1, $2, $3, $4, $5, $6, 'pendente', $7)
+      RETURNING id, email, nome_completo, status, empresa_id, setor_id, cadastro_origem
       `,
-      [email, senhaCriptografada, nome_completo, cpf, setor_id, empresa_id]
+      [email, senhaCriptografada, nome_completo, cpf, setor_id, empresa_id, cadastroOrigem]
     );
 
     const usuarioCriado = novoUsuario.rows[0];
@@ -572,13 +575,14 @@ router.post("/register-empresa", async (req, res) => {
         empresa_id:    usuarioAdmin.empresa_id,
         setor_id:      usuarioAdmin.setor_id,
         permissoes:    permissoesCodigos,
+        app:           "web",
         type:          "access",
       },
       process.env.JWT_SECRET,
       { expiresIn: ACCESS_EXPIRY }
     );
 
-    const refreshToken = await emitirRefreshToken(res, usuarioAdmin.id);
+    const refreshToken = await emitirRefreshToken(res, usuarioAdmin.id, "web");
 
     return res.status(201).json({
       message: "Empresa cadastrada com sucesso!",
@@ -611,94 +615,141 @@ router.post("/register-empresa", async (req, res) => {
 /* ==========================
    LOGIN
 ========================== */
+/* ── helpers compartilhados por /login e /pwa/login ── */
+async function autenticarCredenciais(email, senha) {
+  if (!email || !senha) {
+    const e = new Error("Preencha todos os campos."); e.status = 400; throw e;
+  }
+
+  const resultado = await db.query(
+    `
+    SELECT
+      u.*,
+      s.nome AS setor_nome,
+      e.nome_fantasia AS empresa_nome
+    FROM usuarios u
+    LEFT JOIN setores s ON s.id = u.setor_id
+    LEFT JOIN empresas e ON e.id = u.empresa_id
+    WHERE u.email = $1
+    `,
+    [email]
+  );
+
+  if (resultado.rows.length === 0) {
+    const e = new Error("Email ou senha inválidos."); e.status = 400; throw e;
+  }
+
+  const usuario = resultado.rows[0];
+
+  if (usuario.status !== "aprovado") {
+    const e = new Error("Conta ainda não aprovada. Aguarde um responsável liberar.");
+    e.status = 403; throw e;
+  }
+
+  const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+  if (!senhaCorreta) {
+    const e = new Error("Email ou senha inválidos."); e.status = 400; throw e;
+  }
+
+  const permissoesResult = await db.query(
+    `
+    SELECT COALESCE(p.codigo, p.nome) AS codigo
+    FROM usuario_permissoes up
+    JOIN permissoes p ON p.id = up.permissao_id
+    WHERE up.usuario_id = $1
+    `,
+    [usuario.id]
+  );
+
+  return { usuario, permissoes: permissoesResult.rows.map((p) => p.codigo) };
+}
+
+function assinarToken(usuario, permissoes, app) {
+  return jwt.sign(
+    {
+      id:            usuario.id,
+      email:         usuario.email,
+      nome_completo: usuario.nome_completo,
+      foto_url:      usuario.foto_url || null,
+      status:        usuario.status,
+      empresa_id:    usuario.empresa_id,
+      setor_id:      usuario.setor_id,
+      permissoes,
+      app,
+      type:          "access",
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_EXPIRY }
+  );
+}
+
+function usuarioParaResposta(usuario, permissoes) {
+  return {
+    id:          usuario.id,
+    email:       usuario.email,
+    nome_completo: usuario.nome_completo,
+    foto_url:    usuario.foto_url,
+    setor_id:    usuario.setor_id,
+    setor_nome:  usuario.setor_nome,
+    empresa_id:  usuario.empresa_id,
+    empresa_nome: usuario.empresa_nome,
+    status:      usuario.status,
+    permissoes,
+  };
+}
+
 router.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
+    const { usuario, permissoes } = await autenticarCredenciais(email, senha);
 
-    if (!email || !senha) {
-      return res.status(400).json({ message: "Preencha todos os campos." });
-    }
-
-    const resultado = await db.query(
-      `
-      SELECT 
-        u.*,
-        s.nome AS setor_nome,
-        e.nome_fantasia AS empresa_nome
-      FROM usuarios u
-      LEFT JOIN setores s ON s.id = u.setor_id
-      LEFT JOIN empresas e ON e.id = u.empresa_id
-      WHERE u.email = $1
-      `,
-      [email]
-    );
-
-    if (resultado.rows.length === 0) {
-      return res.status(400).json({ message: "Email ou senha inválidos." });
-    }
-
-    const usuario = resultado.rows[0];
-
-    if (usuario.status !== "aprovado") {
+    if (isInstaladorPuro(permissoes)) {
       return res.status(403).json({
-        message: "Conta ainda não aprovada. Aguarde um responsável liberar.",
+        message: "Instaladores acessam pelo aplicativo do time de campo, não pelo site. Baixe o app do instalador.",
       });
     }
 
-    const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
-
-    if (!senhaCorreta) {
-      return res.status(400).json({ message: "Email ou senha inválidos." });
-    }
-
-    const permissoesResult = await db.query(
-      `
-      SELECT COALESCE(p.codigo, p.nome) AS codigo
-      FROM usuario_permissoes up
-      JOIN permissoes p ON p.id = up.permissao_id
-      WHERE up.usuario_id = $1
-      `,
-      [usuario.id]
-    );
-
-    const permissoes = permissoesResult.rows.map((p) => p.codigo);
-
-    const token = jwt.sign(
-      {
-        id:            usuario.id,
-        email:         usuario.email,
-        nome_completo: usuario.nome_completo,
-        foto_url:      usuario.foto_url || null,
-        status:        usuario.status,
-        empresa_id:    usuario.empresa_id,
-        setor_id:      usuario.setor_id,
-        permissoes,
-        type:          "access",
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: ACCESS_EXPIRY }
-    );
-
-    const refreshToken = await emitirRefreshToken(res, usuario.id);
+    const token = assinarToken(usuario, permissoes, "web");
+    const refreshToken = await emitirRefreshToken(res, usuario.id, "web");
 
     return res.status(200).json({
       message: "Login realizado com sucesso!",
       token,
       refreshToken,
-      user: {
-        id:          usuario.id,
-        email:       usuario.email,
-        nome_completo: usuario.nome_completo,
-        foto_url:    usuario.foto_url,
-        setor_id:    usuario.setor_id,
-        setor_nome:  usuario.setor_nome,
-        empresa_id:  usuario.empresa_id,
-        empresa_nome: usuario.empresa_nome,
-        status:      usuario.status,
-        permissoes,
-      },
+      user: usuarioParaResposta(usuario, permissoes),
     });
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    console.log(error);
+    return res.status(500).json({ message: "Erro no servidor." });
+  }
+});
+
+/* ==========================
+   LOGIN — PWA (instaladores + admin_master)
+========================== */
+router.post("/pwa/login", async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    const { usuario, permissoes } = await autenticarCredenciais(email, senha);
+
+    if (!podeAcessarPWA(permissoes)) {
+      return res.status(403).json({
+        message: "Este aplicativo é exclusivo para administradores e instaladores.",
+      });
+    }
+
+    const token = assinarToken(usuario, permissoes, "pwa");
+    const refreshToken = await emitirRefreshToken(res, usuario.id, "pwa");
+
+    return res.status(200).json({
+      message: "Login realizado com sucesso!",
+      token,
+      refreshToken,
+      user: usuarioParaResposta(usuario, permissoes),
+    });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
     console.log(error);
     return res.status(500).json({ message: "Erro no servidor." });
   }
@@ -882,13 +933,14 @@ router.post("/resetar-senha", async (req, res) => {
         empresa_id:    registro.empresa_id,
         setor_id:      registro.setor_id,
         permissoes,
+        app:           "web",
         type:          "access",
       },
       process.env.JWT_SECRET,
       { expiresIn: ACCESS_EXPIRY }
     );
 
-    await emitirRefreshToken(res, registro.usuario_id);
+    await emitirRefreshToken(res, registro.usuario_id, "web");
 
     return res.status(200).json({
       message: "Senha alterada com sucesso!",
@@ -923,7 +975,7 @@ router.get(
     try {
       const resultado = await db.query(
         `
-        SELECT u.id, u.email, u.nome_completo, u.cpf, u.status, u.setor_id, u.foto_url, s.nome as setor
+        SELECT u.id, u.email, u.nome_completo, u.cpf, u.status, u.setor_id, u.foto_url, u.cadastro_origem, s.nome as setor
         FROM usuarios u
         LEFT JOIN setores s ON s.id = u.setor_id
         WHERE u.status = 'pendente'
@@ -1090,13 +1142,24 @@ router.put(
         UPDATE usuarios
         SET status = 'aprovado'
         WHERE id = $1 AND empresa_id = $2
-        RETURNING id
+        RETURNING id, cadastro_origem
         `,
         [id, req.user.empresa_id]
       );
 
       if (resultado.rows.length === 0) {
         return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      if (resultado.rows[0].cadastro_origem === "pwa") {
+        await db.query(
+          `
+          INSERT INTO usuario_permissoes (usuario_id, permissao_id)
+          SELECT $1, id FROM permissoes WHERE codigo = 'INSTALADOR' OR nome = 'INSTALADOR'
+          ON CONFLICT DO NOTHING
+          `,
+          [id]
+        );
       }
 
       return res.status(200).json({ message: "Usuário aprovado com sucesso!" });
@@ -1525,7 +1588,7 @@ router.post("/refresh", async (req, res) => {
     const hash = crypto.createHash("sha256").update(raw).digest("hex");
 
     const result = await db.query(
-      `SELECT rt.usuario_id, rt.expires_at, rt.token_hash,
+      `SELECT rt.usuario_id, rt.expires_at, rt.token_hash, rt.app,
               u.email, u.nome_completo, u.foto_url, u.status, u.empresa_id, u.setor_id
        FROM refresh_tokens rt
        JOIN usuarios u ON u.id = rt.usuario_id
@@ -1578,6 +1641,7 @@ router.post("/refresh", async (req, res) => {
         empresa_id:    rt.empresa_id,
         setor_id:      rt.setor_id,
         permissoes,
+        app:           rt.app,
         type:          "access",
       },
       process.env.JWT_SECRET,

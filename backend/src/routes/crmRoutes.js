@@ -1,8 +1,10 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const crmService = require("../services/crmService");
+const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 
 const router = express.Router();
+router.use(bloquearAppPWA);
 
 // ── DASHBOARD E STATS ────────────────────────────────────
 

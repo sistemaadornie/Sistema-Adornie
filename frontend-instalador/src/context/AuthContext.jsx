@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setLoginError("");
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/pwa/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),
@@ -53,12 +53,6 @@ export function AuthProvider({ children }) {
 
       if (!res.ok) {
         setLoginError(data.message || "Email ou senha inválidos.");
-        return false;
-      }
-
-      const permissoes = data.user?.permissoes ?? [];
-      if (!permissoes.includes("INSTALADOR")) {
-        setLoginError("Este aplicativo é exclusivo para a equipe de instalação.");
         return false;
       }
 

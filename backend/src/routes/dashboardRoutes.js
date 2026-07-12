@@ -2,7 +2,10 @@
 const express = require("express");
 const router  = express.Router();
 const auth    = require("../middlewares/authMiddleware");
+const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 const svc     = require("../services/dashboardService");
+
+router.use(bloquearAppPWA);
 
 router.get("/pedidos", auth, async (req, res) => {
   try {

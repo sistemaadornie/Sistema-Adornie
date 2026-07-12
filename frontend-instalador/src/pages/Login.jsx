@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
@@ -62,6 +62,10 @@ export default function Login() {
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
+
+      <p style={{ textAlign: "center", marginTop: 16 }}>
+        Ainda não tem conta? <Link to="/cadastro">Cadastre-se</Link>
+      </p>
     </div>
   );
 }

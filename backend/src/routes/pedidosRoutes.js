@@ -6,8 +6,10 @@ const db  = require("../database/db");
 const dashboardSvc = require("../services/dashboardService");
 const auditSvc = require("../services/auditoriaService");
 const { labelProdutoConferencia } = require("../utils/produtoLabel");
+const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 
 const router = express.Router();
+router.use(bloquearAppPWA);
 const uploadPdf = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },

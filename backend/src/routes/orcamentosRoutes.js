@@ -2,8 +2,10 @@ const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const permissionMiddleware = require("../middlewares/permissionMiddleware");
 const svc = require("../services/orcamentoService");
+const bloquearAppPWA = require("../middlewares/bloquearAppPWA");
 
 const router = express.Router();
+router.use(bloquearAppPWA);
 
 const PODE_GERENCIAR = ["COMERCIAL", "OPERADOR_AGENDA", "ADMIN_MASTER"];
 const PODE_APROVAR   = ["OPERADOR_AGENDA", "ADMIN_MASTER"];
