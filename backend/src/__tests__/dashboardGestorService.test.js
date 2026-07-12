@@ -233,6 +233,7 @@ describe("buscarMapa", () => {
       { id: 3, status: "pendente", total: "700",  data_pedido: "2026-07-05", cidade: "Joinville", bairro: "Centro", cliente_id: 3, numero_sequencial: 3, estagio: { etapa_atual: 1 } }, // fora de Curitiba, ignorado no modo bairros
     ]);
     db.query
+      .mockResolvedValueOnce({ rows: [] }) // cache de regioes (Bairro Desconhecido: sem match)
       .mockResolvedValueOnce({ rows: [] }) // categorias por pedido
       .mockResolvedValueOnce({ rows: [] }); // atendimentos por pedido
 
@@ -251,6 +252,7 @@ describe("buscarMapa", () => {
       { id: 11, status: "pendente", total: "400", data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Outro Bairro Inexistente", cliente_id: 11, numero_sequencial: 11, estagio: { etapa_atual: 1 } },
     ]);
     db.query
+      .mockResolvedValueOnce({ rows: [] }) // cache de regioes (nenhum dos dois bairros tem match)
       .mockResolvedValueOnce({ rows: [] }) // categorias por pedido
       .mockResolvedValueOnce({ rows: [] }); // atendimentos por pedido
 
@@ -261,6 +263,22 @@ describe("buscarMapa", () => {
     expect(outrosRegioes[0].clientes).toBe(2);
     expect(outrosRegioes[0].pedidosAtivos).toBe(2);
     expect(outrosRegioes[0].faturamento).toBe(700);
+  });
+
+  test("modo bairros: usa coordenada do cache pra bairro nao mapeado na lista fixa", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "800", data_pedido: "2026-07-05", cidade: "Curitiba", bairro: "Bairro Cache", cliente_id: 1, numero_sequencial: 1, estagio: { etapa_atual: 1 } },
+    ]);
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: "bairro cache", nome: "Bairro Cache", lat: -25.1, lng: -49.1 }] }) // cache de regioes
+      .mockResolvedValueOnce({ rows: [] }) // categorias por pedido
+      .mockResolvedValueOnce({ rows: [] }); // atendimentos por pedido
+
+    const r = await svc.buscarMapa(7, { modo: "bairros", periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.regioes).toHaveLength(1);
+    expect(r.regioes[0]).toMatchObject({ id: "bairro cache", nome: "Bairro Cache", lat: -25.1, lng: -49.1, faturamento: 800 });
+    expect(db.query.mock.calls[0][1]).toEqual([7, "bairro", ["bairro cache"]]);
   });
 });
 

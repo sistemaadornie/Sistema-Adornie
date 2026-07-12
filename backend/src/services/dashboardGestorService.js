@@ -7,8 +7,9 @@ const {
   ETAPAS_FUNIL,
   MAPA_BAIRROS, MAPA_BAIRROS_OUTROS,
   MAPA_CIDADES, MAPA_CIDADES_OUTROS,
-  buscarCoordenada,
+  buscarCoordenada, normalizar,
 } = require("../config/dashboardGestorConfig");
+const { buscarCoordenadasCache, backfillRegioes } = require("./regiaoGeoService");
 
 async function buscarPedidosEnriquecidos(empresaId, { consultoraId } = {}) {
   return dashboardService.listarPedidosDashboard(
@@ -295,10 +296,16 @@ async function buscarMapa(empresaId, filtros = {}, hoje = new Date()) {
 
   const listaCoordenadas = modo === "cidades" ? MAPA_CIDADES : MAPA_BAIRROS;
   const outrosCoord = modo === "cidades" ? MAPA_CIDADES_OUTROS : MAPA_BAIRROS_OUTROS;
+  const tipoRegiao = modo === "cidades" ? "cidade" : "bairro";
+
+  const chavesNaoResolvidas = [...grupos.keys()]
+    .filter((chave) => !buscarCoordenada(chave, listaCoordenadas))
+    .map((chave) => normalizar(chave));
+  const cache = await buscarCoordenadasCache(empresaId, tipoRegiao, chavesNaoResolvidas);
 
   const porRegiao = new Map();
   for (const [chave, lista] of grupos) {
-    const coord = buscarCoordenada(chave, listaCoordenadas) || outrosCoord;
+    const coord = buscarCoordenada(chave, listaCoordenadas) || cache.get(normalizar(chave)) || outrosCoord;
     if (!porRegiao.has(coord.id)) porRegiao.set(coord.id, { ...coord, pedidos: [] });
     porRegiao.get(coord.id).pedidos.push(...lista);
   }
