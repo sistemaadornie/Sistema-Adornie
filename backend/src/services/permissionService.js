@@ -31,4 +31,9 @@ function podeGerenciarAgendamentos(permissoes) {
   return p.has("OPERADOR_AGENDA") || p.has("ADMIN_MASTER");
 }
 
-module.exports = { isInstaladorPuro, isComercialPuro, podeGerenciarAgendamentos };
+function podeAcessarPWA(permissoes) {
+  const p = normalizar(permissoes);
+  return p.has("ADMIN_MASTER") || p.has("INSTALADOR");
+}
+
+module.exports = { isInstaladorPuro, isComercialPuro, podeGerenciarAgendamentos, podeAcessarPWA };
