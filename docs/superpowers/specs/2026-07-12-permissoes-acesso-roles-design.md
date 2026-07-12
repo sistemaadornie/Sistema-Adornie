@@ -117,15 +117,15 @@ obrigatório dentro do service), não apenas ocultação de UI no frontend.
 
 | Módulo | Regra |
 |---|---|
-| Agendamentos | Acesso total: cria, vê e edita/cancela qualquer agendamento (inclusive de outras consultoras), sem filtro de dono. Toda edição feita por uma consultora registra uma entrada de auditoria (quem alterou, o quê, valor anterior → novo). |
-| Mapa / Equipes | Acesso total às ações existentes (criar/editar equipe, etc.), mesmo mecanismo de auditoria de alterações. |
-| Arquitetos | Visível apenas os registros com `consultor_id = usuário logado`. Filtro obrigatório no service (não opt-in via query param). |
-| Clientes | Nova coluna `clientes.consultor_id`. Visível apenas os do próprio usuário. Cliente criado por uma consultora já nasce com `consultor_id` preenchido. |
-| Pedidos | Visível apenas os com `consultor_id = usuário logado`. O filtro "filtrar por consultora" desaparece da UI quando o usuário logado é consultora; o backend ignora/rejeita esse parâmetro caso uma consultora tente enviá-lo mesmo assim (sempre força o próprio `consultor_id`). |
-| Veículos | Bloqueio total (403) em todas as rotas de `veiculosRoutes.js` para quem só tem `COMERCIAL`. |
-| Orçamentos | Bloqueio total — tanto o módulo novo (`orcamentosRoutes.js`) quanto o legado CRM (rotas de orçamento/financeiro/comissões em `crmRoutes.js`). |
-| Catálogo | Bloqueio total em `produtosRoutes.js` e `categoriasRoutes.js`. |
-| Dashboard | Bloqueio total, tanto `dashboardRoutes.js` quanto `dashboardGestorRoutes.js`. Isso muda o comportamento atual (hoje uma consultora sem `DASHBOARD_PEDIDOS_GERAL` consegue ver o dashboard filtrado só com os próprios pedidos) — deixa de ver o dashboard por completo. |
+| Agendamentos | Acesso total: cria, vê e edita/cancela qualquer agendamento (inclusive de outras consultoras), sem filtro de dono. **Nota de implementação:** hoje `agendamentoService.js` já restringe usuários "COMERCIAL puro" (`isComercialPuro()`, em `permissionService.js`) a só ver/reagendar/cancelar os próprios agendamentos (`listar`, `reagendar`, `alterarStatus`) — essas restrições precisam ser **removidas**, não adicionadas. A auditoria de edição (quem alterou, o quê, valor anterior → novo, inclusive troca de equipe) **já existe e funciona** via tabela `agendamento_logs` + função `gravarLog()` + rota `GET /agendamentos/:id/logs`, consumida pela tela `AgendamentosHistorico.jsx` ("Histórico de atividades") — nenhum trabalho novo necessário aqui. |
+| Mapa / Equipes | Acesso total às ações existentes (criar/editar equipe, etc.) — já é assim hoje (`crewRoutes.js` só exige `authMiddleware`, sem restrição por dono). **Falta implementar:** não existe nenhum mecanismo de auditoria para crews hoje; precisa de uma tabela `crew_logs` nova, seguindo o mesmo padrão de `agendamento_logs`. |
+| Arquitetos | Visível apenas os registros com `consultor_id = usuário logado`. Filtro obrigatório em `arquitetoService.listar`/`buscar` (não opt-in via query param) — hoje não existe filtro nenhum, é trabalho novo. |
+| Clientes | Nova coluna `clientes.consultor_id`. Visível apenas os do próprio usuário. Cliente criado por uma consultora já nasce com `consultor_id` preenchido. Trabalho novo (hoje não existe filtro nem coluna). |
+| Pedidos | Visível apenas os com `consultor_id = usuário logado`; filtro "filtrar por consultora" some da UI pra consultora. **Nota de implementação:** isso já está implementado hoje — a tela de Pedidos (`Pedidos.jsx`) consome `GET /api/dashboard/pedidos` (`dashboardService.listarPedidosDashboard`), que já força `consultor_id = userId` pra quem não tem a permissão avulsa `DASHBOARD_PEDIDOS_GERAL`, e o filtro de consultora na UI já só aparece pra quem tem essa permissão. Nenhuma mudança de código necessária — só um teste de regressão confirmando o comportamento e um passo de rollout: **garantir que nenhuma consultora (`COMERCIAL` puro) tenha `DASHBOARD_PEDIDOS_GERAL` atribuída hoje** (é uma permissão avulsa, hoje provavelmente atribuída manualmente via SQL a alguns usuários). |
+| Veículos | Bloqueio total (403) em todas as rotas de `veiculosRoutes.js` para quem só tem `COMERCIAL`. Trabalho novo (hoje só `POST`/`PUT`/`DELETE` têm alguma restrição, e `COMERCIAL` não está nela, então nem essas rotas bloqueiam consultora hoje). |
+| Orçamentos | Bloqueio total no módulo novo (`orcamentosRoutes.js` — hoje `COMERCIAL` está explicitamente liberado em `PODE_GERENCIAR`, precisa ser removido) e nas rotas de orçamento/financeiro/comissões do CRM legado (`crmRoutes.js`, paths `/orcamentos*`, `/financeiro*`, `/comissoes*` — hoje sem proteção nenhuma). Não inclui `/crm/retornos`, `/crm/stats`, `/crm/dashboard` (não são "orçamentos"). |
+| Catálogo | Bloqueio total em `produtosRoutes.js` e `categoriasRoutes.js` (hoje sem proteção nenhuma). Trabalho novo. |
+| Dashboard | **Já satisfeito hoje, nenhum trabalho novo.** A tela `Dashboard.jsx` (Dashboard do Gestor, KPIs) consome `dashboardGestorRoutes.js`, que já tem `router.use(authMiddleware, permissionMiddleware(["ADMIN_MASTER","OPERADOR_AGENDA"]))` no topo — `COMERCIAL` já é 403 em tudo, e o link já não aparece no `Sidebar.jsx`/`App.jsx` pra consultora. (Não confundir com `dashboardRoutes.js`, que apesar do nome é na verdade o endpoint de listagem de Pedidos — ver linha acima.) |
 
 ### Registros sem dono (órfãos)
 
@@ -136,25 +136,35 @@ precisam passar por um backfill manual de `consultor_id` — feito fora desta sp
 
 ## Auditoria de alterações (agendamentos + mapa/equipe)
 
-Tabela genérica reutilizável `alteracoes_auditoria`:
+**Agendamentos:** já implementado hoje, sem nenhum trabalho necessário. `agendamentoService.js`
+grava um log em `agendamento_logs` (via `gravarLog()`) a cada criação, edição, cancelamento,
+exclusão, mudança de status e reagendamento — incluindo diff campo a campo (`{campo, de, para}`)
+e entradas específicas para membros de equipe adicionados/removidos. `GET /agendamentos/:id/logs`
+expõe isso e `frontend-web/src/pages/agendamentos/AgendamentosHistorico.jsx` já renderiza como
+"Histórico de atividades". Como o registro sempre grava `usuarioId`/`usuarioNome` de quem chamou a
+ação, uma consultora editando o agendamento de outra já aparece corretamente no histórico assim
+que a restrição de dono for removida (ver tabela acima).
 
-```
-entidade        text        -- ex: 'agendamento', 'equipe'
-entidade_id     uuid/int
-usuario_id      uuid        -- quem fez a alteração
-campo           text
-valor_anterior  text
-valor_novo      text
-criado_em       timestamptz default now()
+**Mapa / Equipes:** não existe hoje. Segue o mesmo padrão já estabelecido para agendamentos —
+nova tabela `crew_logs`, análoga a `agendamento_logs`:
+
+```sql
+CREATE TABLE crew_logs (
+  id           SERIAL PRIMARY KEY,
+  crew_id      INTEGER NOT NULL,
+  empresa_id   INTEGER NOT NULL,
+  usuario_id   <tipo de usuarios.id — INTEGER local / UUID Supabase>,
+  usuario_nome TEXT NOT NULL,
+  acao         TEXT NOT NULL,   -- 'criado' | 'editado' | 'excluido'
+  detalhes     JSONB,           -- { campos: [{ campo, de, para }, ...] }
+  criado_em    TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
-Alimentada nos pontos de edição de agendamento (`agendamentosRoutes.js`/service correspondente) e
-de equipe/mapa (`crewRoutes.js`/service correspondente) — a cada `UPDATE`, compara campo a campo o
-estado anterior vs. o novo e grava uma linha por campo alterado. Para mudanças que não são colunas
-escalares (ex.: membros adicionados/removidos de `agendamento_equipe`), cada adição/remoção também
-vira uma linha, com `campo = "equipe"` e `valor_anterior`/`valor_novo` descrevendo quem entrou ou
-saiu. A tela de detalhe do agendamento e a tela de equipe ganham uma seção "Histórico de
-alterações" listando essas entradas (quem, quando, campo, de → para).
+Alimentada em `crewService.criarCrew`/`atualizarCrew`/`deletarCrew` (compara o estado antes/depois
+e grava só os campos que mudaram, igual ao bloco de diff já existente em
+`agendamentoService.atualizar`). Nova rota `GET /crews/:id/logs` e uma seção "Histórico de
+alterações" na tela de equipe/mapa do frontend, no mesmo estilo visual da timeline de agendamentos.
 
 ## Migrations necessárias
 
@@ -162,9 +172,9 @@ alterações" listando essas entradas (quem, quando, campo, de → para).
   seguindo o padrão de adaptação dupla local (`INTEGER`) / Supabase (`UUID`) já usado em
   `_supabase_update*.sql` para `arquitetos.consultor_id`/`pedidos.consultor_id`.
 - `usuarios.cadastro_origem` (ou coluna equivalente) para marcar cadastros vindos do PWA.
-- Nova tabela `alteracoes_auditoria`.
+- Nova tabela `crew_logs` (ver seção de auditoria acima).
 - Nenhuma migration de schema é necessária para a lógica de login/JWT (é mudança de código:
-  novo endpoint, novo claim, novo middleware).
+  novo endpoint, novo claim, novo middleware), nem para a auditoria de agendamentos (já existe).
 
 ## Plano de testes
 
@@ -175,11 +185,17 @@ Automatizados (backend):
   `OPERADOR_AGENDA`, `GESTOR_USUARIOS` puros.
 - Token com `app: "pwa"` sem `ADMIN_MASTER`/`OPERADOR_AGENDA`/`COMERCIAL` é rejeitado em rotas de
   clientes/pedidos/arquitetos/orçamentos/catálogo/dashboard.
-- Rotas de veículos/orçamentos (ambos os módulos)/catálogo/dashboard retornam 403 para `COMERCIAL`.
-- Listagens de arquitetos/clientes/pedidos filtram por `consultor_id` quando o usuário é
-  `COMERCIAL`; tentativa de forçar `?consultora_id=outro` via API é ignorada/rejeitada.
-- Edição de agendamento e de equipe gera entrada em `alteracoes_auditoria` com valor
-  anterior/novo corretos.
+- Rotas de veículos/orçamentos (ambos os módulos)/catálogo retornam 403 para `COMERCIAL`.
+  `dashboard-gestor` já tem esse teste implícito na proteção existente — confirmar que segue
+  cobrindo `COMERCIAL`.
+- Listagens de arquitetos/clientes filtram por `consultor_id` quando o usuário é `COMERCIAL`.
+  Pedidos (via `GET /api/dashboard/pedidos`): teste de regressão confirmando que `COMERCIAL` sem
+  `DASHBOARD_PEDIDOS_GERAL` só vê os próprios e que `?consultora_id=outro` é ignorado (comportamento
+  já existente).
+- Edição de agendamento por uma consultora aparece em `agendamento_logs` com o nome de quem editou
+  e o diff correto (comportamento já existente, só precisa de um teste novo cobrindo o caso
+  consultora-edita-agendamento-de-outra, já que antes isso nem era possível). Edição de equipe gera
+  entrada em `crew_logs` com valor anterior/novo corretos (mecanismo novo).
 - Cadastro via PWA cria usuário `pendente` com `cadastro_origem = "pwa"`; aprovação no site
   pré-marca `INSTALADOR`.
 
