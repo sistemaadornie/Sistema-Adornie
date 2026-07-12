@@ -72,6 +72,15 @@ router.get("/mapa", async (req, res) => {
   }
 });
 
+router.post("/mapa/backfill-regioes", async (req, res) => {
+  try {
+    res.json(await svc.backfillRegioesMapa(req.user.empresa_id));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro ao rodar backfill de regiões." });
+  }
+});
+
 router.get("/agenda-semana", async (req, res) => {
   try {
     res.json(await svc.buscarAgendaSemana(req.user.empresa_id, filtrosDe(req)));

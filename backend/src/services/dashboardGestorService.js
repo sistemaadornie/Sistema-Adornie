@@ -404,6 +404,10 @@ async function buscarAgendaSemana(empresaId, filtros = {}) {
   return { compromissos };
 }
 
+async function backfillRegioesMapa(empresaId) {
+  return backfillRegioes(empresaId);
+}
+
 module.exports = {
   buscarFiltros,
   buscarPedidosEnriquecidos,
@@ -413,5 +417,6 @@ module.exports = {
   buscarAlertas,
   buscarConsultoras,
   buscarMapa,
+  backfillRegioesMapa,
   buscarAgendaSemana,
 };
