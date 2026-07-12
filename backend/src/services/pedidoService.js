@@ -3,6 +3,7 @@ const cliSvc = require("./clienteService");
 const arqSvc = require("./arquitetoService");
 const auditSvc = require("./auditoriaService");
 const vinculoAutoSvc = require("./vinculoAutomaticoService");
+const regiaoGeoSvc = require("./regiaoGeoService");
 
 const STATUS_VALIDOS = ["pendente", "em_andamento", "concluido", "cancelado"];
 
@@ -381,6 +382,7 @@ async function criar(empresaId, userId, dados) {
     await _salvarPagamentos(client, pedidoId, pagamentos);
 
     await client.query("COMMIT");
+    regiaoGeoSvc.registrarRegiaoSeNecessaria({ empresaId, bairro, cidade, estado }).catch(() => {});
     return montarPedido(pedidoId, empresaId);
   } catch (err) {
     await client.query("ROLLBACK");
@@ -530,6 +532,7 @@ async function atualizar(id, empresaId, dados, userId) {
     }
 
     await client.query("COMMIT");
+    regiaoGeoSvc.registrarRegiaoSeNecessaria({ empresaId, bairro, cidade, estado }).catch(() => {});
     return montarPedido(id, empresaId);
   } catch (err) {
     await client.query("ROLLBACK");

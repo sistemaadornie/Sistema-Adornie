@@ -270,3 +270,57 @@ describe('importar', () => {
     expect(pedido.arquiteto_id).toBe(42);
   });
 });
+
+jest.mock('../services/regiaoGeoService', () => ({
+  registrarRegiaoSeNecessaria: jest.fn().mockResolvedValue(undefined),
+}));
+const regiaoGeoSvc = require('../services/regiaoGeoService');
+
+describe('registrarRegiaoSeNecessaria e chamado ao salvar pedido', () => {
+  test('criar: chama registrarRegiaoSeNecessaria com bairro/cidade/estado do pedido', async () => {
+    const fakeId = 77;
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: fakeId, empresa_id: 10, status: 'pendente', numero_origem: null, numero_sequencial: 1, cliente_nome: null, cliente_telefone: null, consultor_nome: null, arquiteto_nome: null, tem_anexo_pdf: false }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const client = makeClient([
+      { rows: [] },               // BEGIN
+      { rows: [{ seq: 1 }] },     // nextval
+      { rows: [{ id: fakeId }] }, // INSERT pedidos
+      { rows: [] },               // SELECT existing ids
+      { rows: [] },               // DELETE pagamentos
+      { rows: [] },               // COMMIT
+    ]);
+    db.connect.mockResolvedValue(client);
+    regiaoGeoSvc.registrarRegiaoSeNecessaria.mockResolvedValue();
+
+    await svc.criar(10, 99, {
+      status: 'pendente', bairro: 'Batel', cidade: 'Curitiba', estado: 'PR',
+      itens: [], pagamentos: [],
+    });
+
+    expect(regiaoGeoSvc.registrarRegiaoSeNecessaria).toHaveBeenCalledWith({
+      empresaId: 10, bairro: 'Batel', cidade: 'Curitiba', estado: 'PR',
+    });
+  });
+
+  test('criar: erro em registrarRegiaoSeNecessaria nao derruba a criacao do pedido', async () => {
+    const fakeId = 78;
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: fakeId, empresa_id: 10, status: 'pendente', numero_origem: null, numero_sequencial: 1, cliente_nome: null, cliente_telefone: null, consultor_nome: null, arquiteto_nome: null, tem_anexo_pdf: false }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const client = makeClient([
+      { rows: [] }, { rows: [{ seq: 1 }] }, { rows: [{ id: fakeId }] },
+      { rows: [] }, { rows: [] }, { rows: [] },
+    ]);
+    db.connect.mockResolvedValue(client);
+    regiaoGeoSvc.registrarRegiaoSeNecessaria.mockRejectedValue(new Error('geocod falhou'));
+
+    const pedido = await svc.criar(10, 99, { status: 'pendente', itens: [], pagamentos: [] });
+
+    expect(pedido.id).toBe(fakeId);
+  });
+});
