@@ -51,6 +51,24 @@ export default function InicializacaoDia({
   const [salvando,            setSalvando]            = useState(false);
   const [erro,                setErro]                = useState(null);
   const [enderecosPorVeiculo, setEnderecosPorVeiculo] = useState({});
+  const [historicoAberto, setHistoricoAberto] = useState(null); // id do crew com histórico expandido
+  const [historicoPorCrew, setHistoricoPorCrew] = useState({});
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+
+  const toggleHistorico = useCallback(async (crewId) => {
+    if (historicoAberto === crewId) { setHistoricoAberto(null); return; }
+    setHistoricoAberto(crewId);
+    if (historicoPorCrew[crewId] !== undefined) return;
+    setCarregandoHistorico(true);
+    try {
+      const res = await api.get(`/crews/${crewId}/logs`);
+      setHistoricoPorCrew((prev) => ({ ...prev, [crewId]: res.logs || [] }));
+    } catch {
+      setHistoricoPorCrew((prev) => ({ ...prev, [crewId]: [] }));
+    } finally {
+      setCarregandoHistorico(false);
+    }
+  }, [historicoAberto, historicoPorCrew]);
 
   /* ── Carrega endereços padrão salvos para um veículo ── */
   const carregarEnderecos = useCallback(async (veiculoId) => {
@@ -221,12 +239,44 @@ export default function InicializacaoDia({
                     onChange={(e) => updateCrew(key, "nome", e.target.value)}
                     style={{ flex: 1, fontWeight: 600, fontSize: 14, minHeight: 34, padding: "5px 10px" }}
                   />
+                  {crew.id && (
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => toggleHistorico(crew.id)}>
+                      {historicoAberto === crew.id ? "Ocultar histórico" : "Histórico"}
+                    </button>
+                  )}
                   {crews.length > 1 && (
                     <button className="btn btn-ghost btn-sm" style={{ color: "var(--color-danger)", fontSize: 12, padding: "4px 10px" }} onClick={() => removeCrew(key)}>
                       Remover
                     </button>
                   )}
                 </div>
+
+                {crew.id && historicoAberto === crew.id && (
+                  <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+                    {carregandoHistorico && !historicoPorCrew[crew.id] ? (
+                      <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Carregando...</span>
+                    ) : (historicoPorCrew[crew.id] || []).length === 0 ? (
+                      <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Nenhuma alteração registrada.</span>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {(historicoPorCrew[crew.id] || []).map((log) => (
+                          <div key={log.id} style={{ fontSize: 12 }}>
+                            <strong>{log.usuario_nome}</strong>{" "}
+                            {log.acao === "criado" ? "criou a equipe" : log.acao === "excluido" ? "excluiu a equipe" : "editou a equipe"}
+                            {log.detalhes?.campos?.map((c, i) => (
+                              <div key={i} style={{ color: "var(--color-text-muted)", marginLeft: 8 }}>
+                                {c.campo}: {c.de ?? "—"} → {c.para ?? "—"}
+                              </div>
+                            ))}
+                            <div style={{ color: "var(--color-text-muted)", fontSize: 11 }}>
+                              {new Date(log.criado_em).toLocaleString("pt-BR")}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
 
