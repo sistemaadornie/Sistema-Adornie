@@ -134,5 +134,5 @@ module.exports = {
   ETAPAS_FUNIL,
   MAPA_BAIRROS, MAPA_BAIRROS_OUTROS,
   MAPA_CIDADES, MAPA_CIDADES_OUTROS,
-  buscarCoordenada,
+  buscarCoordenada, normalizar,
 };

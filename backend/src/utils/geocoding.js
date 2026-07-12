@@ -237,4 +237,4 @@ async function geocodificarLote(db, empresaId) {
   return { total: rows.length, ok, falhou, falhaIds };
 }
 
-module.exports = { geocodificarAgendamento, geocodificarLote, avaliarEndereco, photon };
+module.exports = { geocodificarAgendamento, geocodificarLote, avaliarEndereco, photon, nominatim };
