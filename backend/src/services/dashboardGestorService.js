@@ -1,6 +1,7 @@
 "use strict";
 const db = require("../database/db");
 const dashboardService = require("./dashboardService");
+const { fmtNumeroOrigem } = require("./pedidoService");
 const { getPeriodoAtual, getPeriodoAnterior } = require("../utils/periodoGestor");
 const {
   ETAPAS_FUNIL,
@@ -38,6 +39,10 @@ function filtrarAtivos(pedidos) {
 
 function filtrarNaoCancelados(pedidos) {
   return pedidos.filter((p) => p.status !== "cancelado");
+}
+
+function numeroExibicao(p) {
+  return fmtNumeroOrigem(p.numero_origem) || `#${p.numero_sequencial}`;
 }
 
 async function buscarFiltros(empresaId) {
@@ -171,7 +176,7 @@ async function buscarFunilDetalhe(empresaId, numero, filtros = {}, hoje = new Da
     descricao: etapa.descricao,
     responsavel: etapa.responsavel,
     count: pedidos.length,
-    exemplos: pedidos.slice(0, 5).map((p) => ({ numero: `#${p.numero_sequencial}`, cliente: p.cliente_nome })),
+    exemplos: pedidos.slice(0, 5).map((p) => ({ numero: numeroExibicao(p), cliente: p.cliente_nome })),
   };
 }
 
@@ -185,7 +190,8 @@ async function buscarAlertas(empresaId, filtros = {}) {
   const total = comRisco.length;
 
   const alertas = comRisco.slice(0, 20).map((p) => ({
-    numeroPedido: `#${p.numero_sequencial}`,
+    pedidoId: p.id,
+    numeroPedido: numeroExibicao(p),
     cliente: p.cliente_nome,
     cidade: p.cidade,
     etapa: ETAPAS_FUNIL.find((e) => e.numero === p.estagio.etapa_atual)?.nome || "",
@@ -321,8 +327,11 @@ async function buscarMapa(empresaId, filtros = {}, hoje = new Date()) {
       .slice(0, 3)
       .map(([categoria, qtd]) => ({ categoria, pct: totalItens > 0 ? Math.round((qtd / totalItens) * 100) : 0 }));
 
+    const corIndex = listaCoordenadas.findIndex((c) => c.id === r.id);
+
     return {
-      id: r.id, nome: r.nome, x: r.x, y: r.y,
+      id: r.id, nome: r.nome, lat: r.lat, lng: r.lng,
+      corIndex: corIndex >= 0 ? corIndex : listaCoordenadas.length,
       clientes: clientesUnicos.size,
       pedidosAtivos: ativos.length,
       atendimentos,
@@ -330,7 +339,7 @@ async function buscarMapa(empresaId, filtros = {}, hoje = new Date()) {
       mix,
       faturamento,
       pedidosLista: ativos.slice(0, 4).map((p) => ({
-        numero: `#${p.numero_sequencial}`,
+        numero: numeroExibicao(p),
         etapa: ETAPAS_FUNIL.find((e) => e.numero === p.estagio.etapa_atual)?.nome || "",
       })),
     };
@@ -375,6 +384,7 @@ async function buscarAgendaSemana(empresaId, filtros = {}) {
   );
 
   const compromissos = rows.map((r) => ({
+    id: r.id,
     data: r.data,
     hora: r.hora,
     tipo: r.tipo,

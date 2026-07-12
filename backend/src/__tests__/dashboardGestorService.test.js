@@ -150,6 +150,16 @@ describe("buscarFunilDetalhe", () => {
     });
   });
 
+  test("usa o número importado do pedido (numero_origem) em vez do sequencial interno, quando disponível", async () => {
+    dashboardService.listarPedidosDashboard.mockResolvedValue([
+      { id: 1, status: "pendente", total: "100", data_pedido: "2026-07-05", cidade: "Curitiba", numero_sequencial: 42, numero_origem: "#00002304", cliente_nome: "Regina", estagio: { etapa_atual: 3 } },
+    ]);
+
+    const r = await svc.buscarFunilDetalhe(7, 3, { periodo: "mes" }, new Date(2026, 6, 11));
+
+    expect(r.exemplos).toEqual([{ numero: "#2304", cliente: "Regina" }]);
+  });
+
   test("lança erro 400 para etapa inválida", async () => {
     await expect(svc.buscarFunilDetalhe(7, 99, {})).rejects.toMatchObject({ status: 400 });
   });
@@ -169,7 +179,7 @@ describe("buscarAlertas", () => {
     expect(r.total).toBe(2);
     expect(r.alertas.map((a) => a.numeroPedido)).toEqual(["#11", "#10"]); // atrasado (-3) antes de urgente (2)
     expect(r.alertas[0]).toEqual({
-      numeroPedido: "#11", cliente: "B", cidade: "Curitiba", etapa: "Separação",
+      pedidoId: 2, numeroPedido: "#11", cliente: "B", cidade: "Curitiba", etapa: "Separação",
       consultora: "Marina", diasParaPrazo: -3, nivel: "atrasado",
     });
   });
@@ -231,7 +241,7 @@ describe("buscarMapa", () => {
     expect(r.regioes).toHaveLength(2);
     const batel = r.regioes.find((x) => x.id === "batel");
     const outros = r.regioes.find((x) => x.id === "outros");
-    expect(batel).toMatchObject({ nome: "Batel", x: 44, y: 54, clientes: 1, pedidosAtivos: 1, faturamento: 1000 });
+    expect(batel).toMatchObject({ nome: "Batel", lat: -25.4444, lng: -49.2881, clientes: 1, pedidosAtivos: 1, faturamento: 1000 });
     expect(outros).toMatchObject({ nome: "Outros", clientes: 1, pedidosAtivos: 1, faturamento: 500 });
   });
 
@@ -268,7 +278,7 @@ describe("buscarAgendaSemana", () => {
     const r = await svc.buscarAgendaSemana(7, { consultoraId: 5, cidade: "Curitiba" });
 
     expect(r.compromissos).toEqual([{
-      data: "2026-07-15", hora: "09:00:00", tipo: "Conferência",
+      id: 1, data: "2026-07-15", hora: "09:00:00", tipo: "Conferência",
       cliente: "Sra. Regina", local: "Batel, Curitiba", equipe: "Marina Alencar", veiculo: "Fiorino I",
     }]);
     const [sql, params] = db.query.mock.calls[0];
