@@ -73,8 +73,15 @@ async function nominatim({ rua, numero, bairro, cidade, estado }) {
   const estadoFull = estadoNome(estado);
 
   // Tenta query estruturada primeiro (mais precisa)
+  // Sem rua, usa o bairro como valor de "street" (busca estruturada do Nominatim
+  // trata "street" como dica livre, não coluna estrita) para não virar uma busca
+  // só de cidade quando o chamador pediu geocodificação de bairro.
+  const streetValue = rua
+    ? `${numero ? numero + " " : ""}${rua}`
+    : bairro || "";
+
   const estruturada = new URLSearchParams({
-    ...(rua    ? { street: `${numero ? numero + " " : ""}${rua}` } : {}),
+    ...(streetValue ? { street: streetValue } : {}),
     ...(cidade ? { city: cidade } : {}),
     state:   estadoFull,
     country: "Brazil",
@@ -102,7 +109,7 @@ async function nominatim({ rua, numero, bairro, cidade, estado }) {
   await sleep(1100); // respeita o rate limit de 1 req/s do Nominatim
 
   // Tenta query livre como fallback
-  const livre = `${rua || ""} ${numero || ""} ${cidade} ${estadoFull} Brasil`.replace(/\s+/g, " ").trim();
+  const livre = `${rua || ""} ${numero || ""} ${bairro || ""} ${cidade} ${estadoFull} Brasil`.replace(/\s+/g, " ").trim();
   const livreParams = new URLSearchParams({ q: livre, format: "json", limit: "1", countrycodes: "br" });
   const r2 = await httpGet("nominatim.openstreetmap.org", `/search?${livreParams.toString()}`);
 
