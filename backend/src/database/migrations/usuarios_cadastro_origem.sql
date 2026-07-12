@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS cadastro_origem TEXT NOT NULL DEFAULT 'web';
