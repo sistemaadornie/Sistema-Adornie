@@ -298,11 +298,6 @@ async function listar(empresaId, userId, permissoes, filtros) {
     params.push(usuario_id);
     wheres.push(`EXISTS (SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id=a.id AND ae.usuario_id=$${params.length})`);
   }
-  if (isComercialPuro(permissoes)) {
-    params.push(userId);
-    wheres.push(`(a.criado_por=$${params.length} OR EXISTS (SELECT 1 FROM agendamento_equipe ae WHERE ae.agendamento_id=a.id AND ae.usuario_id=$${params.length}))`);
-  }
-
   const result = await db.query(
     `
     SELECT
@@ -713,16 +708,6 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
   const STATUS_INSTALADOR = ["andamento","concluido","nao_concluido"];
   if (isInstaladorPuro(permissoes) && !STATUS_INSTALADOR.includes(status)) {
     const e = new Error("Instaladores não podem alterar para este status."); e.status = 403; throw e;
-  }
-
-  if (status === "cancelado" && isComercialPuro(permissoes)) {
-    const criadorCheck = await db.query(
-      `SELECT criado_por FROM agendamentos WHERE id=$1 AND empresa_id=$2 LIMIT 1`,
-      [id, empresaId]
-    );
-    if (criadorCheck.rows[0]?.criado_por !== userId) {
-      const e = new Error("Vendedores só podem cancelar agendamentos que criaram."); e.status = 403; throw e;
-    }
   }
 
   const existe = await db.query(
@@ -1254,7 +1239,7 @@ async function reagendar(id, empresaId, userId, nomeCompleto, permissoes, { data
 
   const podeGer = podeGerenciarAgendamentos(permissoes);
   const ehVend  = isComercialPuro(permissoes);
-  if (!podeGer && !(ehVend && ag.criado_por === userId)) {
+  if (!podeGer && !ehVend) {
     const e = new Error("Sem permissão para reagendar este agendamento."); e.status = 403; throw e;
   }
 
