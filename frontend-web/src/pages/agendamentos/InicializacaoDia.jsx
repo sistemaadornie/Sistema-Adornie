@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../services/api";
+import { CREW_PALETTE } from "../../constants/crewPalette";
 
 const LETRAS = ["A","B","C","D","E","F","G","H"];
 
-export const CREW_PALETTE = [
-  "#38bdf8","#4ade80","#fbbf24","#c084fc",
-  "#fb923c","#2dd4bf","#f472b6","#818cf8",
-];
+export { CREW_PALETTE };
 
 function crewVazio(data, idx) {
   return {

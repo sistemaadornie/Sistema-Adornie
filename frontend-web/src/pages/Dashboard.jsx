@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -64,8 +65,8 @@ function FitRegioes({ regioes }) {
 const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 const fmtN = (v) => Number(v || 0).toLocaleString("pt-BR");
 
-function Skeleton() {
-  return <div className="rel-skeleton" style={{ height: 90 }} />;
+function Skeleton({ height = 90 }) {
+  return <div className="rel-skeleton" style={{ height }} />;
 }
 
 function Empty({ children = "Sem dados." }) {
@@ -77,14 +78,95 @@ function KpiDelta({ tipo, texto }) {
   return <span className={`dash-kpi-delta ${cls}`}>{texto}</span>;
 }
 
+function IconTrendUp({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 17 9 11 13 15 21 6" />
+      <polyline points="15 6 21 6 21 12" />
+    </svg>
+  );
+}
+function IconClipboard() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+      <line x1="8" y1="10" x2="16" y2="10" />
+      <line x1="8" y1="14" x2="16" y2="14" />
+      <line x1="8" y1="18" x2="13" y2="18" />
+    </svg>
+  );
+}
+function IconClock() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15.5 14" />
+    </svg>
+  );
+}
+function IconCalendar() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="5" width="17" height="15" rx="2" />
+      <line x1="3.5" y1="9.5" x2="20.5" y2="9.5" />
+      <line x1="8" y1="3" x2="8" y2="6.5" />
+      <line x1="16" y1="3" x2="16" y2="6.5" />
+    </svg>
+  );
+}
+function IconAlertTriangle() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" />
+      <line x1="12" y1="9.5" x2="12" y2="14" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IconRefresh({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 11a8 8 0 0 0-14.6-4.4M4 4v4h4" />
+      <path d="M4 13a8 8 0 0 0 14.6 4.4M20 20v-4h-4" />
+    </svg>
+  );
+}
+function IconInfo() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16" />
+      <circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function formatRelativo(date) {
+  if (!date) return "agora";
+  const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (diffMin < 1) return "agora há pouco";
+  if (diffMin === 1) return "há 1 minuto";
+  if (diffMin < 60) return `há ${diffMin} minutos`;
+  const diffH = Math.floor(diffMin / 60);
+  return diffH === 1 ? "há 1 hora" : `há ${diffH} horas`;
+}
+
+const DIAS_LETRA = ["D", "S", "T", "Q", "Q", "S", "S"];
+function isoLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState("mes");
   const [consultoraId, setConsultoraId] = useState("");
-  const [cidade, setCidade] = useState("");
 
   const [opcoes, setOpcoes] = useState(null);
   const [kpis, setKpis] = useState(null);
   const [kpisLoading, setKpisLoading] = useState(true);
+  const [kpisAtualizadoEm, setKpisAtualizadoEm] = useState(null);
+  const [, setTick] = useState(0);
 
   const [modoMapa, setModoMapa] = useState("bairros");
   const [mapa, setMapa] = useState(null);
@@ -93,6 +175,7 @@ export default function Dashboard() {
 
   const [alertas, setAlertas] = useState(null);
   const [alertasLoading, setAlertasLoading] = useState(true);
+  const [alertasErro, setAlertasErro] = useState(false);
 
   const [funil, setFunil] = useState(null);
   const [funilLoading, setFunilLoading] = useState(true);
@@ -106,88 +189,107 @@ export default function Dashboard() {
   const [consultorasLoading, setConsultorasLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/dashboard-gestor/filtros").then(setOpcoes).catch(() => setOpcoes({ consultoras: [], cidades: [] }));
+    api.get("/dashboard-gestor/filtros").then(setOpcoes).catch(() => setOpcoes({ consultoras: [] }));
   }, []);
 
   const carregarKpis = useCallback(() => {
     setKpisLoading(true);
     const params = new URLSearchParams({ periodo });
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/kpis?${params}`)
-      .then(setKpis)
+      .then((data) => { setKpis(data); setKpisAtualizadoEm(new Date()); })
       .catch(() => setKpis(null))
       .finally(() => setKpisLoading(false));
-  }, [periodo, consultoraId, cidade]);
+  }, [periodo, consultoraId]);
 
   useEffect(() => { carregarKpis(); }, [carregarKpis]);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     setMapaLoading(true);
     setRegiaoSelecionada(null);
     const params = new URLSearchParams({ periodo, modo: modoMapa });
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/mapa?${params}`)
       .then(setMapa)
       .catch(() => setMapa(null))
       .finally(() => setMapaLoading(false));
-  }, [periodo, consultoraId, cidade, modoMapa]);
+  }, [periodo, consultoraId, modoMapa]);
 
-  useEffect(() => {
+  const carregarAlertas = useCallback(() => {
     setAlertasLoading(true);
+    setAlertasErro(false);
     const params = new URLSearchParams();
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/alertas?${params}`)
       .then(setAlertas)
-      .catch(() => setAlertas(null))
+      .catch(() => { setAlertas(null); setAlertasErro(true); })
       .finally(() => setAlertasLoading(false));
-  }, [consultoraId, cidade]);
+  }, [consultoraId]);
+
+  useEffect(() => { carregarAlertas(); }, [carregarAlertas]);
 
   useEffect(() => {
     setFunilLoading(true);
     const params = new URLSearchParams({ periodo });
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/funil?${params}`)
       .then(setFunil)
       .catch(() => setFunil(null))
       .finally(() => setFunilLoading(false));
-  }, [periodo, consultoraId, cidade]);
+  }, [periodo, consultoraId]);
 
   useEffect(() => {
     const params = new URLSearchParams({ periodo });
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/funil/${etapaSelecionada}?${params}`)
       .then(setDetalheEtapa)
       .catch(() => setDetalheEtapa(null));
-  }, [etapaSelecionada, periodo, consultoraId, cidade]);
+  }, [etapaSelecionada, periodo, consultoraId]);
 
   useEffect(() => {
     setAgendaLoading(true);
     const params = new URLSearchParams();
     if (consultoraId) params.set("consultora_id", consultoraId);
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/agenda-semana?${params}`)
       .then(setAgenda)
       .catch(() => setAgenda(null))
       .finally(() => setAgendaLoading(false));
-  }, [consultoraId, cidade]);
+  }, [consultoraId]);
 
   useEffect(() => {
     setConsultorasLoading(true);
     const params = new URLSearchParams({ periodo });
-    if (cidade) params.set("cidade", cidade);
     api.get(`/dashboard-gestor/consultoras?${params}`)
       .then(setConsultoras)
       .catch(() => setConsultoras(null))
       .finally(() => setConsultorasLoading(false));
-  }, [periodo, cidade]);
+  }, [periodo]);
 
-  const hasFilters = !!(consultoraId || cidade);
-  const limparFiltros = () => { setConsultoraId(""); setCidade(""); };
+  const semanaInstalacoes = useMemo(() => {
+    const hoje = new Date();
+    const hojeIso = isoLocal(hoje);
+    const porDia = new Map();
+    for (const c of agenda?.compromissos || []) {
+      if (c.tipo !== "Instalação") continue;
+      const iso = isoLocal(new Date(c.data));
+      porDia.set(iso, (porDia.get(iso) || 0) + 1);
+    }
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(hoje);
+      d.setDate(d.getDate() + i);
+      const iso = isoLocal(d);
+      return { letra: DIAS_LETRA[d.getDay()], count: porDia.get(iso) || 0, hoje: iso === hojeIso };
+    });
+  }, [agenda]);
+  const semanaMax = Math.max(...semanaInstalacoes.map((d) => d.count), 1);
+
+  const hasFilters = !!consultoraId;
+  const limparFiltros = () => { setConsultoraId(""); };
 
   const mapTheme = useMapTheme();
   const tileUrl = mapTheme === "light" ? TILE_LIGHT : TILE_DARK;
@@ -220,51 +322,98 @@ export default function Dashboard() {
           ))}
         </select>
 
-        <select className="ek-select dash-select" value={cidade} onChange={(e) => setCidade(e.target.value)}>
-          <option value="">Todas as cidades</option>
-          {(opcoes?.cidades || []).map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-
         {hasFilters && (
           <button className="rel-limpar-filtros" onClick={limparFiltros}>Limpar filtros</button>
         )}
       </div>
 
       {kpisLoading ? (
-        <div className="rel-kpis"><Skeleton /><Skeleton /><Skeleton /><Skeleton /></div>
+        <div className="rel-kpis dash-kpis"><Skeleton height={188} /><Skeleton height={188} /><Skeleton height={188} /><Skeleton height={188} /></div>
       ) : !kpis ? (
         <Empty>Não foi possível carregar os KPIs.</Empty>
       ) : (
-        <div className="rel-kpis">
-          <div className="rel-kpi">
-            <div className="rel-kpi-label">Faturamento do período</div>
-            <div className="rel-kpi-value">{fmtR(kpis.faturamento.valor)}</div>
-            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-              <KpiDelta tipo={kpis.faturamento.deltaPct >= 0 ? "up" : "down"} texto={`${kpis.faturamento.deltaPct >= 0 ? "+" : ""}${kpis.faturamento.deltaPct}%`} />
-              <span className="rel-kpi-sub">vs. período anterior</span>
+        <>
+          <div className="rel-kpis dash-kpis">
+            <div className="rel-kpi dash-kpi-card dash-kpi-featured">
+              <div className="dash-kpi-icon"><IconTrendUp /></div>
+              <div className="rel-kpi-label">Faturamento<br />do período</div>
+              <div className="rel-kpi-value">{fmtR(kpis.faturamento.valor)}</div>
+              <div className="dash-kpi-divider" />
+              <div className="dash-kpi-foot">
+                <KpiDelta tipo={kpis.faturamento.deltaPct >= 0 ? "up" : "down"} texto={`${kpis.faturamento.deltaPct >= 0 ? "+" : ""}${kpis.faturamento.deltaPct}%`} />
+                <span className="rel-kpi-sub">vs. período anterior</span>
+              </div>
+            </div>
+
+            <div className="rel-kpi dash-kpi-card">
+              <div className="dash-kpi-icon"><IconClipboard /></div>
+              <div className="rel-kpi-label">Pedidos<br />ativos</div>
+              <div className="rel-kpi-value">{fmtN(kpis.pedidosAtivos.valor)}</div>
+              <div className="rel-kpi-sub">no funil</div>
+              <button
+                type="button"
+                className="dash-kpi-pill"
+                onClick={() => document.getElementById("dash-funil-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                <IconInfo /> Acompanhamento em tempo real
+              </button>
+            </div>
+
+            <div className="rel-kpi dash-kpi-card">
+              <div className="dash-kpi-icon dash-kpi-icon-alert"><IconClock /></div>
+              <div className="rel-kpi-label">Prazos em<br />risco</div>
+              <div className="rel-kpi-value">{fmtN(kpis.prazosEmRisco.valor)}</div>
+              <div className="rel-kpi-sub">atrasados ou urgentes</div>
+              {kpis.prazosEmRisco.valor > 0 && (
+                <button
+                  type="button"
+                  className="dash-kpi-alert-box"
+                  onClick={() => document.getElementById("dash-prazos-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  <IconAlertTriangle />
+                  <div>
+                    <strong>Atenção necessária</strong>
+                    <p>Esses pedidos precisam de ação imediata.</p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <div className="rel-kpi dash-kpi-card">
+              <div className="dash-kpi-icon"><IconCalendar /></div>
+              <div className="rel-kpi-label">Instalações<br />/semana</div>
+              <div className="rel-kpi-value">{fmtN(kpis.instalacoesSemana.valor)}</div>
+              <div className="dash-kpi-foot">
+                <span className={`dash-kpi-badge ${kpis.instalacoesSemana.deltaAbs >= 0 ? "up" : "down"}`}>
+                  {kpis.instalacoesSemana.deltaAbs >= 0 ? "+" : ""}{kpis.instalacoesSemana.deltaAbs}
+                </span>
+                <span className="rel-kpi-sub">vs. semana passada</span>
+              </div>
+              <div className="dash-kpi-week">
+                {semanaInstalacoes.map((d, i) => (
+                  <div key={i} className="dash-kpi-week-col">
+                    <div
+                      className={`dash-kpi-week-bar${d.hoje ? " hoje" : ""}`}
+                      style={{ height: `${Math.max(10, Math.round((d.count / semanaMax) * 100))}%` }}
+                      title={`${d.count} instalação(ões)`}
+                    />
+                    <span className="dash-kpi-week-lbl">{d.letra}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="rel-kpi">
-            <div className="rel-kpi-label">Pedidos ativos</div>
-            <div className="rel-kpi-value">{fmtN(kpis.pedidosAtivos.valor)}</div>
-            <div className="rel-kpi-sub">no funil</div>
-          </div>
-          <div className="rel-kpi">
-            <div className="rel-kpi-label">Prazos em risco</div>
-            <div className="rel-kpi-value">{fmtN(kpis.prazosEmRisco.valor)}</div>
-            <div className="rel-kpi-sub">atrasados ou urgentes</div>
-          </div>
-          <div className="rel-kpi">
-            <div className="rel-kpi-label">Instalações/semana</div>
-            <div className="rel-kpi-value">{fmtN(kpis.instalacoesSemana.valor)}</div>
-            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-              <KpiDelta tipo={kpis.instalacoesSemana.deltaAbs >= 0 ? "up" : "down"} texto={`${kpis.instalacoesSemana.deltaAbs >= 0 ? "+" : ""}${kpis.instalacoesSemana.deltaAbs}`} />
-              <span className="rel-kpi-sub">vs. semana passada</span>
+
+          <div className="dash-kpi-summary">
+            <div className="dash-kpi-summary-left">
+              <span className="dash-kpi-summary-icon"><IconTrendUp /></span>
+              <span>Visão geral do desempenho do período.</span>
             </div>
+            <button type="button" className="dash-kpi-summary-refresh" onClick={carregarKpis} disabled={kpisLoading}>
+              <IconRefresh className={kpisLoading ? "spin" : ""} /> Atualizado {formatRelativo(kpisAtualizadoEm)}
+            </button>
           </div>
-        </div>
+        </>
       )}
 
       <div className="dash-row-2">
@@ -352,22 +501,33 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="ek-section">
+        <div className="ek-section" id="dash-prazos-section">
           <div className="ek-section-head">
             <h3>Prazos em risco</h3>
             {alertas && <span className="ek-count-badge">{alertas.total} pedidos</span>}
           </div>
           <div style={{ padding: "4px 16px 12px" }}>
-            {alertasLoading ? <Skeleton /> : !alertas?.alertas?.length ? <Empty>Nenhum pedido em risco com esses filtros.</Empty> : (
+            {alertasLoading ? <Skeleton /> : alertasErro ? (
+              <div className="rel-empty">
+                Não foi possível carregar os prazos em risco.{" "}
+                <button type="button" className="dash-inline-retry" onClick={carregarAlertas}>Tentar novamente</button>
+              </div>
+            ) : !alertas?.alertas?.length ? <Empty>Nenhum pedido em risco com esses filtros.</Empty> : (
               alertas.alertas.map((a, i) => (
-                <div key={i} className="dash-alerta-row">
+                <div
+                  key={i}
+                  className="dash-alerta-row"
+                  onClick={() => a.pedidoId && navigate(`/pedidos/${a.pedidoId}/fluxo`)}
+                >
                   <span className="dash-alerta-dot" style={{ background: NIVEL_COR[a.nivel] }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", gap: 8 }}>
                       <strong style={{ fontSize: 13 }}>{a.numeroPedido}</strong>
                       <span style={{ fontSize: 12, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.cliente}</span>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>{a.cidade} · {a.etapa} · {a.consultora}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+                      {a.cidade} · {a.etapa} · <span className="dash-alerta-consultora">{a.consultora}</span>
+                    </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: NIVEL_COR[a.nivel] }}>
@@ -382,7 +542,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="ek-section">
+      <div className="ek-section" id="dash-funil-section">
         <div className="ek-section-head">
           <div>
             <h3>Funil de Pedidos</h3>
@@ -457,7 +617,11 @@ export default function Dashboard() {
           <div style={{ padding: "4px 16px 12px" }}>
             {agendaLoading ? <Skeleton /> : !agenda?.compromissos?.length ? <Empty>Nenhum compromisso com esses filtros.</Empty> : (
               agenda.compromissos.map((c, i) => (
-                <div key={i} className="dash-agenda-row">
+                <div
+                  key={i}
+                  className="dash-agenda-row dash-agenda-row-clicavel"
+                  onClick={() => navigate(`/agendamentos?id=${c.id}&detalhe=1`)}
+                >
                   <div className="dash-agenda-hora">
                     <div style={{ fontWeight: 700 }}>{c.hora?.slice(0, 5)}</div>
                     <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{new Date(c.data).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
@@ -465,11 +629,11 @@ export default function Dashboard() {
                   <span className={`dash-agenda-tipo ${c.tipo === "Instalação" ? "instalacao" : "outro"}`}>{c.tipo}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.cliente}</div>
-                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>{c.local}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.local}</div>
                   </div>
-                  <div style={{ textAlign: "right", flex: "none" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600 }}>{c.equipe || "—"}</div>
-                    <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{c.veiculo || "—"}</div>
+                  <div className="dash-agenda-equipe">
+                    <div style={{ fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.equipe || "—"}</div>
+                    <div style={{ fontSize: 10, color: "var(--color-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.veiculo || "—"}</div>
                   </div>
                 </div>
               ))
