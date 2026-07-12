@@ -29,6 +29,7 @@ async function authMiddleware(req, res, next) {
         empresa_id:    decoded.empresa_id,
         setor_id:      decoded.setor_id,
         permissoes:    decoded.permissoes,
+        app:           decoded.app ?? null,
       };
       return next();
     }
@@ -68,6 +69,7 @@ async function authMiddleware(req, res, next) {
       empresa_id:    u.empresa_id,
       setor_id:      u.setor_id,
       permissoes:    permRes.rows.map((p) => p.codigo),
+      app:           decoded.app ?? null,
     };
     return next();
   } catch (error) {
