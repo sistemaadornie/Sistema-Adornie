@@ -3,7 +3,7 @@ jest.mock("../utils/geocoding", () => ({ photon: jest.fn(), nominatim: jest.fn()
 
 const db = require("../database/db");
 const { photon, nominatim } = require("../utils/geocoding");
-const { registrarRegiaoSeNecessaria, buscarCoordenadasCache } = require("../services/regiaoGeoService");
+const { registrarRegiaoSeNecessaria, buscarCoordenadasCache, backfillRegioes } = require("../services/regiaoGeoService");
 
 afterEach(() => jest.clearAllMocks());
 
@@ -99,5 +99,48 @@ describe("buscarCoordenadasCache", () => {
 
     expect(r.get("bairro cache")).toEqual({ id: "bairro cache", nome: "Bairro Cache", lat: -25.1, lng: -49.1 });
     expect(db.query.mock.calls[0][1]).toEqual([7, "bairro", ["bairro cache"]]);
+  });
+});
+
+describe("backfillRegioes", () => {
+  test("processa cada combinacao distinta e resume ok/falhou", async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [
+        { cidade: "Curitiba", bairro: "Batel", estado: "PR" },        // ja conhecida (lista fixa) -> 0 queries
+        { cidade: "Cidade Nova", bairro: null, estado: "XX" },        // nova -> geocodifica com sucesso
+        { cidade: "Cidade Perdida", bairro: null, estado: "XX" },     // nova -> geocodificacao falha
+      ] }) // SELECT DISTINCT
+      .mockResolvedValueOnce({ rows: [] }) // jaConhecida Cidade Nova
+      .mockResolvedValueOnce({ rows: [] }) // INSERT Cidade Nova
+      .mockResolvedValueOnce({ rows: [] }) // jaConhecida Cidade Perdida
+      .mockResolvedValueOnce({ rows: [] }); // INSERT Cidade Perdida
+
+    photon
+      .mockResolvedValueOnce({ lat: -1, lng: -2 }) // Cidade Nova
+      .mockResolvedValueOnce(null);                // Cidade Perdida
+    nominatim.mockResolvedValueOnce(null);          // Cidade Perdida (fallback)
+
+    const r = await backfillRegioes(7, { delayMs: 0 });
+
+    expect(r).toEqual({ total: 3, ok: 3, falhou: 0 });
+    expect(db.query.mock.calls[0][0]).toMatch(/SELECT DISTINCT/);
+    expect(db.query.mock.calls[0][1]).toEqual([7]);
+  });
+
+  test("erro inesperado numa linha nao interrompe as demais", async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [
+        { cidade: "Cidade Erro", bairro: null, estado: "XX" },
+        { cidade: "Cidade Ok", bairro: null, estado: "XX" },
+      ] }) // SELECT DISTINCT
+      .mockRejectedValueOnce(new Error("db fora do ar")) // jaConhecida Cidade Erro
+      .mockResolvedValueOnce({ rows: [] }) // jaConhecida Cidade Ok
+      .mockResolvedValueOnce({ rows: [] }); // INSERT Cidade Ok
+
+    photon.mockResolvedValueOnce({ lat: -3, lng: -4 }); // Cidade Ok
+
+    const r = await backfillRegioes(7, { delayMs: 0 });
+
+    expect(r).toEqual({ total: 2, ok: 1, falhou: 1 });
   });
 });

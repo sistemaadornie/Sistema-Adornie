@@ -76,4 +76,30 @@ async function buscarCoordenadasCache(empresaId, tipo, chavesNormalizadas) {
   return mapa;
 }
 
-module.exports = { registrarRegiaoSeNecessaria, buscarCoordenadasCache };
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function backfillRegioes(empresaId, { delayMs = 1200 } = {}) {
+  const { rows } = await db.query(
+    `SELECT DISTINCT cidade, bairro, estado FROM pedidos
+     WHERE empresa_id = $1 AND deleted_at IS NULL AND cidade IS NOT NULL AND cidade != ''`,
+    [empresaId]
+  );
+
+  let ok = 0, falhou = 0;
+  for (let i = 0; i < rows.length; i++) {
+    try {
+      await registrarRegiaoSeNecessaria({
+        empresaId, bairro: rows[i].bairro, cidade: rows[i].cidade, estado: rows[i].estado,
+      });
+      ok++;
+    } catch {
+      falhou++;
+    }
+    if (i < rows.length - 1) await sleep(delayMs);
+  }
+  return { total: rows.length, ok, falhou };
+}
+
+module.exports = { registrarRegiaoSeNecessaria, buscarCoordenadasCache, backfillRegioes };
