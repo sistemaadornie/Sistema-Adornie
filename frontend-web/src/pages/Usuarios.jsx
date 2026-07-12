@@ -430,6 +430,11 @@ export default function Usuarios() {
                           <Inicial nome={u.nome_completo || u.nome} foto={u.foto_url || u.foto || u.imagem_url || u.avatar_url || u.avatar || u.foto_perfil} />
                           <div>
                             <strong>{u.nome_completo || u.nome || "Não informado"}</strong>
+                            {u.cadastro_origem === "pwa" && (
+                              <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>
+                                📱 Cadastro via app do instalador — ao aprovar, já recebe a permissão Instalador
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
