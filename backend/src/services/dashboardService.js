@@ -260,16 +260,16 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        GROUP BY pi.pedido_id`,
       [pedidoIds]
     ),
-    // Etapa 2: conferencia por pedido
+    // Etapa 2: conferencia por pedido (Ficha de Conferência Técnica — ordem_servico.dados_tecnicos)
     db.query(
       `SELECT pi.pedido_id,
               COUNT(DISTINCT pi.id)::int AS total,
-              COUNT(DISTINCT ci.pedido_item_id) FILTER (WHERE ci.status = 'conferido')::int AS conferidos
+              COUNT(DISTINCT pi.id) FILTER (WHERE os.dados_tecnicos IS NOT NULL)::int AS conferidos
        FROM pedido_itens pi
-       LEFT JOIN conferencia_itens ci ON ci.pedido_item_id = pi.id AND ci.empresa_id = $2
+       LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE pi.pedido_id = ANY($1)
        GROUP BY pi.pedido_id`,
-      [pedidoIds, empresaId]
+      [pedidoIds]
     ),
     // Etapa 3: confeccao por pedido
     db.query(
@@ -608,11 +608,11 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     db.query(
       `SELECT
          COUNT(DISTINCT pi.id)::int AS total,
-         COUNT(DISTINCT ci.pedido_item_id) FILTER (WHERE ci.status = 'conferido')::int AS conferidos
+         COUNT(DISTINCT pi.id) FILTER (WHERE os.dados_tecnicos IS NOT NULL)::int AS conferidos
        FROM pedido_itens pi
-       LEFT JOIN conferencia_itens ci ON ci.pedido_item_id = pi.id AND ci.empresa_id = $2
+       LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE pi.pedido_id = $1`,
-      [pedidoId, empresaId]
+      [pedidoId]
     ),
     db.query(
       `SELECT
