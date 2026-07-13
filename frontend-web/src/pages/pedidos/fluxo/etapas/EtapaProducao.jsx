@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import { api } from "../../../../services/api";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
+import { fmtMedidas } from "../../../../utils/formatMedidas";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -90,48 +91,58 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamento
 
           <hr className="pf-separador" />
 
-          {itens.map((item) => (
-            <div key={item.id} className="pf-item-row">
-              <div style={{ flex: 1 }}>
-                <div className="pf-item-descricao">{item.descricao}</div>
-                {item.ambiente && <div className="pf-item-ambiente">{item.ambiente}</div>}
-              </div>
-
-              {!item.em_confeccao && (
-                <>
-                  <span className="pf-badge" style={{
-                    fontSize: 11,
-                    background: (item.categoria_cor || "#C9A96E") + "22",
-                    color: item.categoria_cor || "#C9A96E",
-                    border: `1px solid ${(item.categoria_cor || "#C9A96E")}44`,
-                  }}>{item.categoria_nome || "Sem categoria"}</span>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                    <input type="checkbox" checked={false}
-                      onChange={() => toggleCampo(item.id, "em_confeccao", true)}
-                      disabled={!!salvando[item.id]} />
-                    Em confecção
-                  </label>
-                </>
-              )}
-
-              {item.em_confeccao && (
-                <>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                    <input type="checkbox" checked={true}
-                      onChange={() => toggleCampo(item.id, "em_confeccao", false)}
-                      disabled={!!salvando[item.id]} />
-                    Em confecção
-                  </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                    <input type="checkbox" checked={!!item.confeccao_ok}
-                      onChange={() => toggleCampo(item.id, "confeccao_ok", !item.confeccao_ok)}
-                      disabled={!!salvando[item.id]} />
-                    Produção concluída
-                  </label>
-                </>
-              )}
+          <div className="vim-tabela vim-fichas">
+            <div className="vim-header vim-fichas">
+              <span>Item</span>
+              <span>Ambiente</span>
+              <span>Produto</span>
+              <span>Medidas</span>
+              <span></span>
             </div>
-          ))}
+            {itens.map((item, i) => (
+              <div key={item.id} className="vim-row vim-fichas">
+                <span className="vim-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : i + 1}</span>
+                <span className="vim-ambiente">{item.ambiente || "—"}</span>
+                <span className="vim-desc">{item.descricao}</span>
+                <span className="vim-medidas">{fmtMedidas(item)}</span>
+                <span className="vim-acao" style={{ flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                  {!item.em_confeccao && (
+                    <>
+                      <span className="pf-badge" style={{
+                        fontSize: 11,
+                        background: (item.categoria_cor || "#C9A96E") + "22",
+                        color: item.categoria_cor || "#C9A96E",
+                        border: `1px solid ${(item.categoria_cor || "#C9A96E")}44`,
+                      }}>{item.categoria_nome || "Sem categoria"}</span>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                        <input type="checkbox" checked={false}
+                          onChange={() => toggleCampo(item.id, "em_confeccao", true)}
+                          disabled={!!salvando[item.id]} />
+                        Em confecção
+                      </label>
+                    </>
+                  )}
+
+                  {item.em_confeccao && (
+                    <>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                        <input type="checkbox" checked={true}
+                          onChange={() => toggleCampo(item.id, "em_confeccao", false)}
+                          disabled={!!salvando[item.id]} />
+                        Em confecção
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                        <input type="checkbox" checked={!!item.confeccao_ok}
+                          onChange={() => toggleCampo(item.id, "confeccao_ok", !item.confeccao_ok)}
+                          disabled={!!salvando[item.id]} />
+                        Produção concluída
+                      </label>
+                    </>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
 
           <hr className="pf-separador" />
 
