@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ModalSelecionarItensInstalacao from "../../ModalSelecionarItensInstalacao";
 import { api } from "../../../../services/api";
 import { numeroPedidoCompleto } from "../../../../utils/numeroPedido";
-import { fmtMedidas } from "../../../../utils/formatMedidas";
+import { fmtMedidasTecnicas } from "../../../../utils/formatMedidas";
 
 function fmtData(iso) {
   if (!iso) return "—";
@@ -104,7 +104,7 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamento
                 <span className="vim-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : i + 1}</span>
                 <span className="vim-ambiente">{item.ambiente || "—"}</span>
                 <span className="vim-desc">{item.descricao}</span>
-                <span className="vim-medidas">{fmtMedidas(item)}</span>
+                <span className="vim-medidas">{fmtMedidasTecnicas(item)}</span>
                 <span className="vim-acao" style={{ flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                   {!item.em_confeccao && (
                     <>

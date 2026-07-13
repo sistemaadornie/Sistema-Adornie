@@ -131,8 +131,9 @@ async function montarPedido(id, empresaId) {
 
   const itensRes = await db.query(
     `SELECT pi.*,
-            os.id     AS os_id,
-            os.status AS os_status,
+            os.id             AS os_id,
+            os.status         AS os_status,
+            os.dados_tecnicos AS dados_tecnicos,
             cat.nome  AS categoria_nome,
             cat.cor   AS categoria_cor
      FROM pedido_itens pi
