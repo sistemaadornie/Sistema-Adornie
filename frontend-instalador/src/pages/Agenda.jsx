@@ -164,7 +164,9 @@ export default function Agenda() {
       params.set("q", buscaDebounced);
     } else {
       const hoje = todayISO();
-      params.set("data_inicio", hoje);
+      // "Todos" precisa incluir agendamentos atrasados (ex.: ficaram "andamento"
+      // e nunca foram concluídos) — por isso não filtra por data_inicio aqui.
+      if (filtro !== "todos") params.set("data_inicio", hoje);
       if (filtro === "hoje")   params.set("data_fim", hoje);
       if (filtro === "semana") params.set("data_fim", addDaysISO(hoje, 7));
       if (filtro === "mes")    params.set("data_fim", addDaysISO(hoje, 30));

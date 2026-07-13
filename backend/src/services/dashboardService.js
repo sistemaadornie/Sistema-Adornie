@@ -182,7 +182,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
   ] = await Promise.all([
     // Genitores: agendamentos com pedido_id + itens de pedido vinculados
     db.query(
-      `SELECT a.id, a.pedido_id, a.status, a.data AS data_inicio, COUNT(ai.id) AS itens_count
+      `SELECT a.id, a.pedido_id, a.status, TO_CHAR(a.data, 'YYYY-MM-DD') AS data_inicio, COUNT(ai.id) AS itens_count
        FROM agendamentos a
        JOIN agendamento_itens ai ON ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
        WHERE a.pedido_id = ANY($1) AND a.empresa_id = $2
@@ -512,7 +512,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   pedido.itens = itensRows;
 
   const { rows: genitoresRaw } = await db.query(
-    `SELECT a.id, a.status, a.tipo, a.data AS data_inicio, a.observacoes_status
+    `SELECT a.id, a.status, a.tipo, TO_CHAR(a.data, 'YYYY-MM-DD') AS data_inicio, a.observacoes_status
      FROM agendamentos a
      WHERE a.pedido_id = $1 AND a.empresa_id = $2
        AND a.agendamento_pai_id IS NULL
@@ -755,7 +755,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       [genitoreIds]
     ),
     db.query(
-      `SELECT id, agendamento_pai_id, tipo, status, data AS data_inicio, observacoes_status
+      `SELECT id, agendamento_pai_id, tipo, status, TO_CHAR(data, 'YYYY-MM-DD') AS data_inicio, observacoes_status
        FROM agendamentos
        WHERE agendamento_pai_id = ANY($1) AND empresa_id = $2
        ORDER BY data`,
