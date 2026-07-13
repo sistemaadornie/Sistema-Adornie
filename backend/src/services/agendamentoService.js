@@ -951,8 +951,10 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
     client.release();
   }
 
-  // Auto-conclusão: se todos os genitores do pedido foram concluídos, conclui o pedido
-  if (status === "concluido") {
+  // Auto-conclusão: se todas as Instalações (etapa final de entrega) do pedido
+  // foram concluídas, conclui o pedido. Só a Instalação conta aqui — Conferência
+  // e outros tipos são etapas anteriores e não representam o fim do fluxo.
+  if (status === "concluido" && existe.rows[0]?.tipo === "Instalação") {
     const agInfo = await db.query(
       `SELECT pedido_id FROM agendamentos WHERE id = $1`, [id]
     );
@@ -967,6 +969,7 @@ async function alterarStatus(id, empresaId, userId, nomeCompleto, permissoes, st
         const pendentes = await db.query(
           `SELECT a.id FROM agendamentos a
            WHERE a.pedido_id = $1 AND a.empresa_id = $2
+             AND a.tipo = 'Instalação'
              AND EXISTS (
                SELECT 1 FROM agendamento_itens ai
                WHERE ai.agendamento_id = a.id AND ai.pedido_item_id IS NOT NULL
