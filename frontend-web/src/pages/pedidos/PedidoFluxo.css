@@ -285,14 +285,14 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 
 .vim-tabela {
   display: grid;
-  grid-template-columns: 40px minmax(160px, 1fr) 110px minmax(170px, auto);
+  grid-template-columns: 40px minmax(160px, 1fr) 150px minmax(170px, auto);
   align-items: stretch;
   border: 1px solid var(--pf-separador);
   border-radius: 8px;
   overflow: hidden;
 }
 .vim-tabela.vim-com-ambiente {
-  grid-template-columns: 40px minmax(160px, 1fr) 110px 110px minmax(220px, auto);
+  grid-template-columns: 40px minmax(160px, 1fr) 150px 110px minmax(220px, auto);
 }
 .vim-tabela.vim-fichas {
   grid-template-columns: 40px 190px minmax(140px, 1fr) 190px minmax(150px, auto);
@@ -327,7 +327,7 @@ body:has(.app-sidebar.collapsed) .pf-modal-grande { max-width: min(1300px, 97vw)
 
 .vim-num { justify-content: center; font-weight: 600; color: var(--pf-card-sub); font-size: 12px; }
 .vim-desc { font-size: 13px; word-break: break-word; }
-.vim-medidas { font-size: 12px; color: var(--pf-card-sub); white-space: nowrap; justify-content: center; }
+.vim-medidas { font-size: 12px; color: var(--pf-card-sub); white-space: normal; text-align: center; justify-content: center; word-break: break-word; }
 .vim-ambiente { font-size: 12px; color: var(--pf-card-sub); justify-content: center; }
 .vim-acao { gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
