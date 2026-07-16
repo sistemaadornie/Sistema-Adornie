@@ -2640,26 +2640,50 @@ function DetalheModal({ ag, equipe, user, onClose, onAlterarStatus, onEditar, on
   );
 }
 
+function agruparItensPorAmbiente(itensRaw) {
+  const grupos = [];
+  const indicePorAmbiente = new Map();
+  for (const it of itensRaw) {
+    const ambiente = it.item_ambiente || null;
+    if (!indicePorAmbiente.has(ambiente)) {
+      indicePorAmbiente.set(ambiente, grupos.length);
+      grupos.push({ ambiente, itens: [] });
+    }
+    grupos[indicePorAmbiente.get(ambiente)].itens.push(it);
+  }
+  return grupos;
+}
+
 function ItensComFotos({ itensRaw, rotulo }) {
+  const grupos = agruparItensPorAmbiente(itensRaw);
+  const mostrarAmbiente = grupos.length > 1 || grupos[0]?.ambiente;
+
   return (
     <div className="ag-form-field">
       <label>{rotulo}</label>
-      <div className="ag-itens-list">
-        {itensRaw.map((it) => (
-          <div key={it.id} className="ag-item-tag" style={{ cursor: "default" }}>
-            📦 {it.nome}
-            {it.fotos?.length > 0 && (
-              <div className="ag-item-fotos">
-                {it.fotos.map((f) => (
-                  <a key={f.id} href={f.url} target="_blank" rel="noreferrer">
-                    <img src={f.url} alt="" className="ag-item-foto-mini" />
-                  </a>
-                ))}
+      {grupos.map((g, idx) => (
+        <div key={g.ambiente ?? `sem-ambiente-${idx}`} className="ag-itens-grupo">
+          {mostrarAmbiente && (
+            <div className="ag-ambiente-heading">📍 {g.ambiente || "Sem ambiente definido"}</div>
+          )}
+          <div className="ag-itens-list">
+            {g.itens.map((it) => (
+              <div key={it.id} className="ag-item-tag" style={{ cursor: "default" }}>
+                📦 {it.nome}
+                {it.fotos?.length > 0 && (
+                  <div className="ag-item-fotos">
+                    {it.fotos.map((f) => (
+                      <a key={f.id} href={f.url} target="_blank" rel="noreferrer">
+                        <img src={f.url} alt="" className="ag-item-foto-mini" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
