@@ -199,6 +199,58 @@ async function inserirEquipe(agId, equipe, client = db) {
   );
 }
 
+/* ── expande itens com quantidade > 1 (categorias que exigem conferência) em unidades independentes ── */
+async function expandirItensParaConferencia(itens, client = db) {
+  if (!itens || !itens.length) return itens || [];
+
+  const resultado = [];
+  for (const it of itens) {
+    const pedidoItemId = it && typeof it === "object" ? (it.pedido_item_id || it.id || null) : null;
+    if (!pedidoItemId) { resultado.push(it); continue; }
+
+    const { rows } = await client.query(
+      `SELECT pi.id, pi.quantidade, pi.item_pai_id, pi.expandido,
+              COALESCE(cat.necessita_conferencia, false) AS necessita_conferencia
+       FROM pedido_itens pi
+       LEFT JOIN categorias cat ON cat.id = pi.categoria_id
+       WHERE pi.id = $1`,
+      [pedidoItemId]
+    );
+    const item = rows[0];
+
+    if (!item || item.item_pai_id != null || !item.necessita_conferencia || Number(item.quantidade) <= 1) {
+      resultado.push(it);
+      continue;
+    }
+
+    if (item.expandido) {
+      const { rows: filhos } = await client.query(
+        `SELECT id, descricao FROM pedido_itens WHERE item_pai_id = $1 ORDER BY numero_unidade`,
+        [item.id]
+      );
+      for (const f of filhos) resultado.push({ pedido_item_id: f.id, nome: f.descricao });
+      continue;
+    }
+
+    const totalUnidades = Math.round(Number(item.quantidade));
+    for (let n = 1; n <= totalUnidades; n++) {
+      const { rows: ins } = await client.query(
+        `INSERT INTO pedido_itens
+           (pedido_id, ambiente, descricao, categoria_id, modelo, especificacoes, unidade,
+            quantidade, item_pai_id, numero_unidade, total_unidades)
+         SELECT pedido_id, ambiente, descricao, categoria_id, modelo, especificacoes, unidade,
+                1, id, $2, $3
+         FROM pedido_itens WHERE id = $1
+         RETURNING id, descricao`,
+        [item.id, n, totalUnidades]
+      );
+      resultado.push({ pedido_item_id: ins[0].id, nome: ins[0].descricao });
+    }
+    await client.query(`UPDATE pedido_itens SET expandido = true WHERE id = $1`, [item.id]);
+  }
+  return resultado;
+}
+
 /* ── criar Ordem de Serviço (OS) se não existir para itens de conferência ── */
 async function criarOSSeNaoExistir(itens, client = db) {
   if (!itens || !itens.length) return;
@@ -1504,5 +1556,6 @@ module.exports = {
   listarConferenciaItens,
   upsertConferenciaItem,
   confirmarCliente,
+  expandirItensParaConferencia,
   criarOSSeNaoExistir,
 };
