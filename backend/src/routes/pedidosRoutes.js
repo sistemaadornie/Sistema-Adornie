@@ -614,6 +614,7 @@ router.get("/:id/itens-pendentes-conferencia-consultoras", authMiddleware, async
       WHERE pi.pedido_id = $1
         AND cat.necessita_conferencia = true
         AND (os.id IS NULL OR os.dados_conferencia_consultoras IS NULL)
+        AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
       ORDER BY pi.ordem ASC, pi.id ASC
     `;
 
@@ -660,6 +661,7 @@ router.get("/:id/itens-conferencia-consultoras", authMiddleware, async (req, res
       LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
       WHERE pi.pedido_id = $1
         AND cat.necessita_conferencia = true
+        AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
       ORDER BY pi.ordem ASC, pi.id ASC
     `;
 

@@ -41,6 +41,16 @@ describe('GET /api/pedidos/:id/itens-pendentes-conferencia-consultoras', () => {
     expect(db.query.mock.calls[1][0]).toContain('dados_conferencia_consultoras IS NULL');
   });
 
+  test('filtra item pai expandido (não lista o pai apos a expansao)', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
+      .mockResolvedValueOnce({ rows: [] });
+
+    await request(app).get('/api/pedidos/1/itens-pendentes-conferencia-consultoras');
+
+    expect(db.query.mock.calls[1][0]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)');
+  });
+
   test('200 retorna lista vazia quando nao ha itens pendentes', async () => {
     db.query
       .mockResolvedValueOnce({ rows: [{ id: 1 }] })
