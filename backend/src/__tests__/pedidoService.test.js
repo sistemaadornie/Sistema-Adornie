@@ -129,6 +129,26 @@ describe('_salvarItens — bloqueia mudança de quantidade em item expandido', (
   });
 });
 
+describe('_salvarItens — bloqueia exclusão de item expandido', () => {
+  test('lança 400 ao tentar excluir (omitir do payload) item com expandido=true', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 9, empresa_id: 10, status: 'pendente' }] }) // montarPedido: pedidos
+      .mockResolvedValueOnce({ rows: [] }) // montarPedido: itens
+      .mockResolvedValueOnce({ rows: [] }); // montarPedido: pagamentos
+
+    const client = { query: jest.fn(), release: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 9 }] }) // UPDATE pedidos
+      .mockResolvedValueOnce({ rows: [{ id: 60, quantidade: '2.00', expandido: true }] }); // SELECT existingIds
+    db.connect.mockResolvedValueOnce(client);
+
+    await expect(
+      svc.atualizar(9, 10, { itens: [] }, 1)
+    ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
 describe('_verificarEtapa1', () => {
   function makeFakeClient(respostas = []) {
     const client = { query: jest.fn() };

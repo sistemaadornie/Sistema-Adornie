@@ -236,6 +236,16 @@ async function _salvarItens(client, pedidoId, itens = []) {
   const incomingIds = itens.map((it) => Number(it.id)).filter((id) => Number.isFinite(id) && id > 0);
 
   const idsParaDeletar = existingIds.filter((id) => !incomingIds.includes(id));
+
+  const idExpandidoParaDeletar = idsParaDeletar.find((id) => existingById.get(id)?.expandido);
+  if (idExpandidoParaDeletar) {
+    const e = new Error(
+      "Não é possível excluir este item depois que a Conferência técnica foi iniciada."
+    );
+    e.status = 400;
+    throw e;
+  }
+
   if (idsParaDeletar.length > 0) {
     await client.query(`DELETE FROM ordem_servico WHERE pedido_item_id = ANY($1)`, [idsParaDeletar]);
     await client.query(`DELETE FROM pedido_itens WHERE id = ANY($1)`, [idsParaDeletar]);

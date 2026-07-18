@@ -379,7 +379,12 @@ export default function EditarPedido() {
                     </select>
                     <input type="number" min="0" step="0.01" value={it.preco_unitario || ""} onChange={(e) => setItem(i, "preco_unitario", e.target.value)} />
                     <input readOnly value={it.valor ? fmtMoeda(it.valor) : ""} className="pd-item-total" />
-                    <button className="pd-item-del" onClick={() => removeItem(i)}>×</button>
+                    <button
+                      className="pd-item-del"
+                      onClick={() => removeItem(i)}
+                      disabled={it.expandido}
+                      title={it.expandido ? "Não é possível excluir: a Conferência técnica já foi iniciada para este item." : undefined}
+                    >×</button>
                   </div>
                 ))}
               </div>
