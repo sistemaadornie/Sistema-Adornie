@@ -136,7 +136,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        c.nome                                                   AS cliente_nome,
        u.nome_completo                                          AS consultor_nome,
        u.id                                                     AS consultor_id,
-       COUNT(pi.id)                                             AS itens_count,
+       COUNT(pi.id) FILTER (WHERE pi.item_pai_id IS NULL) AS itens_count,
        EXISTS (
          SELECT 1 FROM pedido_anexos pa WHERE pa.pedido_id = p.id
        )                                                        AS pdf_ok,
@@ -192,8 +192,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     // Etapa 1: total de itens por pedido
     db.query(
       `SELECT pedido_id, COUNT(*)::int AS total
-       FROM pedido_itens
-       WHERE pedido_id = ANY($1)
+       FROM pedido_itens pi
+       WHERE pedido_id = ANY($1) AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
        GROUP BY pedido_id`,
       [pedidoIds]
     ),
@@ -216,6 +216,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        FROM pedido_itens pi
        JOIN categorias cat ON cat.id = pi.categoria_id
        WHERE pi.pedido_id = ANY($1) AND cat.necessita_conferencia = true
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
        GROUP BY pi.pedido_id`,
       [pedidoIds]
     ),
@@ -242,6 +243,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
        LEFT JOIN produtos prod ON prod.id = oi.produto_id
        WHERE pi.pedido_id = ANY($1)
+         AND pi.item_pai_id IS NULL
          AND COALESCE(pi.categoria_id, prod.categoria_id) IS NULL
        GROUP BY pi.pedido_id`,
       [pedidoIds]
@@ -252,6 +254,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        FROM pedido_itens pi
        LEFT JOIN categorias cat ON cat.id = pi.categoria_id
        WHERE pi.pedido_id = ANY($1)
+         AND pi.item_pai_id IS NULL
          AND COALESCE(cat.vinculavel, false) = true
          AND pi.sem_vinculo = false
          AND NOT EXISTS (
@@ -267,7 +270,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
               COUNT(DISTINCT pi.id) FILTER (WHERE os.dados_tecnicos IS NOT NULL)::int AS conferidos
        FROM pedido_itens pi
        LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
-       WHERE pi.pedido_id = ANY($1)
+       WHERE pi.pedido_id = ANY($1) AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
        GROUP BY pi.pedido_id`,
       [pedidoIds]
     ),
@@ -276,8 +279,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
       `SELECT pedido_id,
               COUNT(*) FILTER (WHERE em_confeccao = true)::int AS em_confeccao,
               COUNT(*) FILTER (WHERE em_confeccao = true AND confeccao_ok = true)::int AS confeccao_ok
-       FROM pedido_itens
-       WHERE pedido_id = ANY($1)
+       FROM pedido_itens pi
+       WHERE pedido_id = ANY($1) AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
        GROUP BY pedido_id`,
       [pedidoIds]
     ),
@@ -297,8 +300,8 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
     // Etapa 4: itens com produto_ok por pedido
     db.query(
       `SELECT pedido_id, COUNT(*) FILTER (WHERE produto_ok = true)::int AS produto_ok
-       FROM pedido_itens
-       WHERE pedido_id = ANY($1)
+       FROM pedido_itens pi
+       WHERE pedido_id = ANY($1) AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
        GROUP BY pedido_id`,
       [pedidoIds]
     ),
@@ -332,6 +335,7 @@ async function listarPedidosDashboard(empresaId, userId, permissoes, filtros = {
        JOIN categorias cat ON cat.id = pi.categoria_id
        JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE pi.pedido_id = ANY($1) AND cat.necessita_conferencia = true
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
          AND os.dados_conferencia_consultoras IS NOT NULL
        GROUP BY pi.pedido_id`,
       [pedidoIds]

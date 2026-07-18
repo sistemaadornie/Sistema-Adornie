@@ -404,4 +404,36 @@ describe("listarPedidosDashboard", () => {
     expect(sql).toContain("$3");
     expect(params).toEqual([1, "concluido", "%Maria%"]);
   });
+
+  test('aplica filtro de venda e de produção nas queries de itens', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1, itens_count: '2' }] }) // main SELECT
+      .mockResolvedValueOnce({ rows: [] }) // preAgs
+      .mockResolvedValueOnce({ rows: [] }) // total itens
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos (instalação)
+      .mockResolvedValueOnce({ rows: [] }) // total itens conferência
+      .mockResolvedValueOnce({ rows: [] }) // itens cobertos conferência
+      .mockResolvedValueOnce({ rows: [] }) // sem categoria
+      .mockResolvedValueOnce({ rows: [] }) // sem vinculo
+      .mockResolvedValueOnce({ rows: [] }) // conferencia (etapa 2)
+      .mockResolvedValueOnce({ rows: [] }) // confeccao (etapa 3)
+      .mockResolvedValueOnce({ rows: [] }) // genitores agendados
+      .mockResolvedValueOnce({ rows: [] }) // produto_ok
+      .mockResolvedValueOnce({ rows: [] }) // instalacoes
+      .mockResolvedValueOnce({ rows: [] }) // separacao
+      .mockResolvedValueOnce({ rows: [] }); // conferencia consultoras
+
+    await listarPedidosDashboard(10, 1, []);
+
+    const calls = db.query.mock.calls.map((c) => c[0]);
+    expect(calls[0]).toContain('pi.item_pai_id IS NULL'); // itens_count (venda)
+    expect(calls[2]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // total itens Etapa 1
+    expect(calls[4]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // necessita conferência
+    expect(calls[6]).toContain('pi.item_pai_id IS NULL'); // sem categoria (venda)
+    expect(calls[7]).toContain('pi.item_pai_id IS NULL'); // sem vinculo (venda)
+    expect(calls[8]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // conferencia tecnica
+    expect(calls[9]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // confeccao
+    expect(calls[11]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // produto_ok
+    expect(calls[14]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // conferencia consultoras
+  });
 });
