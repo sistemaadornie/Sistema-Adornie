@@ -55,7 +55,10 @@ export default function EtapaConferenciaProduto({ pedidoId, pedido, etapas, onCl
           {itens.map((item) => (
             <div key={item.id} className="pf-item-row">
               <div style={{ flex: 1 }}>
-                <div className="pf-item-descricao">{item.descricao}</div>
+                <div className="pf-item-descricao">
+                  {item.descricao}
+                  {item.total_unidades > 1 && ` — Unidade ${item.numero_unidade} de ${item.total_unidades}`}
+                </div>
                 {item.ambiente && <div className="pf-item-ambiente">{item.ambiente}</div>}
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>

@@ -103,7 +103,10 @@ export default function EtapaProducao({ pedidoId, pedido, etapas, preAgendamento
               <div key={item.id} className="vim-row vim-fichas">
                 <span className="vim-num">{Number.isFinite(item.ordem) ? item.ordem + 1 : i + 1}</span>
                 <span className="vim-ambiente">{item.ambiente || "—"}</span>
-                <span className="vim-desc">{item.descricao}</span>
+                <span className="vim-desc">
+                  {item.descricao}
+                  {item.total_unidades > 1 && ` — Unidade ${item.numero_unidade} de ${item.total_unidades}`}
+                </span>
                 <span className="vim-medidas">{fmtMedidasTecnicas(item)}</span>
                 <span className="vim-acao" style={{ flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                   {!item.em_confeccao && (
