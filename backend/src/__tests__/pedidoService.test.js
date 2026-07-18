@@ -60,6 +60,52 @@ describe('buscar (montarPedido)', () => {
 
     expect(result.itens[0].vinculos).toEqual([]);
   });
+
+  test('filtra apenas itens-pai (item_pai_id IS NULL)', async () => {
+    const pedidoRow = {
+      id: 3, empresa_id: 10, status: 'pendente',
+      numero_origem: null, numero_sequencial: 3,
+      cliente_nome: null, cliente_telefone: null,
+      consultor_nome: null, arquiteto_nome: null,
+      tem_anexo_pdf: false,
+    };
+    db.query
+      .mockResolvedValueOnce({ rows: [pedidoRow] }) // SELECT pedidos
+      .mockResolvedValueOnce({ rows: [] })          // SELECT pedido_itens
+      .mockResolvedValueOnce({ rows: [] });         // SELECT pedido_pagamentos
+      // (sem itens, montarPedido nao chega a consultar pedido_item_vinculos)
+
+    await svc.buscar(3, 10);
+
+    expect(db.query.mock.calls[1][0]).toContain('item_pai_id IS NULL');
+  });
+});
+
+describe('atualizar — _salvarItens não deleta itens filhos (expandidos)', () => {
+  test('exclui filhos da query de itens existentes, mesmo que não venham no payload', async () => {
+    const pedidoAntes = {
+      id: 7, empresa_id: 10, status: 'pendente', itens: [], pagamentos: [],
+    };
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 7, empresa_id: 10, status: 'pendente' }] }) // montarPedido: pedidos
+      .mockResolvedValueOnce({ rows: [] }) // montarPedido: itens
+      .mockResolvedValueOnce({ rows: [] }); // montarPedido: pagamentos
+
+    const client = { query: jest.fn(), release: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [{ id: 7 }] }) // UPDATE pedidos
+      .mockResolvedValueOnce({ rows: [{ id: 40 }] }) // _salvarItens: SELECT existingIds (só pais)
+      .mockResolvedValueOnce({ rows: [] }) // _salvarItens: UPDATE item 40
+      .mockResolvedValueOnce({ rows: [] }) // _salvarPagamentos: DELETE
+      .mockResolvedValueOnce({ rows: [] }); // _verificarEtapa1 ou próxima query
+    db.connect.mockResolvedValueOnce(client);
+
+    await svc.atualizar(7, 10, { itens: [{ id: 40, descricao: 'Persiana Sala', quantidade: 2 }] }, 1)
+      .catch(() => {}); // tolera erro em passos posteriores não mockados neste teste focado
+
+    const selectExisting = client.query.mock.calls.find((c) => c[0].includes('SELECT id FROM pedido_itens'));
+    expect(selectExisting[0]).toContain('item_pai_id IS NULL');
+  });
 });
 
 describe('_verificarEtapa1', () => {

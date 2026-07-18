@@ -139,7 +139,7 @@ async function montarPedido(id, empresaId) {
      FROM pedido_itens pi
      LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
      LEFT JOIN categorias cat   ON cat.id = pi.categoria_id
-     WHERE pi.pedido_id=$1
+     WHERE pi.pedido_id=$1 AND pi.item_pai_id IS NULL
      ORDER BY pi.ordem, pi.id`,
     [id]
   );
@@ -228,7 +228,7 @@ async function buscar(id, empresaId) {
 
 async function _salvarItens(client, pedidoId, itens = []) {
   const existingRes = await client.query(
-    `SELECT id FROM pedido_itens WHERE pedido_id = $1`,
+    `SELECT id FROM pedido_itens WHERE pedido_id = $1 AND item_pai_id IS NULL`,
     [pedidoId]
   );
   const existingIds = existingRes.rows.map((r) => r.id);
