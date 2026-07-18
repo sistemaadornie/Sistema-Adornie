@@ -33,4 +33,15 @@ describe('GET /api/pedidos/:id/itens-disponiveis-instalacao', () => {
     const res = await request(app).get('/api/pedidos/1/itens-disponiveis-instalacao');
     expect(res.status).toBe(404);
   });
+
+  test('exclui itens-pai já expandidos em unidades', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // pedCheck
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app).get('/api/pedidos/1/itens-disponiveis-instalacao');
+
+    expect(res.status).toBe(200);
+    expect(db.query.mock.calls[1][0]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)');
+  });
 });

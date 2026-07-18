@@ -512,6 +512,7 @@ router.get("/:id/itens-disponiveis-instalacao", authMiddleware, async (req, res)
       LEFT JOIN categorias cat ON cat.id = COALESCE(pi.categoria_id, prod.categoria_id)
       LEFT JOIN categoria_prazos cp ON cp.categoria_id = COALESCE(pi.categoria_id, prod.categoria_id) AND cp.empresa_id = $2
       WHERE pi.pedido_id = $1
+        AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
         AND pi.id NOT IN (
           SELECT ai.pedido_item_id 
           FROM agendamento_itens ai
