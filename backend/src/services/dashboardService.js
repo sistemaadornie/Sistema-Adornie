@@ -508,8 +508,11 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ),
     db.query(`SELECT 1 FROM pedido_itens WHERE pedido_id = $1 LIMIT 1`, [pedidoId]),
     db.query(
-      `SELECT id, descricao, ambiente, quantidade, unidade, em_confeccao, confeccao_ok, produto_ok
-       FROM pedido_itens WHERE pedido_id = $1 ORDER BY ordem ASC, id ASC`,
+      `SELECT id, descricao, ambiente, quantidade, unidade, em_confeccao, confeccao_ok, produto_ok,
+              numero_unidade, total_unidades
+       FROM pedido_itens
+       WHERE pedido_id = $1 AND NOT (item_pai_id IS NULL AND expandido = true)
+       ORDER BY ordem ASC, id ASC`,
       [pedidoId]
     ),
   ]);
@@ -553,7 +556,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     { rows: itensComConferenciaConsultorasRows },
   ] = await Promise.all([
     db.query(
-      `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1`,
+      `SELECT COUNT(*)::int AS total FROM pedido_itens WHERE pedido_id = $1 AND NOT (item_pai_id IS NULL AND expandido = true)`,
       [pedidoId]
     ),
     db.query(
@@ -571,7 +574,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       `SELECT COUNT(DISTINCT pi.id)::int AS total
        FROM pedido_itens pi
        JOIN categorias cat ON cat.id = pi.categoria_id
-       WHERE pi.pedido_id = $1 AND cat.necessita_conferencia = true`,
+       WHERE pi.pedido_id = $1 AND cat.necessita_conferencia = true
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)`,
       [pedidoId]
     ),
     db.query(
@@ -594,6 +598,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        LEFT JOIN orcamento_itens oi ON oi.id = pi.orcamento_item_id
        LEFT JOIN produtos prod ON prod.id = oi.produto_id
        WHERE pi.pedido_id = $1
+         AND pi.item_pai_id IS NULL
          AND COALESCE(pi.categoria_id, prod.categoria_id) IS NULL`,
       [pedidoId]
     ),
@@ -602,6 +607,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        FROM pedido_itens pi
        LEFT JOIN categorias cat ON cat.id = pi.categoria_id
        WHERE pi.pedido_id = $1
+         AND pi.item_pai_id IS NULL
          AND COALESCE(cat.vinculavel, false) = true
          AND pi.sem_vinculo = false
          AND NOT EXISTS (
@@ -615,15 +621,17 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
          COUNT(DISTINCT pi.id) FILTER (WHERE os.dados_tecnicos IS NOT NULL)::int AS conferidos
        FROM pedido_itens pi
        LEFT JOIN ordem_servico os ON os.pedido_item_id = pi.id
-       WHERE pi.pedido_id = $1`,
+       WHERE pi.pedido_id = $1
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)`,
       [pedidoId]
     ),
     db.query(
       `SELECT
          COUNT(*) FILTER (WHERE em_confeccao = true)::int AS em_confeccao,
          COUNT(*) FILTER (WHERE em_confeccao = true AND confeccao_ok = true)::int AS confeccao_ok
-       FROM pedido_itens
-       WHERE pedido_id = $1`,
+       FROM pedido_itens pi
+       WHERE pedido_id = $1
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)`,
       [pedidoId]
     ),
     db.query(
@@ -639,8 +647,9 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
     ),
     db.query(
       `SELECT COUNT(*) FILTER (WHERE produto_ok = true)::int AS produto_ok
-       FROM pedido_itens
-       WHERE pedido_id = $1`,
+       FROM pedido_itens pi
+       WHERE pedido_id = $1
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)`,
       [pedidoId]
     ),
     db.query(
@@ -669,6 +678,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
        JOIN categorias cat ON cat.id = pi.categoria_id
        JOIN ordem_servico os ON os.pedido_item_id = pi.id
        WHERE pi.pedido_id = $1 AND cat.necessita_conferencia = true
+         AND NOT (pi.item_pai_id IS NULL AND pi.expandido = true)
          AND os.dados_conferencia_consultoras IS NOT NULL`,
       [pedidoId]
     ),
@@ -744,7 +754,7 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const [{ rows: itensPorGenitor }, { rows: herdeirosRaw }] = await Promise.all([
     db.query(
       `SELECT ai.agendamento_id, ai.pedido_item_id, pi.descricao, pi.ordem, pi.medidas,
-              pi.ambiente, pi.largura, pi.altura, pi.modelo,
+              pi.ambiente, pi.largura, pi.altura, pi.modelo, pi.numero_unidade, pi.total_unidades,
               pi.especificacoes->>'acionamento' AS acionamento,
               cat.tipo_confeccao,
               os.id AS ordem_servico_id,
@@ -778,6 +788,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       ambiente: item.ambiente,
       largura: item.largura,
       altura: item.altura,
+      numero_unidade: item.numero_unidade,
+      total_unidades: item.total_unidades,
       produto: labelProdutoConferencia(item.tipo_confeccao, item.modelo, item.acionamento) || item.descricao,
       tipo_confeccao: item.tipo_confeccao,
       ordem_servico_id: item.ordem_servico_id,
@@ -793,7 +805,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
   const instalacoesConcluidas = instalacaoHerdeiros.filter((h) => h.status === "concluido").length;
 
   const { rows: separacaoRows } = await db.query(
-    `SELECT ai.agendamento_id, ai.pedido_item_id, ai.separado, pi.descricao, pi.ambiente
+    `SELECT ai.agendamento_id, ai.pedido_item_id, ai.separado, pi.descricao, pi.ambiente,
+            pi.numero_unidade, pi.total_unidades
      FROM agendamento_itens ai
      JOIN pedido_itens pi ON pi.id = ai.pedido_item_id
      WHERE ai.agendamento_id = ANY($1) AND ai.pedido_item_id IS NOT NULL`,
@@ -810,6 +823,8 @@ async function buscarFluxoPedido(pedidoId, empresaId, userId, permissoes) {
       pedido_item_id: r.pedido_item_id,
       descricao: r.descricao,
       ambiente: r.ambiente,
+      numero_unidade: r.numero_unidade,
+      total_unidades: r.total_unidades,
       separado: r.separado,
     });
   }
