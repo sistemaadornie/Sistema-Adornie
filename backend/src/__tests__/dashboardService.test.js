@@ -427,10 +427,13 @@ describe("listarPedidosDashboard", () => {
 
     const calls = db.query.mock.calls.map((c) => c[0]);
     expect(calls[0]).toContain('pi.item_pai_id IS NULL'); // itens_count (venda)
+    expect(calls[0]).not.toContain('NOT (pi.item_pai_id IS NULL');
     expect(calls[2]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // total itens Etapa 1
     expect(calls[4]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // necessita conferência
     expect(calls[6]).toContain('pi.item_pai_id IS NULL'); // sem categoria (venda)
+    expect(calls[6]).not.toContain('NOT (pi.item_pai_id IS NULL');
     expect(calls[7]).toContain('pi.item_pai_id IS NULL'); // sem vinculo (venda)
+    expect(calls[7]).not.toContain('NOT (pi.item_pai_id IS NULL');
     expect(calls[8]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // conferencia tecnica
     expect(calls[9]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // confeccao
     expect(calls[11]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // produto_ok
