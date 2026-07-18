@@ -228,10 +228,11 @@ async function buscar(id, empresaId) {
 
 async function _salvarItens(client, pedidoId, itens = []) {
   const existingRes = await client.query(
-    `SELECT id FROM pedido_itens WHERE pedido_id = $1 AND item_pai_id IS NULL`,
+    `SELECT id, quantidade, expandido FROM pedido_itens WHERE pedido_id = $1 AND item_pai_id IS NULL`,
     [pedidoId]
   );
   const existingIds = existingRes.rows.map((r) => r.id);
+  const existingById = new Map(existingRes.rows.map((r) => [r.id, r]));
   const incomingIds = itens.map((it) => Number(it.id)).filter((id) => Number.isFinite(id) && id > 0);
 
   const idsParaDeletar = existingIds.filter((id) => !incomingIds.includes(id));
@@ -245,6 +246,16 @@ async function _salvarItens(client, pedidoId, itens = []) {
     const itemId = Number(it.id);
 
     if (Number.isFinite(itemId) && itemId > 0 && existingIds.includes(itemId)) {
+      const existente = existingById.get(itemId);
+      const novaQuantidade = parseFloat(it.quantidade) || 1;
+      if (existente.expandido && novaQuantidade !== parseFloat(existente.quantidade)) {
+        const e = new Error(
+          "Não é possível alterar a quantidade deste item depois que a Conferência técnica foi iniciada."
+        );
+        e.status = 400;
+        throw e;
+      }
+
       // UPDATE item existente
       await client.query(
         `UPDATE pedido_itens

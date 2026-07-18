@@ -93,6 +93,7 @@ describe('atualizar — _salvarItens não deleta itens filhos (expandidos)', () 
 
     const client = { query: jest.fn(), release: jest.fn() };
     client.query
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 7 }] }) // UPDATE pedidos
       .mockResolvedValueOnce({ rows: [{ id: 40 }] }) // _salvarItens: SELECT existingIds (só pais)
       .mockResolvedValueOnce({ rows: [] }) // _salvarItens: UPDATE item 40
@@ -103,8 +104,28 @@ describe('atualizar — _salvarItens não deleta itens filhos (expandidos)', () 
     await svc.atualizar(7, 10, { itens: [{ id: 40, descricao: 'Persiana Sala', quantidade: 2 }] }, 1)
       .catch(() => {}); // tolera erro em passos posteriores não mockados neste teste focado
 
-    const selectExisting = client.query.mock.calls.find((c) => c[0].includes('SELECT id FROM pedido_itens'));
+    const selectExisting = client.query.mock.calls.find((c) => c[0].includes('FROM pedido_itens WHERE pedido_id'));
     expect(selectExisting[0]).toContain('item_pai_id IS NULL');
+  });
+});
+
+describe('_salvarItens — bloqueia mudança de quantidade em item expandido', () => {
+  test('lança 400 ao tentar mudar quantidade de item com expandido=true', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: 8, empresa_id: 10, status: 'pendente' }] }) // montarPedido: pedidos
+      .mockResolvedValueOnce({ rows: [] }) // montarPedido: itens
+      .mockResolvedValueOnce({ rows: [] }); // montarPedido: pagamentos
+
+    const client = { query: jest.fn(), release: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 8 }] }) // UPDATE pedidos
+      .mockResolvedValueOnce({ rows: [{ id: 50, quantidade: '2.00', expandido: true }] }); // SELECT existingIds
+    db.connect.mockResolvedValueOnce(client);
+
+    await expect(
+      svc.atualizar(8, 10, { itens: [{ id: 50, descricao: 'Persiana Sala', quantidade: 3 }] }, 1)
+    ).rejects.toMatchObject({ status: 400 });
   });
 });
 

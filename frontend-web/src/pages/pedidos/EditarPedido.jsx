@@ -89,6 +89,7 @@ export default function EditarPedido() {
           sem_vinculo:    it.sem_vinculo ?? false,
           modelo:         it.modelo ?? null,
           especificacoes: it.especificacoes ?? null,
+          expandido:      it.expandido ?? false,
         })));
         setPagamentos((p.pagamentos || []).map((pg) => ({
           forma:      pg.forma || "PIX / DEPÓSITO",
@@ -367,7 +368,12 @@ export default function EditarPedido() {
                     </select>
                     <input placeholder="2,00" title="Largura (m)" value={it.largura || ""} onChange={(e) => setItem(i, "largura", e.target.value)} />
                     <input placeholder="3,00" title="Altura (m)"  value={it.altura  || ""} onChange={(e) => setItem(i, "altura",  e.target.value)} />
-                    <input type="number" min="0" step="0.01" value={it.quantidade || 1} onChange={(e) => setItem(i, "quantidade", e.target.value)} />
+                    <input
+                      type="number" min="0" step="0.01" value={it.quantidade || 1}
+                      disabled={it.expandido}
+                      title={it.expandido ? "Quantidade travada: a Conferência técnica já foi iniciada para este item." : undefined}
+                      onChange={(e) => setItem(i, "quantidade", e.target.value)}
+                    />
                     <select value={it.unidade || "UN"} onChange={(e) => setItem(i, "unidade", e.target.value)}>
                       {UNIDADES.map((u) => <option key={u}>{u}</option>)}
                     </select>
