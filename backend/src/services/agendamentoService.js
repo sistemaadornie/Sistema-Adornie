@@ -1473,6 +1473,8 @@ async function listarConferenciaItens(agendamentoId, empresaId) {
        pi.id AS pedido_item_id,
        pi.descricao,
        pi.ambiente,
+       pi.numero_unidade,
+       pi.total_unidades,
        cat.tipo_confeccao,
        COALESCE(ci.status, 'pendente') AS status,
        ci.observacoes,

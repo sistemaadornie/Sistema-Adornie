@@ -2848,7 +2848,10 @@ function ConferenciaItensModal({ ag, onClose, onAbrirOS }) {
                   }}
                 >
                   <span>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>{item.descricao}</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>
+                      {item.descricao}
+                      {item.total_unidades > 1 && ` — Unidade ${item.numero_unidade} de ${item.total_unidades}`}
+                    </div>
                     {item.ambiente && <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.ambiente}</div>}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: item.ficha_preenchida ? "#22c55e" : "#94a3b8" }}>
