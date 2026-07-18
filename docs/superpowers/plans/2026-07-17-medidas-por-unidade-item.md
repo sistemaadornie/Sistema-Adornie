@@ -859,7 +859,7 @@ test('aplica filtro de venda e de produção nas queries de itens', async () => 
   await listarPedidosDashboard(10, 1, []);
 
   const calls = db.query.mock.calls.map((c) => c[0]);
-  expect(calls[0]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // itens_count
+  expect(calls[0]).toContain('pi.item_pai_id IS NULL'); // itens_count (venda)
   expect(calls[2]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // total itens Etapa 1
   expect(calls[4]).toContain('NOT (pi.item_pai_id IS NULL AND pi.expandido = true)'); // necessita conferência
   expect(calls[6]).toContain('pi.item_pai_id IS NULL'); // sem categoria (venda)
@@ -883,7 +883,7 @@ Em `backend/src/services/dashboardService.js`, editar cada bloco:
 Linha 139 (`itens_count`), trocar `COUNT(pi.id)` por uma contagem filtrada e o `JOIN` para incluir a condição — como o `pi` já é usado em `GROUP BY`/`EXISTS` fora do agregado, use `COUNT(pi.id) FILTER (WHERE ...)`:
 
 ```sql
-COUNT(pi.id) FILTER (WHERE NOT (pi.item_pai_id IS NULL AND pi.expandido = true)) AS itens_count,
+COUNT(pi.id) FILTER (WHERE pi.item_pai_id IS NULL) AS itens_count,
 ```
 
 Linhas 193-198 (total itens Etapa 1):
