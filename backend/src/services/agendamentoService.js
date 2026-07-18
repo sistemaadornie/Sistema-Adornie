@@ -525,10 +525,14 @@ async function criar(empresaId, userId, dados) {
       );
     }
 
-    await Promise.all([inserirEquipe(agId, equipe, client), inserirItens(agId, itens, client)]);
+    const itensParaSalvar = tipo === "Conferência"
+      ? await expandirItensParaConferencia(itens, client)
+      : itens;
+
+    await Promise.all([inserirEquipe(agId, equipe, client), inserirItens(agId, itensParaSalvar, client)]);
 
     if (tipo === "Conferência") {
-      await criarOSSeNaoExistir(itens, client);
+      await criarOSSeNaoExistir(itensParaSalvar, client);
     }
 
     await client.query("COMMIT");
@@ -672,10 +676,14 @@ async function atualizar(id, empresaId, userId, nomeCompleto, dados) {
       client.query(`DELETE FROM agendamento_equipe WHERE agendamento_id=$1`, [id]),
       client.query(`DELETE FROM agendamento_itens WHERE agendamento_id=$1`, [id]),
     ]);
-    await Promise.all([inserirEquipe(id, equipe, client), inserirItens(id, itens, client)]);
+    const itensParaSalvar = tipo === "Conferência"
+      ? await expandirItensParaConferencia(itens, client)
+      : itens;
+
+    await Promise.all([inserirEquipe(id, equipe, client), inserirItens(id, itensParaSalvar, client)]);
 
     if (tipo === "Conferência") {
-      await criarOSSeNaoExistir(itens, client);
+      await criarOSSeNaoExistir(itensParaSalvar, client);
     }
 
     await client.query("COMMIT");
